@@ -64,9 +64,26 @@ Building the AI generation engine.
 
 # Upcoming Milestones
 
-Milestone 4
+Milestone 4 – Intelligence Engine
 
-Real AI integration
+### ✅ Phase 1
+- Shared schemas
+- Plugin Registry
+- Validation & Repair Layer
+
+### ⏳ Phase 2
+- AI Service
+- Prompt Infrastructure
+- Provider Abstraction
+
+### ⏳ Phase 3
+- API Route
+- Mock Responses
+
+### ⏳ Phase 4
+- Anthropic Integration
+- Live Generation
+- Cache
 
 Milestone 5
 
