@@ -8,5 +8,6 @@ export interface GenerateStructuredInput<T> {
 
 // Implementations must guarantee the resolved value already satisfies `schema` — callers do not re-validate.
 export interface ModelClient {
+  readonly modelId: string;
   generateStructured<T>(input: GenerateStructuredInput<T>): Promise<T>;
 }
