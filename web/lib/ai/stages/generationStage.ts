@@ -4,6 +4,7 @@ import type { ProcessingIntent } from "../../schema/reasoning";
 import type { RegistryContext } from "../../registry/pluginRegistry";
 import type { PluginRegistryEntry } from "../../registry/types";
 import type { ModelClient } from "../modelClient";
+import type { ObserveStage } from "../observability";
 import { buildGenerationPrompt } from "../prompts/generationPrompt";
 
 // Order and repair-state are bookkeeping the app controls, not something the model
@@ -26,16 +27,19 @@ export interface RunGenerationStageInput {
 
 export async function runGenerationStage(
   modelClient: ModelClient,
-  input: RunGenerationStageInput
+  input: RunGenerationStageInput,
+  observe?: ObserveStage
 ): Promise<Chain> {
   const { system, prompt } = buildGenerationPrompt(input);
+  const start = performance.now();
   const result = await modelClient.generateStructured({
     schema: generationModelOutputSchema,
     system,
     prompt,
   });
+  observe?.({ durationMs: performance.now() - start, usage: result.usage, retryCount: result.retryCount });
 
-  const plugins = result.plugins.map((plugin, index) => ({
+  const plugins = result.data.plugins.map((plugin, index) => ({
     ...plugin,
     order: index + 1,
     controls: plugin.controls.map((control) => ({ ...control, wasRepaired: false })),

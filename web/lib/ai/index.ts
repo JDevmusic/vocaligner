@@ -1,8 +1,13 @@
-export type { GenerateStructuredInput, ModelClient } from "./modelClient";
+export type { GenerateStructuredInput, GenerateStructuredResult, ModelClient } from "./modelClient";
+export type { ObserveStage, StageObservation, TokenUsage } from "./observability";
+export { ModelResponseValidationError, ModelTransportError } from "./errors";
 export { PROMPT_VERSION } from "./prompts/version";
+export { PIPELINE_VERSION } from "./pipelineVersion";
 export { buildResearchPrompt } from "./prompts/researchPrompt";
 export { buildReasoningPrompt } from "./prompts/reasoningPrompt";
 export { buildGenerationPrompt } from "./prompts/generationPrompt";
 export { runResearchStage } from "./stages/researchStage";
 export { runReasoningStage } from "./stages/reasoningStage";
 export { runGenerationStage } from "./stages/generationStage";
+export { createMockModelClient } from "./mockModelClient";
+export { createAnthropicModelClient } from "./anthropicModelClient";

@@ -1,5 +1,5 @@
 import type { ZodType } from "zod";
-import type { GenerateStructuredInput, ModelClient } from "./modelClient";
+import type { GenerateStructuredInput, GenerateStructuredResult, ModelClient } from "./modelClient";
 
 // The three stage schemas have distinctive top-level keys, so dispatching on shape
 // (rather than call order) keeps the mock correct even if stages are called out of sequence.
@@ -118,20 +118,30 @@ function buildMockGeneration() {
   };
 }
 
+// Mock calls report zero token usage rather than a fabricated estimate — they
+// genuinely cost nothing, and any usage aggregation should group by modelId so
+// these zeros don't dilute real Anthropic cost figures once both exist side by side.
+const ZERO_USAGE = { inputTokens: 0, outputTokens: 0 };
+
 export function createMockModelClient(): ModelClient {
   return {
     modelId: "mock",
-    async generateStructured<T>({ schema, prompt }: GenerateStructuredInput<T>): Promise<T> {
+    async generateStructured<T>({
+      schema,
+      prompt,
+    }: GenerateStructuredInput<T>): Promise<GenerateStructuredResult<T>> {
+      let data: T;
       if (hasKey(schema, "genre")) {
-        return schema.parse(buildMockResearch(prompt));
+        data = schema.parse(buildMockResearch(prompt));
+      } else if (hasKey(schema, "processingIntents")) {
+        data = schema.parse(buildMockReasoning());
+      } else if (hasKey(schema, "plugins")) {
+        data = schema.parse(buildMockGeneration());
+      } else {
+        throw new Error("MockModelClient received an unrecognised schema shape.");
       }
-      if (hasKey(schema, "processingIntents")) {
-        return schema.parse(buildMockReasoning());
-      }
-      if (hasKey(schema, "plugins")) {
-        return schema.parse(buildMockGeneration());
-      }
-      throw new Error("MockModelClient received an unrecognised schema shape.");
+
+      return { data, usage: ZERO_USAGE, retryCount: 0 };
     },
   };
 }
