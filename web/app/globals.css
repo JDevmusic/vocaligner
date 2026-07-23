@@ -28,13 +28,12 @@
   --muted-lavender: #d3c1e3;
   --dusk-panel: #2b2622;
   --dusk-panel-raised: #38312b;
-  /* "Wash" was liked but read as too dulled -- this sits between muted and
-     vivid: real saturation up top (the "dark" end of dark-to-light),
-     resolving through gold/lavender down to white, rather than a uniform
-     pale tint. */
-  --wash-deep: #d1483e;
-  --wash-coral: #f2506f;
+  /* "Wash" v2 -- coral/red dropped per feedback; direction flipped to
+     white at the top, through sunset gold, down to a deep purple base.
+     wash-lavender bridges gold -> deep purple so the hue shift reads as
+     one purple family deepening, not two unrelated colors meeting. */
   --wash-lavender: #c9a8dd;
+  --wash-purple: #3f1f4a;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);

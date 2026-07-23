@@ -7,14 +7,21 @@ import { AnimatedButton } from "./AnimatedButton";
 import { item } from "./motion-shared";
 
 // ---------------------------------------------------------------------------
-// Design H — "Wash" (refined)
-// Owner picked this direction but called the color too dulled -- this
-// brings back real saturation at the top of the gradient, resolving to
-// white ("dark to light", closer to the Lovable reference), makes the
-// hero headline the dominant element, shrinks the mad-libs sentence to a
-// secondary role, and adds a right-column explanation of what the product
-// does (the E-console description treatment, moved beside the headline).
+// Design H — "Wash" (v3)
+// Coral/red dropped per feedback. Gradient direction flipped: white at
+// the top, through sunset gold, down to a deep purple base -- the purple
+// is what the owner wants kept and pushed further, not the pink. Text
+// color now follows the gradient (dark up top, light by the purple
+// footer) instead of assuming white-on-color throughout.
+//
+// Premium touches added on top of the color change: a very faint film-
+// grain texture (flat gradients read cheap/plasticky without it), a soft
+// colored glow under the CTA instead of a flat shadow, and a hairline
+// gradient-matched nav divider.
 // ---------------------------------------------------------------------------
+
+const GRAIN_URL =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")";
 
 export function DesignH() {
   return (
@@ -23,13 +30,19 @@ export function DesignH() {
       className="relative flex min-h-screen flex-col"
       style={{
         background:
-          "linear-gradient(170deg, var(--wash-deep) 0%, var(--wash-coral) 16%, var(--sunset-start) 32%, var(--wash-lavender) 50%, var(--sunset-start) 68%, var(--sunset-fade) 88%, #ffffff 100%)",
+          "linear-gradient(180deg, #ffffff 0%, var(--sunset-fade) 14%, var(--sunset-start) 36%, var(--sunset-start) 58%, var(--wash-lavender) 80%, var(--wash-purple) 100%)",
       }}
     >
-      <nav className="relative">
-        <div className="mx-auto flex w-full max-w-[1200px] items-center gap-2.5 px-6 pt-8 sm:px-10">
-          <Mark className="h-4 w-auto text-white" />
-          <span className="text-sm font-semibold tracking-[0.15em] text-white uppercase">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.035] mix-blend-overlay"
+        style={{ backgroundImage: GRAIN_URL }}
+        aria-hidden="true"
+      />
+
+      <nav className="relative border-b border-black/[0.06]">
+        <div className="mx-auto flex w-full max-w-[1200px] items-center gap-2.5 px-6 py-7 sm:px-10">
+          <Mark className="h-4 w-auto text-foreground" />
+          <span className="text-sm font-semibold tracking-[0.15em] text-foreground uppercase">
             VocAligner
           </span>
         </div>
@@ -43,19 +56,19 @@ export function DesignH() {
         className="relative mx-auto grid w-full max-w-[1200px] grid-cols-1 gap-8 px-6 pt-10 sm:px-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-start lg:gap-16"
       >
         <div>
-          <span className="font-mono text-xs tracking-[0.2em] text-white/80 uppercase">
+          <span className="font-mono text-xs tracking-[0.2em] text-supporting uppercase">
             Signal research, matched to spec
           </span>
-          <h1 className="mt-4 max-w-xl text-5xl leading-[1.03] font-semibold tracking-tight text-white sm:text-7xl">
+          <h1 className="mt-4 max-w-xl text-5xl leading-[1.03] font-semibold tracking-tight text-foreground sm:text-7xl">
             Recreate the vocal sound of your favourite artists.
           </h1>
         </div>
 
         <div className="lg:pt-2">
-          <span className="font-mono text-xs tracking-[0.2em] text-white/70 uppercase">
+          <span className="font-mono text-xs tracking-[0.2em] text-supporting uppercase">
             What VocAligner does
           </span>
-          <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/90 sm:text-base">
+          <p className="mt-3 max-w-sm text-sm leading-relaxed text-foreground/75 sm:text-base">
             Type an artist and a song. VocAligner researches the production
             behind the record — tone, dynamics, space — and hands you a
             Logic Pro stock plugin chain built to match it. No third-party
@@ -73,8 +86,7 @@ export function DesignH() {
       >
         <form
           onSubmit={(event) => event.preventDefault()}
-          style={{ textShadow: "0 2px 16px rgba(0,0,0,0.18)" }}
-          className="flex max-w-xl flex-wrap items-baseline justify-center gap-x-2 gap-y-2 text-xl leading-relaxed font-medium text-white sm:text-2xl"
+          className="flex max-w-xl flex-wrap items-baseline justify-center gap-x-2 gap-y-2 text-xl leading-relaxed font-medium text-foreground sm:text-2xl"
         >
           <span>Match</span>
           <label className="sr-only" htmlFor="artist-h">Artist</label>
@@ -83,7 +95,7 @@ export function DesignH() {
             type="text"
             placeholder="Frank Ocean"
             size={12}
-            className="min-w-0 border-b-2 border-white/60 bg-transparent px-1 pb-0.5 text-center text-white outline-none placeholder:text-white/50 focus:border-white"
+            className="min-w-0 border-b-2 border-black/30 bg-transparent px-1 pb-0.5 text-center text-foreground outline-none placeholder:text-black/35 focus:border-black"
           />
           <span>on</span>
           <label className="sr-only" htmlFor="song-h">Song</label>
@@ -92,7 +104,7 @@ export function DesignH() {
             type="text"
             placeholder="Thinkin Bout You"
             size={16}
-            className="min-w-0 border-b-2 border-white/60 bg-transparent px-1 pb-0.5 text-center text-white outline-none placeholder:text-white/50 focus:border-white"
+            className="min-w-0 border-b-2 border-black/30 bg-transparent px-1 pb-0.5 text-center text-foreground outline-none placeholder:text-black/35 focus:border-black"
           />
           <span>, in Logic Pro.</span>
         </form>
@@ -100,7 +112,7 @@ export function DesignH() {
         <div className="mt-8">
           <AnimatedButton
             title="Preview only — not wired up"
-            className="rounded-full bg-black px-8 py-3.5 text-base font-semibold text-white transition-colors hover:bg-zinc-800"
+            className="rounded-full bg-black px-8 py-3.5 text-base font-semibold text-white shadow-[0_6px_24px_-6px_rgba(63,31,74,0.4)] transition-shadow hover:shadow-[0_8px_30px_-4px_rgba(63,31,74,0.55)]"
           >
             Generate Vocal Chain
           </AnimatedButton>
@@ -108,12 +120,12 @@ export function DesignH() {
       </motion.div>
 
       <footer className="relative mx-auto w-full max-w-[1200px] px-6 pb-10 text-center">
-        <div className="mx-auto flex max-w-lg flex-wrap items-center justify-center gap-x-3 gap-y-2 text-xs text-supporting">
+        <div className="mx-auto flex max-w-lg flex-wrap items-center justify-center gap-x-3 gap-y-2 text-xs text-white/65">
           {CHAIN_PREVIEW.map((plugin, index) => (
             <span key={plugin} className="flex items-center gap-3">
               {plugin}
               {index < CHAIN_PREVIEW.length - 1 ? (
-                <span className="text-black/25" aria-hidden="true">·</span>
+                <span className="text-white/25" aria-hidden="true">·</span>
               ) : null}
             </span>
           ))}
