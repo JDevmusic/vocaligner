@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion, MotionConfig, type Variants } from "motion/react";
 import { Wordmark } from "../components/Wordmark";
+import { Mark } from "../components/Mark";
 import { CHAIN_PREVIEW, HOW_IT_WORKS } from "../landing-copy";
 
 // Throwaway design-exploration page. Delete after a direction is picked.
@@ -33,6 +34,7 @@ export function DesignPreviewClient() {
         <DesignA />
         <DesignB />
         <DesignC />
+        <DesignD />
       </div>
     </MotionConfig>
   );
@@ -50,6 +52,7 @@ function PreviewSwitcher() {
       <Link href="#design-a" className="transition-colors hover:text-black">A · Sunset Editorial</Link>
       <Link href="#design-b" className="transition-colors hover:text-black">B · Studio Console</Link>
       <Link href="#design-c" className="transition-colors hover:text-black">C · Minimal Focus</Link>
+      <Link href="#design-d" className="transition-colors hover:text-black">D · Signal</Link>
     </motion.div>
   );
 }
@@ -462,6 +465,134 @@ function DesignC() {
           ))}
         </div>
       </motion.footer>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Design D — "Signal"
+// Built outward from the actual VA mark's chamfered geometry instead of
+// generic rounded-corner SaaS conventions: cut-corner panels (see .chamfer
+// in globals.css), the mark used as a real graphic element (nav lockup +
+// oversized watermark), and the chain preview styled as a literal signal
+// path (chamfered tags + connecting line) instead of soft pill badges.
+// Typography stays plain Geist, tight and confident, rather than reaching
+// for a display font — distinctiveness comes from structure, not a font.
+// ---------------------------------------------------------------------------
+
+function DesignD() {
+  return (
+    <section id="design-d" className="relative flex min-h-screen flex-col overflow-hidden bg-[#faf8f5]">
+      <SectionLabel letter="D" name="Signal" />
+
+      <nav className="relative border-b border-black/10">
+        <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-6 py-4 sm:px-10">
+          <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-70">
+            <Mark className="h-4 w-auto text-foreground" />
+            <span className="text-sm font-semibold tracking-[0.15em] text-foreground uppercase">
+              VocAligner
+            </span>
+          </Link>
+          <span className="hidden text-xs font-medium tracking-[0.2em] text-muted uppercase sm:block">
+            Logic Pro Vocal Chains
+          </span>
+        </div>
+        <div className="h-[3px] bg-brand-accent" style={{ width: "72px" }} aria-hidden="true" />
+      </nav>
+
+      <main className="relative mx-auto flex w-full max-w-[1200px] flex-1 items-center px-6 py-16 sm:px-10">
+        <Mark className="pointer-events-none absolute top-1/2 -right-16 h-[420px] w-auto -translate-y-1/2 text-black/[0.035] sm:-right-24" />
+
+        <div className="relative grid w-full grid-cols-1 gap-12 lg:grid-cols-[1fr_0.85fr] lg:items-center">
+          <motion.div
+            variants={container}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.3 }}
+          >
+            <motion.span
+              variants={item}
+              className="inline-block border-l-2 border-brand-accent pl-3 text-xs font-semibold tracking-[0.2em] text-supporting uppercase"
+            >
+              Signal chain, matched
+            </motion.span>
+
+            <motion.h1
+              variants={item}
+              className="mt-5 max-w-lg text-4xl leading-[1.05] font-semibold tracking-tight text-foreground sm:text-5xl"
+            >
+              Recreate the vocal sound of your favourite artists.
+            </motion.h1>
+
+            <motion.p variants={item} className="mt-4 max-w-md text-base text-muted sm:text-lg">
+              Type an artist and a song. VocAligner researches the production
+              and hands you a Logic Pro stock plugin chain built to match it.
+            </motion.p>
+
+            <motion.div variants={item} className="mt-8 flex items-center overflow-x-auto pb-1">
+              {CHAIN_PREVIEW.map((plugin, index) => (
+                <div key={plugin} className="flex shrink-0 items-center">
+                  <span className="chamfer-sm whitespace-nowrap border border-black/15 bg-white px-3 py-1.5 font-mono text-xs text-foreground">
+                    {plugin}
+                  </span>
+                  {index < CHAIN_PREVIEW.length - 1 ? (
+                    <span className="h-px w-6 bg-black/20" aria-hidden="true" />
+                  ) : null}
+                </div>
+              ))}
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, clipPath: "inset(0% 0% 100% 0%)" }}
+            whileInView={{ opacity: 1, clipPath: "inset(0% 0% 0% 0%)" }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.5, ease: EASE }}
+            className="chamfer-lg relative border border-black/10 bg-white p-6"
+          >
+            <div
+              className="absolute inset-x-0 top-0 h-1"
+              style={{
+                background: "linear-gradient(to right, var(--sunset-start), var(--sunset-mid))",
+              }}
+              aria-hidden="true"
+            />
+            <form
+              onSubmit={(event) => event.preventDefault()}
+              className="flex flex-col gap-4 pt-2"
+            >
+              <div className="flex flex-col gap-1.5 text-left">
+                <label htmlFor="artist-d" className="text-[11px] font-medium tracking-wide text-muted uppercase">
+                  Artist
+                </label>
+                <input
+                  id="artist-d"
+                  type="text"
+                  placeholder="Frank Ocean"
+                  className="chamfer border border-black/10 bg-[#faf8f5] px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-black/30"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5 text-left">
+                <label htmlFor="song-d" className="text-[11px] font-medium tracking-wide text-muted uppercase">
+                  Song
+                </label>
+                <input
+                  id="song-d"
+                  type="text"
+                  placeholder="Thinkin Bout You"
+                  className="chamfer border border-black/10 bg-[#faf8f5] px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-black/30"
+                />
+              </div>
+              <AnimatedButton
+                title="Preview only — not wired up"
+                className="chamfer mt-1 bg-black px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-zinc-800"
+              >
+                Generate Vocal Chain
+              </AnimatedButton>
+            </form>
+          </motion.div>
+        </div>
+      </main>
     </section>
   );
 }
