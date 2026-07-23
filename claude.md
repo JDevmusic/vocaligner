@@ -130,6 +130,12 @@ When introducing new concepts:
 - avoid unnecessary jargon
 - explain why something is done, not only how
 
+The owner is genuinely new to day-to-day dev practice — things like `.env.local`, `.gitignore`, environment variables, and secrets handling are not yet familiar territory, even though they can follow along fine once explained. Practical implications for any agent working on this project:
+
+- Don't assume familiarity with these concepts. Spell out what a file/setting does and why it matters before changing it.
+- Be extra careful and explicit around anything secret-adjacent (API keys, `.env*` files, what's gitignored vs. committed) — confirm before acting rather than assuming the owner already understands the convention.
+- It's fine to just handle routine dev-hygiene setup directly (creating a `.env.local`, adding a gitignore entry) — just narrate what you did and why in plain terms afterward, don't leave it unexplained.
+
 ---
 
 # Git
