@@ -52,7 +52,7 @@ function LoadingContent() {
       <div className="mt-6 flex w-48 flex-col items-center gap-2">
         <div className="h-1 w-full overflow-hidden rounded-full bg-black/10">
           <div
-            className="h-full rounded-full bg-accent transition-all duration-500 ease-out"
+            className="h-full rounded-full bg-brand-accent transition-all duration-500 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>

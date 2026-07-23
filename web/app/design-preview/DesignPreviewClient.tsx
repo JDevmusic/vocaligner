@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { motion, type Variants } from "motion/react";
+import { motion, MotionConfig, type Variants } from "motion/react";
 import { Wordmark } from "../components/Wordmark";
 import { CHAIN_PREVIEW, HOW_IT_WORKS } from "../landing-copy";
 
@@ -26,13 +26,15 @@ const springTap = { type: "spring" as const, stiffness: 420, damping: 24 };
 
 export function DesignPreviewClient() {
   return (
-    <div className="flex min-h-screen flex-col bg-white">
-      <style>{"html { scroll-behavior: smooth; }"}</style>
-      <PreviewSwitcher />
-      <DesignA />
-      <DesignB />
-      <DesignC />
-    </div>
+    <MotionConfig reducedMotion="user">
+      <div className="flex min-h-screen flex-col bg-white">
+        <style>{"html { scroll-behavior: smooth; }"}</style>
+        <PreviewSwitcher />
+        <DesignA />
+        <DesignB />
+        <DesignC />
+      </div>
+    </MotionConfig>
   );
 }
 
@@ -75,7 +77,6 @@ function AnimatedButton({
     <motion.button
       type="button"
       title={title}
-      variants={item}
       whileHover={{ scale: 1.035 }}
       whileTap={{ scale: 0.96 }}
       transition={springTap}
@@ -119,7 +120,11 @@ function DesignA() {
           plugin chain built to match their vocal sound.
         </motion.p>
 
-        <motion.form variants={item} className="mt-8 flex w-full max-w-md flex-col gap-3">
+        <motion.form
+          variants={item}
+          onSubmit={(event) => event.preventDefault()}
+          className="mt-8 flex w-full max-w-md flex-col gap-3"
+        >
           <div className="flex flex-col gap-1.5 text-left">
             <label htmlFor="artist-a" className="text-xs font-medium tracking-wide text-muted uppercase">
               Artist
@@ -225,7 +230,7 @@ function DesignB() {
         <div className="flex flex-col">
           <motion.span
             variants={item}
-            className="text-xs font-semibold tracking-[0.25em] text-accent uppercase"
+            className="text-xs font-semibold tracking-[0.25em] text-brand-accent uppercase"
           >
             AI Vocal Chains for Logic Pro
           </motion.span>
@@ -246,6 +251,7 @@ function DesignB() {
 
           <motion.form
             variants={item}
+            onSubmit={(event) => event.preventDefault()}
             className="mt-7 flex flex-col gap-3 rounded-xl border border-black/10 bg-white p-3 shadow-sm sm:flex-row sm:items-end"
           >
             <div className="flex flex-1 flex-col gap-1 px-2 pt-1.5">
@@ -306,8 +312,8 @@ function DesignB() {
             aria-hidden="true"
           />
           <motion.div
-            animate={{ y: [0, -8, 0] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+            whileInView={{ y: [0, -8, 0], transition: { duration: 6, repeat: Infinity, ease: "easeInOut" } }}
+            viewport={{ once: true }}
             className="relative w-full max-w-sm rounded-2xl border border-black/10 bg-white/90 p-5 shadow-xl backdrop-blur"
           >
             <div className="flex items-center justify-between border-b border-black/5 pb-3">
@@ -315,9 +321,9 @@ function DesignB() {
                 Channel Strip
               </span>
               <motion.span
-                animate={{ opacity: [1, 0.35, 1] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                className="h-2 w-2 rounded-full bg-accent"
+                whileInView={{ opacity: [1, 0.35, 1], transition: { duration: 2, repeat: Infinity, ease: "easeInOut" } }}
+                viewport={{ once: true }}
+                className="h-2 w-2 rounded-full bg-brand-accent"
                 aria-hidden="true"
               />
             </div>
@@ -340,7 +346,7 @@ function DesignB() {
                   <div className="flex gap-1" aria-hidden="true">
                     <span className="h-1.5 w-1.5 rounded-full bg-black/20" />
                     <span className="h-1.5 w-1.5 rounded-full bg-black/20" />
-                    <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
                   </div>
                 </motion.div>
               ))}
