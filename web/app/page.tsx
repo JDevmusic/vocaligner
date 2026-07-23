@@ -3,23 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Wordmark } from "./components/Wordmark";
-
-const CHAIN_PREVIEW = ["Channel EQ", "Compressor", "DeEsser 2", "ChromaVerb"];
-
-const HOW_IT_WORKS = [
-  {
-    title: "Type an artist and a song",
-    description: "Tell us whose vocal sound you want to recreate.",
-  },
-  {
-    title: "AI researches the production",
-    description: "We study the tonal balance, dynamics and space of the recording.",
-  },
-  {
-    title: "Get your Logic Pro chain",
-    description: "A stock plugin chain built to match, ready to recreate.",
-  },
-];
+import { CHAIN_PREVIEW, HOW_IT_WORKS } from "./landing-copy";
 
 export default function Home() {
   const router = useRouter();
