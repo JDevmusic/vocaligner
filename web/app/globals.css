@@ -12,6 +12,13 @@
   --sunset-start: #f6b953;
   --sunset-mid: #fad489;
   --sunset-fade: #fdefda;
+  /* Bolder, more saturated exploration palette -- same warm family as the
+     sunset tokens above, pushed to real color instead of a pale wash. */
+  --vivid-gold: #ffb020;
+  --vivid-coral: #f2506f;
+  --vivid-purple: #b23fd8;
+  --panel-dark: #1c1512;
+  --panel-dark-raised: #2a201b;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -103,14 +110,8 @@
 /* Cut top-left / bottom-right corners -- echoes the VA mark's angular
    chamfers and hardware-faceplate proportions, instead of another
    rounded-corner SaaS card. */
-.chamfer-sm {
-  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
-}
 .chamfer {
   clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
-}
-.chamfer-lg {
-  clip-path: polygon(28px 0, 100% 0, 100% calc(100% - 28px), calc(100% - 28px) 100%, 0 100%, 0 28px);
 }
 
 .dark {
