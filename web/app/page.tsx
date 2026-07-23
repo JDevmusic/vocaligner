@@ -2,6 +2,24 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { Wordmark } from "./components/Wordmark";
+
+const CHAIN_PREVIEW = ["Channel EQ", "Compressor", "DeEsser 2", "ChromaVerb"];
+
+const HOW_IT_WORKS = [
+  {
+    title: "Type an artist and a song",
+    description: "Tell us whose vocal sound you want to recreate.",
+  },
+  {
+    title: "AI researches the production",
+    description: "We study the tonal balance, dynamics and space of the recording.",
+  },
+  {
+    title: "Get your Logic Pro chain",
+    description: "A stock plugin chain built to match, ready to recreate.",
+  },
+];
 
 export default function Home() {
   const router = useRouter();
@@ -21,9 +39,7 @@ export default function Home() {
   return (
     <div className="hero-gradient flex min-h-screen flex-1 flex-col">
       <main className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col items-center px-6 py-24 text-center sm:py-32">
-        <span className="text-sm font-semibold tracking-[0.2em] text-muted uppercase">
-          VocAligner
-        </span>
+        <Wordmark />
 
         <h1 className="mt-6 max-w-2xl text-4xl leading-[1.1] font-semibold tracking-tight text-foreground sm:text-6xl">
           Recreate the vocal sound of your favourite artists.
@@ -85,6 +101,33 @@ export default function Home() {
           Every chain uses only Logic Pro stock plugins — no third-party
           plugins required.
         </p>
+
+        <div className="mt-16 flex flex-wrap items-center justify-center gap-2">
+          {CHAIN_PREVIEW.map((plugin, index) => (
+            <div key={plugin} className="flex items-center gap-2">
+              <span className="rounded-full border border-black/10 bg-white/70 px-4 py-1.5 text-sm font-medium text-supporting shadow-sm">
+                {plugin}
+              </span>
+              {index < CHAIN_PREVIEW.length - 1 ? (
+                <span className="text-muted/50" aria-hidden="true">
+                  →
+                </span>
+              ) : null}
+            </div>
+          ))}
+        </div>
+
+        <section className="mt-28 grid w-full grid-cols-1 gap-10 border-t border-black/5 pt-16 sm:grid-cols-3">
+          {HOW_IT_WORKS.map((step, index) => (
+            <div key={step.title} className="flex flex-col items-center text-center">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-sm font-semibold text-white">
+                {index + 1}
+              </span>
+              <h2 className="mt-4 text-base font-semibold text-foreground">{step.title}</h2>
+              <p className="mt-2 text-sm text-muted">{step.description}</p>
+            </div>
+          ))}
+        </section>
       </main>
     </div>
   );
