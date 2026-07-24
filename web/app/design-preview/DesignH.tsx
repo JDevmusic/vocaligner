@@ -69,10 +69,9 @@ export function DesignH() {
             What VocAligner does
           </span>
           <p className="mt-3 max-w-sm text-sm leading-relaxed text-foreground/75 sm:text-base">
-            Type an artist and a song. VocAligner researches the production
-            behind the record — tone, dynamics, space — and hands you a
-            Logic Pro stock plugin chain built to match it. No third-party
-            plugins, no guesswork.
+            Every classic vocal has a recipe. VocAligner finds it and hands
+            you the exact chain to recreate it — no trial and error, no
+            third-party plugins.
           </p>
         </div>
       </motion.div>
