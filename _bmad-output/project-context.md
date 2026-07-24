@@ -22,10 +22,13 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - TypeScript 5, strict mode on
 - Zod 4.4.3
 - Tailwind CSS 4 (`@tailwindcss/postcss`)
+- shadcn/ui (Nova preset, Base UI primitives, Lucide icons) — `components.json`, primitives in `components/ui/`, `cn()` helper in `lib/utils.ts`. Not yet used by any real page (added during design exploration; scaffolding only).
+- `motion` (Motion, formerly Framer Motion) — import from `"motion/react"`, not `"framer-motion"`
 - Vitest 4.1.10
 - ESLint 9 (flat config, `eslint-config-next`)
 - `@anthropic-ai/sdk` 0.110.0
 - Import alias: `@/*` → project root (`web/`)
+- `globals.css` has two "accent" concepts that must not be conflated: shadcn's `--accent` (neutral hover/surface color, used by generated `components/ui/*`) vs. the brand's warm golden `--brand-accent` (`text-brand-accent` / `bg-brand-accent`). Same split for `--muted` (shadcn's light surface color) vs. the app's readable-gray `text-muted` (aliased to `--muted-foreground`, not `--muted`) — see the comments in `globals.css` before changing either.
 
 ## Critical Implementation Rules
 
@@ -96,4 +99,4 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - Review periodically for outdated rules
 - Remove rules that become obvious over time
 
-Last Updated: 2026-07-23
+Last Updated: 2026-07-24

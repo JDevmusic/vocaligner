@@ -1,6 +1,6 @@
 # VocAligner Design System
 
-Version 1.0
+Version 1.1 — updated after a design exploration round (see `/design-preview`, throwaway, to be deleted once the app is aligned to this version).
 
 ---
 
@@ -55,6 +55,14 @@ VocAligner is NOT:
 
 ---
 
+# Brand Mark
+
+VocAligner has a real mark now, not just a text wordmark: `web/app/components/Mark.tsx` (source: `web/public/va-mark.svg`), a "VA" monogram built from chamfered (cut-corner) letterforms.
+
+Use it in navigation, paired tightly with the wordmark. It can also appear large and very faint as a background watermark — a confident, quiet way to reinforce identity without becoming decoration.
+
+---
+
 # Emotional Goal
 
 When somebody lands on VocAligner they should think:
@@ -69,15 +77,21 @@ When somebody lands on VocAligner they should think:
 
 # Colour Palette
 
-Primary Background
+Primary Background — Landing Hero
 
-Warm sunset yellow gradient beginning at the top of the page.
+The landing page hero gradient runs white at the top, through a warm sunset gold, down into a deep purple base.
 
-The gradient should slowly fade into pure white as the user scrolls.
+Not a pale wash. The gold and purple should read as real, saturated colour — restrained, not flamboyant, but not dulled down either.
 
-The transition should feel soft and natural.
+Sections below the hero that continue the story (e.g. "how it works") pick up exactly where the hero's gradient ends and deepen further into a near-black purple, rather than cutting back to white. Use white text on these sections.
 
-Avoid harsh colour changes.
+Explored and rejected: pink/red/coral as part of this gradient, and a fully-saturated "vivid" version of the same gradient used edge-to-edge. Both read as generic AI-product styling rather than premium.
+
+Primary Background — Other Pages
+
+Functional pages (loading, results) keep the simpler warm sunset yellow gradient fading to white, as before. Reserve the fuller white-to-gold-to-purple treatment for the landing page, where there's room for it to breathe.
+
+Avoid harsh colour changes anywhere. Blend, don't cut.
 
 ---
 
@@ -123,11 +137,9 @@ Black text
 
 Accent Colour
 
-Warm golden yellow.
+Warm golden yellow, used sparingly on functional pages (progress bars, small highlights). Should guide attention rather than dominate.
 
-Use sparingly.
-
-Accent colour should guide attention rather than dominate the page.
+Deep purple is a secondary brand colour, not just an accent — it's used deliberately at real scale in the hero and storytelling sections, not sprinkled in small doses.
 
 ---
 
@@ -178,6 +190,20 @@ What the user should do next.
 The primary call-to-action should be obvious.
 
 The artist and song inputs should be immediately visible.
+
+Layout: an asymmetric two-column top section, not centered. Headline on the left, sized as the dominant element on the page. A short, inspiring (not mechanical) explanation of what the product does on the right, beside it — not below it.
+
+The artist/song input itself sits lower, centered, as a secondary interaction: "Match [artist] on [song], in Logic Pro" — one sentence, not a stacked form. It should be visibly smaller than the headline.
+
+---
+
+# Storytelling Sections
+
+Below the hero, a "Meet VocAligner" section explains how the product works. Dark, continuing the hero's gradient into near-black rather than cutting back to white — the hero and this section should read as one continuous piece.
+
+Layout: two columns. Left is the "Meet VocAligner" headline and a short, inspiring explanation (how it listens, what it hands back). Right is the process broken into stages — three vertically stacked cards, each numbered, not a horizontal row.
+
+Keep the explanation brief and benefit-led, not a feature list. Reference: ToneAdapt's landing page (a close analog product — guitar tone matching instead of vocals) pairs inspiring copy with a concrete, concise breakdown; follow that shape.
 
 ---
 
@@ -240,6 +266,10 @@ Avoid unnecessary movement.
 
 Animation should reinforce interaction rather than distract.
 
+Implementation: the `motion` library (Motion, formerly Framer Motion). Content fades/lifts in as the user scrolls to it, not all at once on page load. Buttons and interactive elements get a small hover/tap response.
+
+Always respect reduced-motion preferences (`MotionConfig reducedMotion="user"` or equivalent) — this is not optional.
+
 ---
 
 # Icons
@@ -265,6 +295,8 @@ Where possible, showcase:
 - Plugin visualisations
 - Simple abstract gradients
 
+Texture: a very faint film-grain overlay on large gradient areas (low single-digit opacity) stops them reading as flat/plasticky. Subtle enough that it shouldn't be consciously noticed.
+
 ---
 
 # Design Inspiration
@@ -277,6 +309,9 @@ The overall aesthetic should take inspiration from:
 - Raycast
 - Stripe
 - Apple
+- ElevenLabs — restraint; colour as one confident moment, not a wash
+- ToneAdapt — a close analog product (guitar tone matching instead of vocals); its "how it works" storytelling shape
+- Lovable / Suno — for how much more colour and motion an AI product can carry before it stops feeling premium; don't over-correct back to plain
 
 Take inspiration from:
 
