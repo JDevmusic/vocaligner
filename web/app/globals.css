@@ -34,7 +34,7 @@
      one purple family deepening, not two unrelated colors meeting. */
   --wash-lavender: #c9a8dd;
   --wash-purple: #3f1f4a;
-  --wash-purple-deep: #1e1020; /* continues the wash-purple family further into near-black, for sections that pick up where the hero's gradient ends */
+  --wash-purple-deep: #150a18; /* continues the wash-purple family further into near-black, for sections that pick up where the hero's gradient ends */
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);

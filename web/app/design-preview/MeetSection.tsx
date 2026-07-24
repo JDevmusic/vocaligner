@@ -33,7 +33,7 @@ export function MeetSection() {
     <section
       className="relative flex flex-col"
       style={{
-        background: "linear-gradient(to bottom, var(--wash-purple) 0%, var(--wash-purple-deep) 100%)",
+        background: "linear-gradient(to bottom, var(--wash-purple) 0%, var(--wash-purple-deep) 30%, var(--wash-purple-deep) 100%)",
       }}
     >
       <motion.div
