@@ -1,16 +1,16 @@
 export const CHAIN_PREVIEW = ["Channel EQ", "Compressor", "DeEsser 2", "ChromaVerb"];
 
-export const HOW_IT_WORKS = [
+export const STEPS = [
   {
-    title: "Type an artist and a song",
-    description: "Tell us whose vocal sound you want to recreate.",
+    title: "Tell us the sound",
+    description: "Type an artist and a song — the vocal sound you're chasing.",
   },
   {
-    title: "AI researches the production",
-    description: "We study the tonal balance, dynamics and space of the recording.",
+    title: "We study the record",
+    description: "VocAligner researches the tonal balance, dynamics and space of the mix.",
   },
   {
-    title: "Get your Logic Pro chain",
-    description: "A stock plugin chain built to match, ready to recreate.",
+    title: "Build it in Logic Pro",
+    description: "Get a stock plugin chain, ready to build — no guesswork.",
   },
 ];

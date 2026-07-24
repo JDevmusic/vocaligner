@@ -1,32 +1,14 @@
 "use client";
 
 import { motion } from "motion/react";
+import { STEPS } from "../landing-copy";
 import { container, item } from "./motion-shared";
 
-// ---------------------------------------------------------------------------
-// Meet VocAligner — the section revealed on scroll, after the Design H
-// hero. Background picks up exactly where the hero's gradient ends
-// (wash-purple) and deepens further into near-black, so the two sections
-// read as one continuous piece rather than a hard cut back to light.
-// Left column: intro copy. Right column: the three stages as stacked
-// cards, not a horizontal row -- matches the hero's asymmetric two-column
-// shape instead of a centered block.
-// ---------------------------------------------------------------------------
-
-const STEPS = [
-  {
-    title: "Tell us the sound",
-    description: "Type an artist and a song — the vocal sound you're chasing.",
-  },
-  {
-    title: "We study the record",
-    description: "VocAligner researches the tonal balance, dynamics and space of the mix.",
-  },
-  {
-    title: "Build it in Logic Pro",
-    description: "Get a stock plugin chain, ready to build — no guesswork.",
-  },
-];
+// "Meet VocAligner" -- the how-it-works section below the hero.
+// Background picks up exactly where the hero's gradient ends (wash-purple)
+// and deepens further into near-black, so the two sections read as one
+// continuous piece rather than a hard cut back to light. See
+// docs/DESIGN_SYSTEM.md's Storytelling Sections.
 
 export function MeetSection() {
   return (

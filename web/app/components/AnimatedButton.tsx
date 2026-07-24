@@ -8,18 +8,26 @@ export function AnimatedButton({
   className,
   title,
   style,
+  type = "button",
+  disabled = false,
+  form,
 }: {
   children: React.ReactNode;
   className: string;
   title: string;
   style?: React.CSSProperties;
+  type?: "button" | "submit";
+  disabled?: boolean;
+  form?: string;
 }) {
   return (
     <motion.button
-      type="button"
+      type={type}
       title={title}
-      whileHover={{ scale: 1.035 }}
-      whileTap={{ scale: 0.96 }}
+      disabled={disabled}
+      form={form}
+      whileHover={disabled ? undefined : { scale: 1.035 }}
+      whileTap={disabled ? undefined : { scale: 0.96 }}
       transition={springTap}
       className={className}
       style={style}

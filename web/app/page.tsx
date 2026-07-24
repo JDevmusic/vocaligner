@@ -2,13 +2,25 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { Wordmark } from "./components/Wordmark";
-import { CHAIN_PREVIEW, HOW_IT_WORKS } from "./landing-copy";
+import { motion, MotionConfig } from "motion/react";
+import { Mark } from "./components/Mark";
+import { AnimatedButton } from "./components/AnimatedButton";
+import { MeetSection } from "./components/MeetSection";
+import { Footer } from "./components/Footer";
+import { CHAIN_PREVIEW } from "./landing-copy";
+import { item } from "./components/motion-shared";
+
+// Film-grain texture on the hero's large gradient area -- see
+// docs/DESIGN_SYSTEM.md's Images/Texture note.
+const GRAIN_URL =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")";
 
 export default function Home() {
   const router = useRouter();
   const [artist, setArtist] = useState("");
   const [song, setSong] = useState("");
+
+  const canGenerate = artist.trim().length > 0 && song.trim().length > 0;
 
   function handleGenerate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -18,101 +30,126 @@ export default function Home() {
     router.push(`/loading?${query}`);
   }
 
-  const canGenerate = artist.trim().length > 0 && song.trim().length > 0;
-
   return (
-    <div className="hero-gradient flex min-h-screen flex-1 flex-col">
-      <main className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col items-center px-6 py-24 text-center sm:py-32">
-        <Wordmark />
-
-        <h1 className="mt-6 max-w-2xl text-4xl leading-[1.1] font-semibold tracking-tight text-foreground sm:text-6xl">
-          Recreate the vocal sound of your favourite artists.
-        </h1>
-
-        <p className="mt-6 max-w-xl text-lg text-muted sm:text-xl">
-          Type an artist and a song, and VocAligner generates a Logic Pro
-          stock plugin chain built to match their vocal sound.
-        </p>
-
-        <form
-          onSubmit={handleGenerate}
-          className="mt-12 flex w-full max-w-md flex-col gap-4"
+    <MotionConfig reducedMotion="user">
+      <div className="flex min-h-screen flex-col">
+        <section
+          className="relative flex min-h-screen flex-col"
+          style={{
+            background:
+              "linear-gradient(180deg, #ffffff 0%, var(--sunset-fade) 14%, var(--sunset-start) 36%, var(--sunset-start) 58%, var(--wash-lavender) 80%, var(--wash-purple) 100%)",
+          }}
         >
-          <div className="flex flex-col gap-1.5 text-left">
-            <label
-              htmlFor="artist"
-              className="text-xs font-medium tracking-wide text-muted uppercase"
-            >
-              Artist
-            </label>
-            <input
-              id="artist"
-              type="text"
-              value={artist}
-              onChange={(event) => setArtist(event.target.value)}
-              placeholder="e.g. Frank Ocean"
-              className="rounded-lg border border-black/10 bg-white px-5 py-3 text-base text-foreground shadow-sm outline-none placeholder:text-zinc-400 focus:border-black/30"
-            />
-          </div>
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.035] mix-blend-overlay"
+            style={{ backgroundImage: GRAIN_URL }}
+            aria-hidden="true"
+          />
 
-          <div className="flex flex-col gap-1.5 text-left">
-            <label
-              htmlFor="song"
-              className="text-xs font-medium tracking-wide text-muted uppercase"
-            >
-              Song
-            </label>
-            <input
-              id="song"
-              type="text"
-              value={song}
-              onChange={(event) => setSong(event.target.value)}
-              placeholder="e.g. Thinkin Bout You"
-              className="rounded-lg border border-black/10 bg-white px-5 py-3 text-base text-foreground shadow-sm outline-none placeholder:text-zinc-400 focus:border-black/30"
-            />
-          </div>
+          <nav className="relative border-b border-black/[0.06]">
+            <div className="mx-auto flex w-full max-w-[1200px] items-center gap-2.5 px-6 py-7 sm:px-10">
+              <Mark className="h-4 w-auto text-foreground" />
+              <span className="text-sm font-semibold tracking-[0.15em] text-foreground uppercase">
+                VocAligner
+              </span>
+            </div>
+          </nav>
 
-          <button
-            type="submit"
-            disabled={!canGenerate}
-            className="mt-2 rounded-lg px-8 py-3.5 text-lg font-semibold transition-colors enabled:bg-black enabled:text-white enabled:hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-black/[.06] disabled:text-foreground/30"
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.4 }}
+            variants={item}
+            className="relative mx-auto grid w-full max-w-[1200px] grid-cols-1 gap-8 px-6 pt-10 sm:px-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-start lg:gap-16"
           >
-            Generate Vocal Chain
-          </button>
-        </form>
-
-        <p className="mt-6 max-w-md text-sm text-supporting">
-          Every chain uses only Logic Pro stock plugins — no third-party
-          plugins required.
-        </p>
-
-        <div className="mt-16 flex flex-wrap items-center justify-center gap-2">
-          {CHAIN_PREVIEW.map((plugin, index) => (
-            <div key={plugin} className="flex items-center gap-2">
-              <span className="rounded-full border border-black/10 bg-white/70 px-4 py-1.5 text-sm font-medium text-supporting shadow-sm">
-                {plugin}
+            <div>
+              <span className="font-mono text-xs tracking-[0.2em] text-supporting uppercase">
+                Signal research, matched to spec
               </span>
-              {index < CHAIN_PREVIEW.length - 1 ? (
-                <span className="text-muted/50" aria-hidden="true">
-                  →
+              <h1 className="mt-4 max-w-xl text-5xl leading-[1.03] font-semibold tracking-tight text-foreground sm:text-7xl">
+                Recreate the vocal sound of your favourite artists.
+              </h1>
+            </div>
+
+            <div className="lg:pt-2">
+              <span className="font-mono text-xs tracking-[0.2em] text-supporting uppercase">
+                What VocAligner does
+              </span>
+              <p className="mt-3 max-w-sm text-sm leading-relaxed text-foreground/75 sm:text-base">
+                Every classic vocal has a recipe. VocAligner finds it and
+                hands you the exact chain to recreate it — no trial and
+                error, no third-party plugins.
+              </p>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.3 }}
+            variants={item}
+            className="relative mx-auto flex w-full max-w-[1200px] flex-1 flex-col items-center justify-center px-6 py-14 text-center"
+          >
+            <form
+              id="hero-form"
+              onSubmit={handleGenerate}
+              className="flex max-w-xl flex-wrap items-baseline justify-center gap-x-2 gap-y-2 text-xl leading-relaxed font-medium text-foreground sm:text-2xl"
+            >
+              <span>Match</span>
+              <label className="sr-only" htmlFor="artist">Artist</label>
+              <input
+                id="artist"
+                type="text"
+                value={artist}
+                onChange={(event) => setArtist(event.target.value)}
+                placeholder="Frank Ocean"
+                size={12}
+                className="min-w-0 border-b-2 border-black/30 bg-transparent px-1 pb-0.5 text-center text-foreground outline-none placeholder:text-black/35 focus:border-black"
+              />
+              <span>on</span>
+              <label className="sr-only" htmlFor="song">Song</label>
+              <input
+                id="song"
+                type="text"
+                value={song}
+                onChange={(event) => setSong(event.target.value)}
+                placeholder="Thinkin Bout You"
+                size={16}
+                className="min-w-0 border-b-2 border-black/30 bg-transparent px-1 pb-0.5 text-center text-foreground outline-none placeholder:text-black/35 focus:border-black"
+              />
+              <span>, in Logic Pro.</span>
+            </form>
+
+            <div className="mt-8">
+              <AnimatedButton
+                type="submit"
+                form="hero-form"
+                disabled={!canGenerate}
+                title="Generate Vocal Chain"
+                className="rounded-full bg-black px-8 py-3.5 text-base font-semibold text-white shadow-[0_6px_24px_-6px_rgba(63,31,74,0.4)] transition-shadow enabled:hover:shadow-[0_8px_30px_-4px_rgba(63,31,74,0.55)] disabled:cursor-not-allowed disabled:bg-black/[.06] disabled:text-foreground/30 disabled:shadow-none"
+              >
+                Generate Vocal Chain
+              </AnimatedButton>
+            </div>
+          </motion.div>
+
+          <footer className="relative mx-auto w-full max-w-[1200px] px-6 pb-10 text-center">
+            <div className="mx-auto flex max-w-lg flex-wrap items-center justify-center gap-x-3 gap-y-2 text-xs text-white/65">
+              {CHAIN_PREVIEW.map((plugin, index) => (
+                <span key={plugin} className="flex items-center gap-3">
+                  {plugin}
+                  {index < CHAIN_PREVIEW.length - 1 ? (
+                    <span className="text-white/25" aria-hidden="true">·</span>
+                  ) : null}
                 </span>
-              ) : null}
+              ))}
             </div>
-          ))}
-        </div>
-
-        <section className="mt-28 grid w-full grid-cols-1 gap-10 border-t border-black/5 pt-16 sm:grid-cols-3">
-          {HOW_IT_WORKS.map((step, index) => (
-            <div key={step.title} className="flex flex-col items-center text-center">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-sm font-semibold text-white">
-                {index + 1}
-              </span>
-              <h2 className="mt-4 text-base font-semibold text-foreground">{step.title}</h2>
-              <p className="mt-2 text-sm text-muted">{step.description}</p>
-            </div>
-          ))}
+          </footer>
         </section>
-      </main>
-    </div>
+
+        <MeetSection />
+        <Footer />
+      </div>
+    </MotionConfig>
   );
 }
