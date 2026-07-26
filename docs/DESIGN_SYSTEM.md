@@ -1,6 +1,6 @@
 # VocAligner Design System
 
-Version 1.1 — updated after a design exploration round (see `/design-preview`, throwaway, to be deleted once the app is aligned to this version).
+Version 1.1 — landing page is aligned to this version (Story 1.1, 2026-07-24). The throwaway `/design-preview` exploration route has been deleted.
 
 ---
 
@@ -197,6 +197,14 @@ The artist/song input itself sits lower, centered, as a secondary interaction: "
 
 ---
 
+# Footer
+
+Landing page only, for MVP. Minimal, single row: brand mark + wordmark (small, muted) on one side, a copyright line and a one-line trademark disclaimer on the other — "© {{year}} VocAligner. Not affiliated with or endorsed by Apple. Logic Pro is a trademark of Apple Inc."
+
+No links to pages that don't exist yet (no Privacy Policy, Terms, or Contact until those are real). Add them when there's something real to link to, not before.
+
+---
+
 # Storytelling Sections
 
 Below the hero, a "Meet VocAligner" section explains how the product works. Dark, continuing the hero's gradient into near-black rather than cutting back to white — the hero and this section should read as one continuous piece.
@@ -204,6 +212,18 @@ Below the hero, a "Meet VocAligner" section explains how the product works. Dark
 Layout: two columns. Left is the "Meet VocAligner" headline and a short, inspiring explanation (how it listens, what it hands back). Right is the process broken into stages — three vertically stacked cards, each numbered, not a horizontal row.
 
 Keep the explanation brief and benefit-led, not a feature list. Reference: ToneAdapt's landing page (a close analog product — guitar tone matching instead of vocals) pairs inspiring copy with a concrete, concise breakdown; follow that shape.
+
+---
+
+# Functional Pages (Loading & Results)
+
+These are not lower-priority than the landing page — they're a different *kind* of page, and get treated accordingly, not neglected.
+
+Background and chrome stay calm and simple (the existing sunset-to-white gradient, minimal decoration) — deliberately, not by default. Someone reading real plugin settings or waiting on a real result needs clarity and focus, not the landing page's richer wash; that treatment is reserved for the one-time first impression. Never import the dark storytelling palette here.
+
+The Plugin Visual (how a generated chain is actually displayed) is the exception and the priority: it's the product's actual payoff moment, not a technical afterthought. It deserves the same design care as the landing page hero — this is where "premium" has to be true, not just claimed.
+
+Typography, spacing, and component styling (buttons, cards) on these pages should read as the same product as the new landing page — a light consistency pass, not a full redesign, and never at the cost of the calm background principle above.
 
 ---
 
