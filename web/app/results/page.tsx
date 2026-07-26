@@ -20,6 +20,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   space: "Space",
   pitch: "Pitch",
   character: "Character",
+  modulation: "Modulation",
   other: "Other",
 };
 

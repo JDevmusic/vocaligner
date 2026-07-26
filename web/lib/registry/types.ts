@@ -19,6 +19,7 @@ export const pluginCategorySchema = z.enum([
   "space",
   "pitch",
   "character",
+  "modulation",
   "other",
 ]);
 

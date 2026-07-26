@@ -131,6 +131,100 @@ const rawEntries: PluginRegistryEntry[] = [
         "For a subtler effect, increase response time. For a stylised, hard-tuned effect, reduce it.",
     },
   },
+  {
+    id: "logic-pro.overdrive",
+    displayName: "Overdrive",
+    vendor: "Apple (Logic Pro stock)",
+    category: "character",
+    daw: "logic-pro",
+    tier: "stock",
+    controls: [
+      { parameter: "drive", type: "number", unit: "%", min: 0, max: 100, default: 25 },
+      { parameter: "tone", type: "number", unit: "Hz", min: 500, max: 12000, default: 6000 },
+      { parameter: "output", type: "number", unit: "dB", min: -12, max: 12, default: 0 },
+    ],
+    education: {
+      whyUsed:
+        "Adds warm, amp-style saturation and harmonic grit to the vocal — the difference between a clean take and a vocal with real character.",
+      whatToListenFor:
+        "Listen for a fuller, slightly gritty edge on the vocal. Too much reads as harsh or distorted rather than warm.",
+      commonMistakes:
+        "Driving it hard enough to lose intelligibility, or leaving the tone control too bright, which turns warmth into harshness.",
+      adjustmentGuidance:
+        "If the vocal still feels too clean, increase drive gradually. If it starts to sound harsh, lower the tone frequency first before pulling back drive.",
+    },
+  },
+  {
+    id: "logic-pro.flanger",
+    displayName: "Flanger",
+    vendor: "Apple (Logic Pro stock)",
+    category: "modulation",
+    daw: "logic-pro",
+    tier: "stock",
+    controls: [
+      { parameter: "rate", type: "number", unit: "Hz", min: 0.05, max: 5, default: 0.3 },
+      { parameter: "intensity", type: "number", unit: "%", min: 0, max: 100, default: 50 },
+      { parameter: "feedback", type: "number", unit: "%", min: -100, max: 100, default: 20 },
+      { parameter: "mix", type: "number", unit: "%", min: 0, max: 100, default: 35 },
+    ],
+    education: {
+      whyUsed:
+        "Sweeps a short, modulated delay against the dry signal to give the vocal a swirling, psychedelic sense of movement and width.",
+      whatToListenFor:
+        "Listen for a sweeping, jet-like quality that moves in and out. Too fast or too intense and it starts to sound robotic rather than dreamlike.",
+      commonMistakes:
+        "Using a fast rate, which reads as artificial rather than psychedelic — slow, subtle movement is what reads as intentional.",
+      adjustmentGuidance:
+        "For a subtler effect, lower the rate and mix. For a more pronounced, wide effect, increase intensity and feedback.",
+    },
+  },
+  {
+    id: "logic-pro.phaser",
+    displayName: "Phaser",
+    vendor: "Apple (Logic Pro stock)",
+    category: "modulation",
+    daw: "logic-pro",
+    tier: "stock",
+    controls: [
+      { parameter: "rate", type: "number", unit: "Hz", min: 0.05, max: 5, default: 0.3 },
+      { parameter: "intensity", type: "number", unit: "%", min: 0, max: 100, default: 50 },
+      { parameter: "stages", type: "number", min: 4, max: 12, default: 6 },
+      { parameter: "mix", type: "number", unit: "%", min: 0, max: 100, default: 35 },
+    ],
+    education: {
+      whyUsed:
+        "Creates a sweeping series of notches in the frequency spectrum, giving the vocal a swirling, psychedelic character distinct from a flanger's sharper sweep.",
+      whatToListenFor:
+        "Listen for a smooth, swooshing movement across the vocal's tone, rather than a sweeping delay-like effect.",
+      commonMistakes:
+        "Setting the mix too high, which can make the vocal feel thin or phasey rather than adding texture underneath it.",
+      adjustmentGuidance:
+        "For a subtler effect, lower mix and intensity. More stages produces a denser, more complex sweep.",
+    },
+  },
+  {
+    id: "logic-pro.chorus",
+    displayName: "Chorus",
+    vendor: "Apple (Logic Pro stock)",
+    category: "modulation",
+    daw: "logic-pro",
+    tier: "stock",
+    controls: [
+      { parameter: "rate", type: "number", unit: "Hz", min: 0.05, max: 5, default: 0.5 },
+      { parameter: "intensity", type: "number", unit: "%", min: 0, max: 100, default: 40 },
+      { parameter: "mix", type: "number", unit: "%", min: 0, max: 100, default: 35 },
+    ],
+    education: {
+      whyUsed:
+        "Delays and modulates a copy of the vocal against the dry signal, creating the impression of multiple voices performing in unison.",
+      whatToListenFor:
+        "Listen for a thicker, richer vocal that still sounds like one performance, not an obvious doubled or detuned effect.",
+      commonMistakes:
+        "Pushing intensity or mix too high, which can make the vocal sound detuned or seasick rather than simply thicker.",
+      adjustmentGuidance:
+        "If the vocal needs more body, increase mix slightly. If it starts to sound unnatural, reduce intensity first.",
+    },
+  },
 ];
 
 export const logicProStockPlugins: PluginRegistryEntry[] = rawEntries.map((entry) =>
