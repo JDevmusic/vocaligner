@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { Wordmark } from "../components/Wordmark";
@@ -20,26 +21,75 @@ function LoadingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [phaseIndex, setPhaseIndex] = useState(0);
+  const [error, setError] = useState(false);
 
   const artist = searchParams.get("artist") ?? "";
+  const song = searchParams.get("song") ?? "";
   const phases = useMemo(() => buildPhases(artist), [artist]);
 
+  // Purely visual: advances through the phase text/progress bar while the
+  // real request is in flight, capping at the last phase rather than
+  // looping. Stops once an error state is shown.
   useEffect(() => {
-    const isLastPhase = phaseIndex >= phases.length - 1;
+    if (error) return;
 
-    const timeout = setTimeout(() => {
-      if (isLastPhase) {
-        const song = searchParams.get("song") ?? "";
-        const query = new URLSearchParams({ artist, song }).toString();
-        router.push(`/results?${query}`);
-        return;
-      }
-
-      setPhaseIndex((index) => index + 1);
+    const interval = setInterval(() => {
+      setPhaseIndex((index) => Math.min(index + 1, phases.length - 1));
     }, PHASE_DURATION_MS);
 
-    return () => clearTimeout(timeout);
-  }, [phaseIndex, phases.length, router, searchParams, artist]);
+    return () => clearInterval(interval);
+  }, [phases.length, error]);
+
+  // The real generation request, fired once on mount. Navigation only
+  // happens once the response has actually arrived.
+  useEffect(() => {
+    let cancelled = false;
+
+    async function generate() {
+      try {
+        const response = await fetch("/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ artist, song }),
+        });
+
+        if (!response.ok) {
+          if (!cancelled) setError(true);
+          return;
+        }
+
+        const body = await response.json();
+        if (!cancelled) router.push(`/results?id=${body.id}`);
+      } catch {
+        if (!cancelled) setError(true);
+      }
+    }
+
+    generate();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [artist, song, router]);
+
+  if (error) {
+    return (
+      <div className="hero-gradient flex min-h-screen flex-1 flex-col items-center justify-center px-6 text-center">
+        <Wordmark />
+
+        <p className="mt-8 text-lg font-medium text-foreground sm:text-xl">
+          Something went wrong generating your vocal chain.
+        </p>
+
+        <Link
+          href="/"
+          className="mt-6 text-sm font-medium text-muted underline underline-offset-4 hover:text-foreground"
+        >
+          Try again
+        </Link>
+      </div>
+    );
+  }
 
   const progress = ((phaseIndex + 1) / phases.length) * 100;
 

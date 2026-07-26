@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { vocalChainResponseSchema } from "@/lib/schema/vocalChain";
+import { getGenerationById } from "@/lib/store/generationStore";
 import { POST } from "./route";
 
 function postGenerate(body: unknown) {
@@ -29,6 +30,14 @@ describe("POST /api/generate", () => {
     for (const plugin of parsed.chain.plugins) {
       expect(plugin.pluginId).toMatch(/^logic-pro\./);
     }
+  });
+
+  it("persists a successful generation so it can be retrieved by id", async () => {
+    const response = await postGenerate({ artist: "Frank Ocean", song: "Thinkin Bout You" });
+    const body = await response.json();
+    const parsed = vocalChainResponseSchema.parse(body);
+
+    expect(getGenerationById(parsed.id)).toEqual(parsed);
   });
 
   it("rejects a request missing the song field", async () => {

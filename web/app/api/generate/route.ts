@@ -1,6 +1,7 @@
 import { generateVocalChain, VocalChainGenerationError } from "@/lib/ai/generateVocalChain";
 import { getModelClient } from "@/lib/ai/getModelClient";
 import { vocalChainInputSchema } from "@/lib/schema/vocalChain";
+import { saveGeneration } from "@/lib/store/generationStore";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -21,6 +22,7 @@ export async function POST(request: Request) {
   try {
     const modelClient = getModelClient();
     const response = await generateVocalChain(modelClient, parsedInput.data);
+    saveGeneration(response);
     return Response.json(response, { status: 201 });
   } catch (error) {
     if (error instanceof VocalChainGenerationError) {
