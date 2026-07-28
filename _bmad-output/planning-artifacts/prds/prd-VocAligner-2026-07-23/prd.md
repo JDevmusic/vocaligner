@@ -2,7 +2,7 @@
 title: VocAligner
 status: final
 created: 2026-07-23
-updated: 2026-07-23
+updated: 2026-07-29
 ---
 
 # PRD: VocAligner
@@ -63,6 +63,7 @@ Competitive scan (see memlog) found no existing product that does this specifica
 - **Setting Rationale Hover** *(future, not MVP)* — Hovering over a plugin control reveals a short explanation of why that value was chosen. MVP shows literal values only, no rationale text.
 - **Interactive Plugin Visual** *(future, not MVP)* — A Plugin Visual (see below) a user can directly adjust in-browser, rather than a display-only reference. Named as a future direction in `docs/principles.md`.
 - **Plugin Visual** — The graphical, Logic-style representation of a single plugin in a Vocal Chain (knobs, toggles, meters laid out like the plugin's own Logic Pro UI), as opposed to a plain text/numeric settings list.
+- **Plugin Variant** *(future, not MVP)* — A named sub-model of a plugin that has more than one (e.g. Compressor's Studio FET, Vintage Opto, etc. — not every plugin has variants). Future scope: each variant carries a human-authored sonic-character description (same pattern as the existing per-plugin `education` data); the AI matches the target song's research findings against these descriptions to pick the best-fit variant, rather than researching plugin behavior itself. MVP always uses a plugin's default/generic behavior with no variant selection.
 
 ## 4. Features
 
@@ -136,7 +137,7 @@ A user can view the generated Vocal Chain as an ordered sequence of Plugin Visua
 
 **Consequences (testable):**
 - Plugin order shown matches the actual signal chain order (first plugin in the list is first in the signal path).
-- Each plugin is rendered using a Plugin Visual rather than a plain text list — for MVP, every plugin reuses one default visual treatment modelled on the reference Compressor plugin UI (`docs/images.md/Compressor_plugin.png`). `[ASSUMPTION: "default treatment" means one consistent generic visual template applied across all plugin types for MVP; bespoke per-plugin-type visuals are a later version, not MVP]`
+- Each plugin is rendered using a Plugin Visual rather than a plain text list. `[REVISED 2026-07-29 — supersedes the original "one generic visual template" assumption]` Each of the 10 registry plugins gets its own bespoke visual matching its real Logic Pro panel — not one generic knob-grid template reused across all types. This reversal was made deliberately by the founder after reviewing real Logic Pro screenshots for all 10 plugins and finding a generic treatment didn't read as premium or trustworthy — see `docs/DESIGN_SYSTEM.md`'s Plugin Visual Fidelity Standards section for the resulting build rules, and `docs/plugin-references.md` for per-plugin ground-truth reference data (default values, ranges, and for Channel EQ/Pitch Correction specifically, the algorithmic rules needed since they aren't simple knob layouts). Two plugins — Channel EQ (a computed frequency-response curve) and Pitch Correction (a scale-aware keyboard) — required real engineering beyond styling (filter-response math, music-theory interval lookups); the other 8 stay knob-based, just styled/proportioned to match their real panel.
 - Each plugin's settings are specific enough (not vague ranges) that a user can input them directly into Logic Pro's own plugin UI.
 
 #### FR-7: Show literal values only, no rationale text
@@ -161,6 +162,7 @@ Each control in a Plugin Visual displays its literal value (a numeric parameter 
 - VocAligner does not include community features (ratings, shared/public presets) in v1.
 - VocAligner does not display Confidence Scores for generated chains in v1 — named future feature, not yet designed.
 - `[NON-GOAL for MVP]` VocAligner does not implement rate-limiting or abuse-prevention on the Generation endpoint in v1. This is a free, unauthenticated, free-text form that will eventually call a paid AI provider per request — a conscious, near-term cost exposure for a solo founder, not an oversight. Revisit before or immediately after live Anthropic integration ships (see §8).
+- `[NON-GOAL for MVP]` VocAligner does not select a specific Plugin Variant (e.g. Compressor's Studio FET vs. Vintage Opto) in v1 — every recommended plugin uses its default/generic behavior. Confirmed future feature (see Glossary); founder deliberately parked it rather than folding it into MVP or fast-following, to keep the core loop (Epic 1) shipping first.
 - Plugin Visuals are display-only, values-only in v1 — see FR-6/FR-7 Out of Scope for the specifics (Interactive Plugin Visual, Setting Rationale Hover are the named future features).
 
 ## 6. MVP Scope
@@ -195,6 +197,7 @@ Each control in a Plugin Visual displays its literal value (a numeric parameter 
 - Confidence Scores — deferred, not yet designed.
 - Interactive Plugin Visuals and Setting Rationale Hover — see FR-6/FR-7 Out of Scope (§4.3).
 - Bespoke per-plugin-type visuals — MVP reuses one default visual treatment across all plugin types.
+- Plugin Variant selection (e.g. Compressor circuit types, ChromaVerb algorithms) — every plugin uses its default behavior; no variant is chosen or displayed.
 - User accounts, authentication, payments — per `CLAUDE.md`, not implemented "unless specifically requested."
 - Other DAWs, community ratings/shared presets, project export/import.
 
@@ -220,12 +223,14 @@ The founder's near-term priority is a working local MVP with a crisp, premium-fe
 5. No numeric success target exists (§7 is placeholder) — revisit once there's real usage to measure.
 6. FR-2's research step has no adequacy check — nothing currently distinguishes "found real production detail" from "found almost nothing" before a chain is generated. Known limitation, not solved in MVP; revisit if obscure/misspelled inputs turn out to produce noticeably worse chains in practice.
 7. Rate-limiting/abuse-prevention on the Generation endpoint is a conscious MVP omission (see §5) — revisit timing once live Anthropic integration ships, since that's when free-text requests start costing real money per call.
+8. What happens when research identifies a real production technique with no equivalent in the current Plugin Registry (e.g. a modulation effect like flanger/chorus — none of the six current stock plugins cover this family)? Confirmed direction: the system omits that step from the chain rather than substituting an unrelated plugin or implying an accuracy it doesn't have — silent omission over a confidently-wrong recreation, consistent with the trustworthiness principle in §1. Registry coverage is expected to grow organically as real songs surface real gaps (see Architecture Deferred), not from a speculative up-front audit. A "closest available substitute, explicitly flagged as an estimate" UX is a plausible future direction, but it's blocked on the already-deferred Confidence Score / Setting Rationale Hover features (§6.2) — shipping the substitution without that flag would read as more accurate than it is. Not yet an explicit rule at the prompt/reasoning level (discovered 2026-07-26 via live research on Tame Impala's "Feels Like We Only Go Backwards" surfacing a flanger technique with no registry match).
 
 ## 9. Assumptions Index
 
 - §2.3 UJ-1 — exact failure-state UX not yet designed.
 - §2.3 UJ-2 / §4.2 FR-4 — cache match assumed exact-text, case-insensitive, no fuzzy matching in MVP.
 - §4.1 FR-1 — no genre restriction, confirmed by founder as intentional for MVP.
-- §4.3 FR-6 — "default visual treatment" assumed to mean one consistent generic Plugin Visual template (modelled on the reference Compressor UI) reused across all plugin types for MVP; confirmed by founder that bespoke per-plugin visuals come later.
+- §4.3 FR-6 — `[SUPERSEDED 2026-07-29]` originally assumed one generic Plugin Visual template reused across all plugin types for MVP, with bespoke per-plugin visuals deferred to later. Reversed by the founder after reviewing real Logic Pro screenshots for all 10 registry plugins — each plugin now gets a bespoke visual matching its real panel, confirmed as in-scope for MVP, not deferred. See `docs/DESIGN_SYSTEM.md` and `docs/plugin-references.md`.
 - §7 — all Success Metrics are placeholders, not agreed KPIs, reflecting the founder's stated near-term priority (local-working MVP + design) over scale metrics.
 - §8.2 — cache scope (global vs. per-user) assumed global based on current schema/architecture, not explicitly confirmed.
+- §8.8 — registry coverage gaps (e.g. songs needing modulation effects like flanger/chorus with no current stock-plugin equivalent) are treated as an accepted, permanent limitation of a Logic-stock-only product, not a defect to eliminate; the system omits an unrepresentable step rather than substituting a misleading approximation. `[ASSUMPTION]`

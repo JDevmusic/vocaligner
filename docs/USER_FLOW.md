@@ -40,6 +40,6 @@ User recreates chain inside Logic Pro.
 
 ↓
 
-Optional:
+Future (post-MVP):
 
 Save chain.

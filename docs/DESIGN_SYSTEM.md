@@ -1,6 +1,6 @@
 # VocAligner Design System
 
-Version 1.1 — landing page is aligned to this version (Story 1.1, 2026-07-24). The throwaway `/design-preview` exploration route has been deleted.
+Version 1.3 — landing page is aligned to v1.1 (Story 1.1, 2026-07-24). The throwaway `/design-preview` exploration route has been deleted. v1.2 (2026-07-27) added the Plugin Visual Fidelity Standards section, following issues found in early Channel EQ mockups. v1.3 (2026-07-29) closes out that mockup process — the bespoke-per-plugin decision it validated is now confirmed in-scope for MVP (see PRD, Architecture, and Story 1.3), and the standards section carries the finalized rules for Channel EQ and Pitch Correction.
 
 ---
 
@@ -224,6 +224,24 @@ Background and chrome stay calm and simple (the existing sunset-to-white gradien
 The Plugin Visual (how a generated chain is actually displayed) is the exception and the priority: it's the product's actual payoff moment, not a technical afterthought. It deserves the same design care as the landing page hero — this is where "premium" has to be true, not just claimed.
 
 Typography, spacing, and component styling (buttons, cards) on these pages should read as the same product as the new landing page — a light consistency pass, not a full redesign, and never at the cost of the calm background principle above.
+
+---
+
+# Plugin Visual Fidelity Standards
+
+Applies to every bespoke Plugin Visual (Channel EQ, Pitch Correction, and all knob-based plugins) — specific to this component family, not general UI guidance.
+
+Always work from the real Logic Pro reference screenshot for that specific plugin (`docs/images.md/*_plugin.png`). Compare the built mockup against it directly before calling it done — "in the spirit of" is not the bar.
+
+Verify the neutral/default state first. Before checking how a visual looks with real data applied, confirm it renders as genuinely neutral when every value sits at its Logic default — a computed or derived visual (a curve, a meter position, a highlighted note) is only trustworthy if its resting state actually reads as resting.
+
+Custom icons and controls only. Never substitute a generic icon-library glyph, a placeholder text/ASCII character, or a default charting-library affordance (data-point markers, default gridline spacing, generic legend/tooltip styling) for what the real plugin actually shows. Logic's plugins have their own dense, specific visual language — match it.
+
+Any scale, axis, or range in a bespoke visual should reflect the real plugin's own scale design (including asymmetric or dual scales, if that's what the real plugin uses), not a generic linear default sized to whatever charting approach produced it.
+
+**Pitch Correction's keyboard must highlight notes based on the actual researched Root Note + Scale/Chord** — never a fixed or literal black/white piano rendering. Compute the scale's member notes from standard music-theory interval patterns (e.g. major = W-W-H-W-W-W-H from the root) and apply the same bold/faded convention used elsewhere (in-scale notes highlighted, out-of-scale notes faded), regardless of whether a note is physically a white or black key. A C Major example will coincidentally highlight only the white keys — that matches literal piano coloring by chance, not evidence the mapping is correct. Verify against a scale that includes at least one black key (e.g. G Major, which includes F#) before considering this done.
+
+This means literally the same two flat colors for every key, black or white — one for in-scale, one for faded/out-of-scale. Do not tint, darken, or blend the color differently for black keys (e.g. a black key's own natural darkness bleeding into the highlight/fade color) — that produces a muddy in-between tone that reads as ambiguous rather than clearly on or off. Black vs. white key identity should only be communicated by shape/size (the traditional shorter, narrower key silhouette), never by a color difference. Matches how real Logic does it — see PitchCorrection_plugin.png, where every key in Chromatic Scale mode is the exact same blue regardless of black/white.
 
 ---
 
