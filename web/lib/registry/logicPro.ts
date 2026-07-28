@@ -139,9 +139,10 @@ const rawEntries: PluginRegistryEntry[] = [
     daw: "logic-pro",
     tier: "stock",
     controls: [
-      { parameter: "drive", type: "number", unit: "%", min: 0, max: 100, default: 25 },
-      { parameter: "tone", type: "number", unit: "Hz", min: 500, max: 12000, default: 6000 },
-      { parameter: "output", type: "number", unit: "dB", min: -12, max: 12, default: 0 },
+      { parameter: "drive", type: "number", unit: "dB", min: 0, max: 24, default: 6 },
+      { parameter: "tone", type: "number", unit: "Hz", min: 20, max: 20000, default: 980 },
+      { parameter: "output", type: "number", unit: "dB", min: -40, max: 20, default: 0 },
+      { parameter: "levelCompensation", type: "boolean", default: true },
     ],
     education: {
       whyUsed:
@@ -162,10 +163,10 @@ const rawEntries: PluginRegistryEntry[] = [
     daw: "logic-pro",
     tier: "stock",
     controls: [
-      { parameter: "rate", type: "number", unit: "Hz", min: 0.05, max: 5, default: 0.3 },
+      { parameter: "rate", type: "number", unit: "Hz", min: 0, max: 20, default: 0.133 },
       { parameter: "intensity", type: "number", unit: "%", min: 0, max: 100, default: 50 },
-      { parameter: "feedback", type: "number", unit: "%", min: -100, max: 100, default: 20 },
-      { parameter: "mix", type: "number", unit: "%", min: 0, max: 100, default: 35 },
+      { parameter: "feedback", type: "number", unit: "%", min: -100, max: 100, default: 67 },
+      { parameter: "mix", type: "number", unit: "%", min: 0, max: 100, default: 50 },
     ],
     education: {
       whyUsed:
@@ -186,10 +187,15 @@ const rawEntries: PluginRegistryEntry[] = [
     daw: "logic-pro",
     tier: "stock",
     controls: [
-      { parameter: "rate", type: "number", unit: "Hz", min: 0.05, max: 5, default: 0.3 },
-      { parameter: "intensity", type: "number", unit: "%", min: 0, max: 100, default: 50 },
-      { parameter: "stages", type: "number", min: 4, max: 12, default: 6 },
-      { parameter: "mix", type: "number", unit: "%", min: 0, max: 100, default: 35 },
+      { parameter: "stages", type: "number", min: 4, max: 12, default: 12 },
+      { parameter: "rate1", type: "number", unit: "Hz", min: 0, max: 10, default: 0.24 },
+      { parameter: "rate2", type: "number", unit: "Hz", min: 0, max: 10, default: 0.48 },
+      { parameter: "ceiling", type: "number", unit: "Hz", min: 20, max: 20000, default: 13200 },
+      { parameter: "floor", type: "number", unit: "Hz", min: 20, max: 20000, default: 550 },
+      { parameter: "sweepMode", type: "string", default: "Squared" },
+      { parameter: "feedback", type: "number", unit: "%", min: 0, max: 100, default: 50 },
+      { parameter: "warmth", type: "boolean", default: false },
+      { parameter: "mix", type: "number", unit: "%", min: 0, max: 100, default: 50 },
     ],
     education: {
       whyUsed:
@@ -199,7 +205,7 @@ const rawEntries: PluginRegistryEntry[] = [
       commonMistakes:
         "Setting the mix too high, which can make the vocal feel thin or phasey rather than adding texture underneath it.",
       adjustmentGuidance:
-        "For a subtler effect, lower mix and intensity. More stages produces a denser, more complex sweep.",
+        "For a subtler effect, lower mix and feedback. More stages produces a denser, more complex sweep.",
     },
   },
   {
@@ -210,9 +216,9 @@ const rawEntries: PluginRegistryEntry[] = [
     daw: "logic-pro",
     tier: "stock",
     controls: [
-      { parameter: "rate", type: "number", unit: "Hz", min: 0.05, max: 5, default: 0.5 },
-      { parameter: "intensity", type: "number", unit: "%", min: 0, max: 100, default: 40 },
-      { parameter: "mix", type: "number", unit: "%", min: 0, max: 100, default: 35 },
+      { parameter: "rate", type: "number", unit: "Hz", min: 0, max: 20, default: 0.5 },
+      { parameter: "intensity", type: "number", unit: "%", min: 0, max: 100, default: 10 },
+      { parameter: "mix", type: "number", unit: "%", min: 0, max: 100, default: 30 },
     ],
     education: {
       whyUsed:
