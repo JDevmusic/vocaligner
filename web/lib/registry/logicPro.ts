@@ -88,9 +88,16 @@ const rawEntries: PluginRegistryEntry[] = [
     category: "de-esser",
     daw: "logic-pro",
     tier: "stock",
+    // Real DeEsser 2 has a Threshold knob the registry was missing entirely,
+    // and what used to be modeled as "reduction" is really Max Reduction --
+    // a ceiling on how much gain reduction is allowed to happen, not a
+    // literal amount applied. Renamed/rescaled and threshold added, both
+    // read off docs/images/reference/DeEsser_plugin.png's own printed
+    // values.
     controls: [
       { parameter: "frequency", type: "number", unit: "Hz", min: 2000, max: 10000, default: 6000 },
-      { parameter: "reduction", type: "number", unit: "dB", min: 0, max: 24, default: 6 },
+      { parameter: "threshold", type: "number", unit: "dB", min: -60, max: 0, default: -9.5 },
+      { parameter: "maxReduction", type: "number", unit: "dB", min: 0, max: 25, default: 20 },
     ],
     education: {
       whyUsed:

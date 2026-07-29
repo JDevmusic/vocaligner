@@ -102,7 +102,7 @@ function buildMockGeneration() {
         rationale: "Control moderate sibilance introduced by the presence boost.",
         controls: [
           { parameter: "frequency", value: 6200, unit: "Hz", confidence: "medium" },
-          { parameter: "reduction", value: 5, unit: "dB", confidence: "medium" },
+          { parameter: "maxReduction", value: 5, unit: "dB", confidence: "medium" },
         ],
       },
       {
