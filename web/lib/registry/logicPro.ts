@@ -108,17 +108,25 @@ const rawEntries: PluginRegistryEntry[] = [
     category: "space",
     daw: "logic-pro",
     tier: "stock",
+    // Real ChromaVerb has independent Dry and Wet controls, not one
+    // crossfade "mix" knob -- corrected from an invented single parameter.
+    // decay/predelay defaults also corrected to Logic's own neutral-state
+    // values, read directly from docs/images/reference/Chromaverb_plugin.png
+    // ("Original Audio"). Attack/Size/Density/Distance are real controls on
+    // the panel but stay out of the registry for now -- this fix is scoped
+    // to the mix->dry/wet split, not adding new generateable parameters.
     controls: [
-      { parameter: "mix", type: "number", unit: "%", min: 0, max: 100, default: 15 },
-      { parameter: "decay", type: "number", unit: "s", min: 0.1, max: 10, default: 1.5 },
-      { parameter: "predelay", type: "number", unit: "ms", min: 0, max: 250, default: 10 },
+      { parameter: "decay", type: "number", unit: "s", min: 0.3, max: 100, default: 1.1 },
+      { parameter: "predelay", type: "number", unit: "ms", min: 0, max: 250, default: 8 },
+      { parameter: "dry", type: "number", unit: "%", min: 0, max: 100, default: 100 },
+      { parameter: "wet", type: "number", unit: "%", min: 0, max: 100, default: 50 },
     ],
     education: {
       whyUsed:
         "Adds a sense of physical space around the vocal, helping it feel like part of the mix rather than pasted on top.",
       whatToListenFor: "Listen for whether the vocal feels washed out or loses clarity in busy sections.",
-      commonMistakes: "Using too much mix level, which pushes the vocal back and reduces intelligibility.",
-      adjustmentGuidance: "If the vocal feels distant, reduce mix or decay. If it feels too dry, increase mix slightly.",
+      commonMistakes: "Using too much wet level, which pushes the vocal back and reduces intelligibility.",
+      adjustmentGuidance: "If the vocal feels distant, reduce wet or decay. If it feels too dry, increase wet slightly.",
     },
   },
   {

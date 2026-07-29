@@ -110,7 +110,7 @@ function buildMockGeneration() {
         addressesIntentIds: ["space-3"],
         rationale: "Add a short, subtle sense of space.",
         controls: [
-          { parameter: "mix", value: 12, unit: "%", confidence: "medium" },
+          { parameter: "wet", value: 12, unit: "%", confidence: "medium" },
           { parameter: "decay", value: 1.2, unit: "s", confidence: "low" },
         ],
       },
