@@ -1,4 +1,5 @@
 import { getKnobRotationDeg } from "@/lib/controls/knobRotation";
+import { niceTickValues } from "@/lib/controls/knobTicks";
 import { formatParameterLabel } from "@/lib/format/parameterLabel";
 import { resolveControlRange, resolveControlValue } from "@/lib/registry/controlValues";
 import type { PluginRegistryEntry } from "@/lib/registry/types";
@@ -32,18 +33,83 @@ export function KnobSection({ heading, children }: { heading?: string; children:
   );
 }
 
-export function Knob({ label, value, angleDeg }: { label: string; value: string; angleDeg: number }) {
+// Radial tick-mark knob, validated in the Compressor design spike
+// (docs/images/spikes/compressor/) and generalized to docs/DESIGN_SYSTEM.md
+// v1.5 as the standard knob treatment for all 8 knob-based plugins -- real
+// Logic knobs carry tick marks around the dial's circumference, not just a
+// label above and a value below. `ticks` is optional: NumberKnob always
+// supplies them (computed from the control's own registry min/max, so no
+// per-knob hand-tuning); FadedKnob only supplies them where a real Logic
+// range has actually been researched for that specific faded control --
+// otherwise it renders as a plain dial rather than fabricating a range.
+const KNOB_SIZE = 84;
+
+export interface KnobTick {
+  angleDeg: number;
+  label: string;
+}
+
+function knobPolarPoint(angleDeg: number, radius: number) {
+  const rad = (angleDeg * Math.PI) / 180;
+  return { x: 60 + radius * Math.sin(rad), y: 60 - radius * Math.cos(rad) };
+}
+
+// Computes ticks for a real numeric range -- the mechanical, no-research-
+// needed path used by every NumberKnob and any FadedKnob given a real min/max.
+export function numericTicks(min: number, max: number): KnobTick[] {
+  return niceTickValues(min, max).map((t) => ({
+    angleDeg: getKnobRotationDeg(t, min, max),
+    label: String(Math.round(t * 100) / 100),
+  }));
+}
+
+export function Knob({
+  label,
+  value,
+  angleDeg,
+  ticks = [],
+  faded,
+  size = KNOB_SIZE,
+}: {
+  label: string;
+  value: string;
+  angleDeg: number;
+  ticks?: KnobTick[];
+  faded?: boolean;
+  size?: number;
+}) {
+  const start = knobPolarPoint(angleDeg, 11);
+  const end = knobPolarPoint(angleDeg, 25);
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="relative h-14 w-14 rounded-full border border-border bg-background">
-        <div
-          className="absolute left-1/2 top-1/2 h-5 w-0.5 rounded-full bg-brand-accent"
-          style={{ transform: `translate(-50%, -100%) rotate(${angleDeg}deg)`, transformOrigin: "bottom center" }}
+    <div className={`flex flex-col items-center gap-1 ${faded ? "opacity-45" : ""}`}>
+      <svg width={size} height={size} viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r="27" fill="var(--background)" stroke="var(--border)" strokeWidth="1.5" />
+        {ticks.map((t, i) => {
+          const inner = knobPolarPoint(t.angleDeg, 30);
+          const outer = knobPolarPoint(t.angleDeg, 35);
+          const labelPos = knobPolarPoint(t.angleDeg, 47);
+          return (
+            <g key={i}>
+              <line x1={inner.x} y1={inner.y} x2={outer.x} y2={outer.y} stroke="var(--border)" strokeWidth="1.2" />
+              <text x={labelPos.x} y={labelPos.y} fontSize={11} textAnchor="middle" dominantBaseline="middle" className="fill-supporting">
+                {t.label}
+              </text>
+            </g>
+          );
+        })}
+        <line
+          x1={start.x}
+          y1={start.y}
+          x2={end.x}
+          y2={end.y}
+          stroke={faded ? "var(--muted)" : "var(--brand-accent)"}
+          strokeWidth="3.5"
+          strokeLinecap="round"
         />
-      </div>
+      </svg>
       <div className="text-center">
-        <p className="text-[10px] font-medium tracking-wide text-muted uppercase">{label}</p>
-        <p className="text-xs font-semibold text-foreground">{value}</p>
+        <p className="text-[9px] font-medium tracking-wide text-muted uppercase">{label}</p>
+        <p className={faded ? "text-[10px] text-muted" : "text-[10px] font-semibold text-foreground"}>{value}</p>
       </div>
     </div>
   );
@@ -106,6 +172,7 @@ export function NumberKnob({ plugin, values, parameter }: ControlProps) {
       label={formatParameterLabel(parameter)}
       value={formatKnobValue(parameter, value, definition?.unit)}
       angleDeg={getKnobRotationDeg(value, range.min, range.max)}
+      ticks={numericTicks(range.min, range.max)}
     />
   );
 }
@@ -128,21 +195,33 @@ export function StringLabel({ plugin, values, parameter }: ControlProps) {
 // Correction's Settings/Tuning sections -- never a placeholder dash or
 // blank, and never implying a specific generated value.
 
-export function FadedKnob({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex flex-col items-center gap-2 opacity-45">
-      <div className="relative h-14 w-14 rounded-full border border-border bg-background">
-        <div
-          className="absolute left-1/2 top-1/2 h-5 w-0.5 rounded-full bg-muted"
-          style={{ transform: "translate(-50%, -100%)", transformOrigin: "bottom center" }}
-        />
-      </div>
-      <div className="text-center">
-        <p className="text-[10px] font-medium tracking-wide text-muted uppercase">{label}</p>
-        <p className="text-xs text-muted">{value}</p>
-      </div>
-    </div>
-  );
+// `min`/`max`/`def` are optional and deliberately not required: they should
+// only be supplied where a real Logic range has actually been researched for
+// that specific faded control (e.g. Compressor's Knee, read directly off the
+// reference screenshot) -- never invented to make a knob look more precise
+// than the research behind it. Without them, this renders as a plain dial
+// (no ticks, pointing straight up), same as before tick marks existed.
+// `ticks` is an escape hatch for a qualitative sweep (e.g. Compressor's
+// Distortion: Off/Soft/Hard/Clip) that isn't a numeric range at all.
+export function FadedKnob({
+  label,
+  value,
+  min,
+  max,
+  def,
+  ticks,
+}: {
+  label: string;
+  value: string;
+  min?: number;
+  max?: number;
+  def?: number;
+  ticks?: KnobTick[];
+}) {
+  const hasRange = min !== undefined && max !== undefined;
+  const resolvedTicks = ticks ?? (hasRange ? numericTicks(min, max) : []);
+  const angleDeg = hasRange && def !== undefined ? getKnobRotationDeg(def, min, max) : 0;
+  return <Knob label={label} value={value} angleDeg={angleDeg} ticks={resolvedTicks} faded />;
 }
 
 export function FadedField({ label, value }: { label: string; value: string }) {
