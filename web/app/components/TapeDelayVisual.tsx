@@ -2,11 +2,12 @@ import { FadedField, FadedKnob, KnobSection, NumberKnob, PluginPanel } from "./c
 import type { PluginRegistryEntry } from "@/lib/registry/types";
 import type { ControlValue } from "@/lib/schema/chain";
 
-// Full real panel structure (docs/images.md/TapeDelay_plugin.png): DELAY /
+// Full real panel structure (docs/images/reference/TapeDelay_plugin.png): DELAY /
 // CHARACTER / FEEDBACK / OUTPUT across the top, MODULATION along the
-// bottom. Only Time/Feedback/Mix have real data -- Character and Modulation
-// are entirely real sections with no backing data, shown faded rather than
-// omitted.
+// bottom. Only Time/Feedback/Dry/Wet have real data -- Character and
+// Modulation are entirely real sections with no backing data, shown faded
+// rather than omitted. Dry and Wet are independent real controls (corrected
+// from an invented single "mix" crossfade knob).
 export function TapeDelayVisual({ plugin, values }: { plugin: PluginRegistryEntry; values: ControlValue[] }) {
   return (
     <PluginPanel plugin={plugin}>
@@ -29,8 +30,8 @@ export function TapeDelayVisual({ plugin, values }: { plugin: PluginRegistryEntr
         <FadedField label="Freeze" value="Off" />
       </KnobSection>
       <KnobSection heading="Output">
-        <FadedKnob label="Dry" value="90 %" />
-        <NumberKnob plugin={plugin} values={values} parameter="mix" />
+        <NumberKnob plugin={plugin} values={values} parameter="dry" />
+        <NumberKnob plugin={plugin} values={values} parameter="wet" />
       </KnobSection>
       <KnobSection heading="Modulation">
         <FadedKnob label="LFO Rate" value="0.38 Hz" />

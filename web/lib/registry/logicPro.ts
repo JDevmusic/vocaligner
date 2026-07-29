@@ -136,10 +136,15 @@ const rawEntries: PluginRegistryEntry[] = [
     category: "space",
     daw: "logic-pro",
     tier: "stock",
+    // Real Tape Delay has independent Dry and Wet controls, not one crossfade
+    // "mix" knob -- corrected from an invented single parameter, same fix
+    // already applied to ChromaVerb. Defaults confirmed against
+    // docs/images/reference/TapeDelay_plugin.png's factory-default state.
     controls: [
-      { parameter: "mix", type: "number", unit: "%", min: 0, max: 100, default: 10 },
       { parameter: "time", type: "number", unit: "ms", min: 1, max: 2000, default: 350 },
       { parameter: "feedback", type: "number", unit: "%", min: 0, max: 100, default: 20 },
+      { parameter: "dry", type: "number", unit: "%", min: 0, max: 100, default: 90 },
+      { parameter: "wet", type: "number", unit: "%", min: 0, max: 100, default: 30 },
     ],
     education: {
       whyUsed: "Adds rhythmic depth and interest, especially useful for ad-libs and phrase endings.",
