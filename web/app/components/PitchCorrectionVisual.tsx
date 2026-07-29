@@ -1,5 +1,6 @@
 import { getKnobRotationDeg } from "@/lib/controls/knobRotation";
 import { getScaleNotes } from "@/lib/pitch/scaleIntervals";
+import { resolveControlRange, resolveControlValue } from "@/lib/registry/controlValues";
 import type { PluginRegistryEntry } from "@/lib/registry/types";
 import type { ControlValue } from "@/lib/schema/chain";
 
@@ -11,21 +12,6 @@ const BLACK_KEYS = [
   { name: "G#", afterWhiteIndex: 4 },
   { name: "A#", afterWhiteIndex: 5 },
 ];
-
-function resolveControlValue(
-  plugin: PluginRegistryEntry,
-  values: ControlValue[],
-  parameter: string
-): string | number | boolean | undefined {
-  const found = values.find((v) => v.parameter === parameter);
-  if (found) return found.value;
-  return plugin.controls.find((c) => c.parameter === parameter)?.default;
-}
-
-function resolveControlRange(plugin: PluginRegistryEntry, parameter: string): { min: number; max: number } {
-  const definition = plugin.controls.find((c) => c.parameter === parameter);
-  return { min: definition?.min ?? 0, max: definition?.max ?? 1 };
-}
 
 function FadedToggle({ label, value }: { label: string; value: string }) {
   return (
