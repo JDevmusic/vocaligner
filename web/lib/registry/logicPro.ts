@@ -8,11 +8,42 @@ const rawEntries: PluginRegistryEntry[] = [
     category: "eq",
     daw: "logic-pro",
     tier: "stock",
+    // Real Channel EQ is 8 bands, not 4 flat knobs. Bands 1/8 (low/high cut)
+    // expose BOTH a Slope (dB/Oct) and a Q (the real reference screenshot
+    // shows three data lines per band, including bands 1/8 -- Q shapes the
+    // resonance at the cutoff independent of the 12/24 dB/Oct order). Bands
+    // 2-7 expose Q only, no slope. Flat, namespaced parameter names
+    // (bandNFrequency/bandNGain/bandNQ/bandNSlope) keep this on the existing
+    // sparse ControlValue[] model rather than a nested schema: a band with
+    // none of its parameters present in a Generation's controls[]
+    // contributes nothing to the curve (see web/lib/eq/channelEqCurve.ts).
+    // Defaults below are Logic's own neutral-state values -- see
+    // docs/plugin-references.md's Channel EQ section.
     controls: [
-      { parameter: "highPassFrequency", type: "number", unit: "Hz", min: 20, max: 500, default: 80 },
-      { parameter: "presenceFrequency", type: "number", unit: "Hz", min: 500, max: 8000, default: 3000 },
-      { parameter: "presenceGain", type: "number", unit: "dB", min: -12, max: 12, default: 0 },
-      { parameter: "airGain", type: "number", unit: "dB", min: -12, max: 12, default: 0 },
+      { parameter: "band1Frequency", type: "number", unit: "Hz", min: 20, max: 20000, default: 20 },
+      { parameter: "band1Slope", type: "number", unit: "dB/Oct", min: 6, max: 24, default: 12 },
+      { parameter: "band1Q", type: "number", min: 0.1, max: 10, default: 0.71 },
+      { parameter: "band2Frequency", type: "number", unit: "Hz", min: 20, max: 20000, default: 75 },
+      { parameter: "band2Gain", type: "number", unit: "dB", min: -18, max: 18, default: 0 },
+      { parameter: "band2Q", type: "number", min: 0.1, max: 10, default: 1.0 },
+      { parameter: "band3Frequency", type: "number", unit: "Hz", min: 20, max: 20000, default: 100 },
+      { parameter: "band3Gain", type: "number", unit: "dB", min: -18, max: 18, default: 0 },
+      { parameter: "band3Q", type: "number", min: 0.1, max: 10, default: 0.6 },
+      { parameter: "band4Frequency", type: "number", unit: "Hz", min: 20, max: 20000, default: 250 },
+      { parameter: "band4Gain", type: "number", unit: "dB", min: -18, max: 18, default: 0 },
+      { parameter: "band4Q", type: "number", min: 0.1, max: 10, default: 0.3 },
+      { parameter: "band5Frequency", type: "number", unit: "Hz", min: 20, max: 20000, default: 1040 },
+      { parameter: "band5Gain", type: "number", unit: "dB", min: -18, max: 18, default: 0 },
+      { parameter: "band5Q", type: "number", min: 0.1, max: 10, default: 0.41 },
+      { parameter: "band6Frequency", type: "number", unit: "Hz", min: 20, max: 20000, default: 2500 },
+      { parameter: "band6Gain", type: "number", unit: "dB", min: -18, max: 18, default: 0 },
+      { parameter: "band6Q", type: "number", min: 0.1, max: 10, default: 0.2 },
+      { parameter: "band7Frequency", type: "number", unit: "Hz", min: 20, max: 20000, default: 7500 },
+      { parameter: "band7Gain", type: "number", unit: "dB", min: -18, max: 18, default: 0 },
+      { parameter: "band7Q", type: "number", min: 0.1, max: 10, default: 1.0 },
+      { parameter: "band8Frequency", type: "number", unit: "Hz", min: 20, max: 20000, default: 20000 },
+      { parameter: "band8Slope", type: "number", unit: "dB/Oct", min: 6, max: 24, default: 24 },
+      { parameter: "band8Q", type: "number", min: 0.1, max: 10, default: 0.71 },
     ],
     education: {
       whyUsed:
@@ -22,7 +53,7 @@ const rawEntries: PluginRegistryEntry[] = [
       commonMistakes:
         "Boosting presence too aggressively, which introduces harshness rather than clarity.",
       adjustmentGuidance:
-        "If the vocal sounds thin, reduce the high-pass frequency. If it sounds harsh, reduce the presence gain.",
+        "If the vocal sounds thin, reduce the low-cut band's frequency. If it sounds harsh, pull back whichever band is boosted in the presence range.",
     },
   },
   {
@@ -116,9 +147,16 @@ const rawEntries: PluginRegistryEntry[] = [
     category: "pitch",
     daw: "logic-pro",
     tier: "stock",
+    // rootNote/scale are the song's actual researched key -- genuinely
+    // discoverable data, unlike most per-song settings (Story 1.3, Task 3).
+    // "response"/"tolerance" corrected against PitchCorrection_plugin.png's
+    // real defaults; the previous "amount" (%) control had no real
+    // counterpart -- real Logic exposes Tolerance in Cents, not a percentage.
     controls: [
-      { parameter: "response", type: "number", unit: "ms", min: 0, max: 500, default: 50 },
-      { parameter: "amount", type: "number", unit: "%", min: 0, max: 100, default: 50 },
+      { parameter: "rootNote", type: "string", default: "C" },
+      { parameter: "scale", type: "string", default: "Major Scale" },
+      { parameter: "response", type: "number", unit: "ms", min: 0, max: 500, default: 122 },
+      { parameter: "tolerance", type: "number", unit: "Cent", min: 0, max: 100, default: 10 },
     ],
     education: {
       whyUsed:

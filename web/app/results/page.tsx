@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { Wordmark } from "../components/Wordmark";
 import { pluginRegistry } from "@/lib/registry/pluginRegistry";
+import { formatParameterLabel } from "@/lib/format/parameterLabel";
 
 const PREVIEW_PLUGIN_IDS = [
   "logic-pro.channel-eq",
@@ -23,11 +24,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   modulation: "Modulation",
   other: "Other",
 };
-
-function formatParameterLabel(parameter: string): string {
-  const withSpaces = parameter.replace(/([a-z])([A-Z])/g, "$1 $2");
-  return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1);
-}
 
 function ResultsContent() {
   const searchParams = useSearchParams();

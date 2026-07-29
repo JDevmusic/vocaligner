@@ -109,40 +109,49 @@ Drone was NOT root-only as originally guessed — it includes the fifth.
 
 ## Channel EQ — real 8-band structure and default values
 
-Real Channel EQ is 8 bands, not the 4 flat knobs currently in
-`web/lib/registry/logicPro.ts` — extend the registry entry to match before
-building the bespoke visual (Story 1.3, Task 2). Each band has Frequency (Hz),
-Gain (dB), and Q — except bands 1 and 8, which use a Slope (dB/Octave: 12 or
-24) instead of Q.
+**Implemented (2026-07-30)** — `web/lib/registry/logicPro.ts`'s Channel EQ
+entry now has the real 8-band structure below, as 22 flat, namespaced
+controls (`bandNFrequency`/`bandNGain`/`bandNQ`/`bandNSlope`) rather than a
+nested schema, so the existing sparse `ControlValue[]` model still applies
+per-band. See `web/lib/eq/channelEqCurve.ts` for the curve math/band
+resolution and `web/app/components/ChannelEqVisual.tsx` for the component.
+
+Each band has Frequency (Hz), Gain (dB), and Q — **bands 1 and 8 additionally
+have a Slope (dB/Octave: 12 or 24), on top of their own Q, not instead of
+it.** The condensed table below (and the original version of this doc)
+under-specified this — Band 1's real readout is three numbers (Frequency,
+Slope, Q), confirmed directly against `docs/images.md/ChannelEQ_example.png`'s
+band-data row. 24dB/Oct is modeled as two cascaded 12dB/Oct filter stages at
+the band's own resolved Q, not a separate/fixed constant.
 
 Default values, read directly from a neutral-state Logic screenshot
 (`docs/images.md/ChannelEQ_plugin.png`, "Original Audio" — every band grayed
 out, curve dead flat at 0dB):
 
-| Band | Frequency | Gain | Slope / Q | Type |
-|---|---|---|---|---|
-| 1 | 20.0 Hz | 0.0 dB | 12 dB/Oct | low cut |
-| 2 | 75.0 Hz | 0.0 dB | Q 1.00 | low shelf |
-| 3 | 100 Hz | 0.0 dB | Q 0.60 | bell |
-| 4 | 250 Hz | 0.0 dB | Q 0.30 | bell |
-| 5 | 1040 Hz | 0.0 dB | Q 0.41 | bell |
-| 6 | 2500 Hz | 0.0 dB | Q 0.20 | bell |
-| 7 | 7500 Hz | 0.0 dB | Q 1.00 | high shelf |
-| 8 | 20000 Hz | 0.0 dB | 24 dB/Oct | high cut |
+| Band | Frequency | Gain | Slope | Q | Type |
+|---|---|---|---|---|---|
+| 1 | 20.0 Hz | 0.0 dB | 12 dB/Oct | 0.71 | low cut |
+| 2 | 75.0 Hz | 0.0 dB | — | 1.00 | low shelf |
+| 3 | 100 Hz | 0.0 dB | — | 0.60 | bell |
+| 4 | 250 Hz | 0.0 dB | — | 0.30 | bell |
+| 5 | 1040 Hz | 0.0 dB | — | 0.41 | bell |
+| 6 | 2500 Hz | 0.0 dB | — | 0.20 | bell |
+| 7 | 7500 Hz | 0.0 dB | — | 1.00 | high shelf |
+| 8 | 20000 Hz | 0.0 dB | 24 dB/Oct | 0.71 | high cut |
 
 Master output Gain: 0.0 dB.
 
 **A band absent from a `PluginInstance`'s `controls[]` array must contribute
 zero to the rendered curve** — never fall back to computing its filter
 response at the default frequency above. This is not a styling detail: in
-`docs/images.md/ChannelEQ_example.png` (a real applied example), only 3 of
+`docs/images.md/ChannelEQ_example.png` (a real applied example), only 4 of
 the 8 bands actually differ from their defaults (Band 1 freq → 69.5 Hz, Band 4
-gain → −4.4 dB, Band 6 freq/gain/Q → 2980 Hz / +1.5 dB / Q 0.93, Band 8 freq →
-12000 Hz) — the other bands are genuinely untouched, and the curve must be
-dead flat wherever that's true, matching the neutral reference exactly. Build
-a neutral-state diagnostic (all bands at/absent their defaults) and confirm
-it's flat before verifying against applied data — this is what caught the
-original implementation computing a rolloff shape at rest.
+gain → −4.4 dB, Band 6 freq/gain/Q → 2980 Hz / +1.5 dB / Q 0.93, Band 8
+freq/Q → 12000 Hz / Q 0.79) — the other bands are genuinely untouched, and the
+curve must be dead flat wherever that's true, matching the neutral reference
+exactly. Build a neutral-state diagnostic (all bands at/absent their
+defaults) and confirm it's flat before verifying against applied data — this
+is what caught the original implementation computing a rolloff shape at rest.
 
 The curve is real filter-response math (biquad/RBJ Cookbook formulas per band
 type), computed client-side and deterministically from whatever band data the

@@ -80,9 +80,9 @@ function buildMockGeneration() {
         addressesIntentIds: ["tonal-balance-2"],
         rationale: "Remove low-end buildup and add clarity in the presence range.",
         controls: [
-          { parameter: "highPassFrequency", value: 90, unit: "Hz", confidence: "high" },
-          { parameter: "presenceFrequency", value: 3200, unit: "Hz", confidence: "medium" },
-          { parameter: "presenceGain", value: 2, unit: "dB", confidence: "medium" },
+          { parameter: "band1Frequency", value: 90, unit: "Hz", confidence: "high" },
+          { parameter: "band5Frequency", value: 3200, unit: "Hz", confidence: "medium" },
+          { parameter: "band5Gain", value: 2, unit: "dB", confidence: "medium" },
         ],
       },
       {

@@ -1,6 +1,8 @@
 # Story 1.3: Build the bespoke Plugin Visual components
 
-Status: ready-for-dev
+Status: in-progress
+
+> **Progress (2026-07-30):** Task 0 (registry correction for Overdrive/Flanger/Phaser/Chorus), Task 2 (Channel EQ), and Task 3 (Pitch Correction) are complete — see Dev Agent Record below. Task 1 (the other 8 knob-based visuals: Compressor, DeEsser 2, ChromaVerb, Tape Delay, Overdrive, Flanger, Phaser, Chorus) and the remainder of Task 4 (styling compliance for those 8) are deliberately deferred to a follow-up pass, per the founder's explicit scoping — Channel EQ and Pitch Correction were the two plugins already fully validated through the mockup process, the other 8 were not.
 
 > **Resolution (2026-07-29):** the original "one generic component" approach (AC2 below, superseded) was reversed by the founder after reviewing real Logic Pro screenshots for all 10 registry plugins — a generic knob-grid didn't read as premium or recognizable. The bespoke direction was validated through an iterative static-mockup process (not live component code) for the two plugins that needed real new engineering — Channel EQ and Pitch Correction — before this story was reopened for implementation. See `docs/DESIGN_SYSTEM.md`'s Plugin Visual Fidelity Standards section and `docs/plugin-references.md` for everything that process produced. This rewrite supersedes the story's original AC/Tasks/Dev Notes in full.
 
@@ -21,23 +23,23 @@ so that it's immediately recognizable as "what I'll build in Logic Pro."
 
 ## Tasks / Subtasks
 
-- [ ] Task 0: Correct known-inaccurate registry parameters before styling around them (AC: 1)
-  - [ ] Overdrive, Flanger, Phaser, and Chorus were added to the registry (`web/lib/registry/logicPro.ts`) before real reference screenshots existed, and some of their parameter names/ranges don't match the real plugins now that ground truth exists (e.g. Phaser's registry entry has an invented "Intensity" knob — the real plugin has dual-rate LFOs, a Ceiling control, Sweep Mode, and a separate Feedback section instead). Check each of these 4 against its `docs/images.md/*_plugin.png` reference and correct `logicPro.ts` before or alongside building that plugin's bespoke visual — don't style a visual around data you already know is wrong.
-  - [ ] This is a data correctness issue independent of the visual work (FR-6 requires settings specific enough to input directly into the real plugin) — treat it as its own commit/checkpoint per plugin, not folded silently into styling work.
-- [ ] Task 1: Build the 8 knob-based bespoke visuals (AC: 1, 2, 5)
+- [x] Task 0: Correct known-inaccurate registry parameters before styling around them (AC: 1)
+  - [x] Checked all 4 (Overdrive, Flanger, Phaser, Chorus) against their reference screenshots, not just Phaser. Corrected parameter names/units/ranges/defaults in `web/lib/registry/logicPro.ts`. Phaser needed the most work: removed the invented "Intensity" knob, added `stages`/`rate1`/`rate2`/`ceiling`/`floor`/`sweepMode`/`feedback`/`warmth`/`mix` matching the real dual-LFO/Sweep/Feedback-section layout.
+  - [x] Committed separately (`532b45c`) before any visual work began.
+- [ ] Task 1: Build the 8 knob-based bespoke visuals (AC: 1, 2, 5) — **deferred to a follow-up pass**
   - [ ] Compressor, DeEsser 2, ChromaVerb, Tape Delay, Overdrive, Flanger, Phaser, Chorus. Each is its own component (or a shared knob-rendering base parameterized per plugin's layout — dev's call), reading `{ plugin: PluginRegistryEntry; values: ControlValue[] }` same as the original single-component design.
   - [ ] Match each plugin's real panel proportions/knob arrangement from its reference screenshot — this is a layout/styling task per plugin, not a new rendering paradigm. Reuse one knob-rendering treatment (rotation math, value label style) across all 8 rather than reinventing per plugin.
-  - [ ] Reuse the existing `formatParameterLabel` helper (currently in `web/app/results/page.tsx`) for turning `parameter` (e.g. `makeupGain`) into a display label — extract it to a shared module (e.g. `web/lib/format/parameterLabel.ts`) as part of this task rather than importing from a page file, since Story 1.4 substantially rewrites `results/page.tsx`.
-  - [ ] Per-control widgets by `type`: `"number"` → knob with rotation computed from a pure `getKnobRotationDeg(value, min, max)` helper (unit-tested, no DOM needed); `"boolean"` → on/off toggle pill; `"string"` → label/value pill (no options list exists in the schema, so this is display-only, not a selector).
-- [ ] Task 2: Build the Channel EQ visual (AC: 1, 3, 5)
-  - [ ] Full spec — band structure, real default values, curve math, shading, axis, label density — is in Dev Notes below and `docs/plugin-references.md`. This was already validated through several rounds of static mockups; implement against that spec directly rather than re-deriving it.
-  - [ ] Extend `logicPro.ts`'s Channel EQ entry from its current 4 flat knobs to the real 8-band structure (see Dev Notes for the exact default values).
-- [ ] Task 3: Build the Pitch Correction visual (AC: 1, 4, 5)
-  - [ ] Full spec — interval-pattern lookup, highlighting rules — is in Dev Notes below and `docs/plugin-references.md`.
-  - [ ] Add a `key`-equivalent field (root note + scale/chord) to Pitch Correction's registry entry — this is genuinely researchable data (a song's key is a discoverable music fact), unlike most other per-song settings.
-- [ ] Task 4: Styling compliance, all 10 (AC: 1)
-  - [ ] Only the stable, already-established design tokens/semantic classes (see Dev Notes) — never a raw hex value or raw Tailwind palette utility, per Architecture AD-6.
-  - [ ] A genuinely new color (e.g. a knob-fill accent) gets a `--color-*` token in `globals.css` first, then a semantic class — never a raw Tailwind palette utility directly.
+  - [x] `formatParameterLabel` extracted to `web/lib/format/parameterLabel.ts` (done now since `results/page.tsx` already needed the import updated); `results/page.tsx` updated to import from there.
+  - [x] `getKnobRotationDeg(value, min, max)` built as a pure, unit-tested helper (`web/lib/controls/knobRotation.ts`) — built now because Pitch Correction's Response/Tolerance knobs needed it; ready for the other 8's knobs to reuse.
+  - [ ] Per-control widgets by `type` for the 8 knob-based plugins specifically (`"boolean"` toggle pill, `"string"` label/value pill) — not yet built.
+- [x] Task 2: Build the Channel EQ visual (AC: 1, 3, 5)
+  - [x] `web/app/components/ChannelEqVisual.tsx` + `web/lib/eq/channelEqCurve.ts` (curve math, band resolution, axis/collision helpers) built against the already-validated spec directly.
+  - [x] Extended `logicPro.ts`'s Channel EQ entry to the real 8-band structure — 22 flat, namespaced controls (`bandNFrequency`/`bandNGain`/`bandNQ`/`bandNSlope`). Note beyond the original Dev Notes spec below: bands 1/8 turned out to need Q *in addition to* Slope, not instead of it — confirmed against the reference screenshot's three-line band readout and Story 1.3's own prose spec ("Band 1: 20.0 Hz, 0.0 dB, 12 dB/Oct, Q 0.71"), which the condensed Dev Notes table below had flattened away. 24dB/Oct is modeled as two cascaded 12dB/Oct biquad stages at the band's own resolved Q (cascaded dB responses sum), not a fixed Butterworth constant.
+- [x] Task 3: Build the Pitch Correction visual (AC: 1, 4, 5)
+  - [x] `web/app/components/PitchCorrectionVisual.tsx` + `web/lib/pitch/scaleIntervals.ts` (full interval table + lookup) built against the already-validated spec directly.
+  - [x] Added `rootNote`/`scale` (string controls) to Pitch Correction's registry entry, plus corrected `response`'s default (122ms, was 50ms) and replaced the invented `amount`/% control with the real `tolerance`/Cent control — found while extending the entry, same FR-6 correctness principle as Task 0.
+- [ ] Task 4: Styling compliance, all 10 (AC: 1) — **complete for Channel EQ and Pitch Correction; not yet applicable to the other 8 (Task 1 deferred)**
+  - [x] Channel EQ and Pitch Correction use only stable tokens (`--brand-accent`, `--border`, `--foreground`, `--muted`, `--supporting`, `--background`) — no raw hex/Tailwind palette utilities, no new tokens needed.
 
 ## Dev Notes
 
@@ -61,7 +63,7 @@ so that it's immediately recognizable as "what I'll build in Logic Pro."
 
 ### Pitch Correction — full spec (already validated via mockup)
 
-- **Highlight notes computed from Root Note + Scale/Chord**, never hardcoded per example. `docs/plugin-references.md` has the full interval-pattern table (~43 scale/chord types Logic supports, each as semitone offsets from the root) — look up the pattern, transpose onto the root, apply to the 12-key layout.
+- **Highlight notes computed from Root Note + Scale/Chord**, never hardcoded per example. `docs/plugin-references.md` has the full interval-pattern table (42 scale/chord types Logic supports, each as semitone offsets from the root) — look up the pattern, transpose onto the root, apply to the 12-key layout.
 - **Verify against more than one root/scale combination before considering this done** — a C Major test case alone will pass even with an incorrect implementation, since C Major's notes happen to be exactly the white keys.
 - **Every key uses one of exactly two flat colors** — one for in-scale, one for faded/out-of-scale — identical regardless of whether the key is naturally black or white. Do not tint, darken, or blend the color differently for black keys; that produces an ambiguous muddy tone rather than a clear on/off read. Black vs. white identity is communicated by shape/size only (the traditional shorter, narrower key silhouette), never by color. Matches real Logic's own behavior (every key is the same blue in Chromatic Scale mode).
 - **Match the real keyboard's proportions** — roughly 2.5:1 width:height for the keyboard block, a proper piano-key shape, not a flattened strip.
@@ -91,8 +93,33 @@ so that it's immediately recognizable as "what I'll build in Logic Pro."
 
 ### Agent Model Used
 
+Claude Sonnet 5
+
 ### Debug Log References
+
+- `npx tsc --noEmit`, `npx eslint .`, `npx vitest run` all clean after each step (42 tests passing across 7 files by the end).
+- Fixed a regression caught by the existing test suite: `web/lib/ai/mockModelClient.ts`'s Channel EQ fixture used the pre-correction parameter names (`highPassFrequency` etc.), which the registry validation layer (`web/lib/validation/repairChain.ts`) now correctly rejected. Updated the mock fixture to the new `bandNFrequency`/`bandNGain` names.
+- Verified both components visually via a temporary dev-server route rendering neutral + applied fixture data (Channel EQ neutral/applied; Pitch Correction C Major/G Major/E Min7) — screenshots matched the previously-validated mockup output. Route deleted after verification, per this story's own testing note.
 
 ### Completion Notes List
 
+- Task 0: checked all 4 plugins (not just Phaser) against their reference screenshots; committed separately (`532b45c`) before any styling work.
+- Channel EQ's real band 1/8 structure has both a Slope *and* a Q control (three data lines in the reference readout) — the condensed Dev Notes table below only showed Freq/Gain/Slope-or-Q, but Story 1.3's own prose spec listed all four values for Band 1. Added `band1Q`/`band8Q` to the registry and switched the 24dB/Oct cut-band math from a fixed Butterworth-Q constant to the band's own resolved Q, cascaded across two stages.
+- Pitch Correction's registry entry had a second inaccuracy beyond the Task-0-named four plugins: `amount`/% had no real counterpart (real Logic exposes `tolerance` in Cents), and `response`'s default was 50ms instead of the real 122ms. Corrected both while adding `rootNote`/`scale`, since the entry was already being extended.
+- `getKnobRotationDeg` (originally scoped to Task 1) was built now because Pitch Correction's own Response/Tolerance knobs needed real rotation math, not fixture placeholders. It's unit-tested and ready for the other 8 plugins' knobs to reuse.
+- Task 1 (8 knob-based visuals) and the rest of Task 4 are explicitly deferred — not started.
+
 ### File List
+
+- `web/lib/registry/logicPro.ts` (Task 0 correction, committed separately; Channel EQ/Pitch Correction extension)
+- `web/lib/ai/mockModelClient.ts` (fixture fix, regression caught by existing tests)
+- `web/lib/format/parameterLabel.ts` (new, extracted)
+- `web/app/results/page.tsx` (updated to import the extracted helper)
+- `web/lib/controls/knobRotation.ts` (new)
+- `web/lib/controls/knobRotation.test.ts` (new)
+- `web/lib/eq/channelEqCurve.ts` (new)
+- `web/lib/eq/channelEqCurve.test.ts` (new)
+- `web/lib/pitch/scaleIntervals.ts` (new)
+- `web/lib/pitch/scaleIntervals.test.ts` (new)
+- `web/app/components/ChannelEqVisual.tsx` (new)
+- `web/app/components/PitchCorrectionVisual.tsx` (new)
