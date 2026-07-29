@@ -119,3 +119,65 @@ export function StringLabel({ plugin, values, parameter }: ControlProps) {
   const raw = resolveControlValue(plugin, values, parameter);
   return <StringPill label={formatParameterLabel(parameter)} value={String(raw ?? "")} />;
 }
+
+// Faded elements: the real panel's structure that VocAligner doesn't
+// generate a value for, still shown in its real position -- per
+// docs/DESIGN_SYSTEM.md's Plugin Visual Fidelity Standards. `value` should
+// be Logic's own real default/resting reading for that control (read off
+// the reference screenshot), the same convention already used for Pitch
+// Correction's Settings/Tuning sections -- never a placeholder dash or
+// blank, and never implying a specific generated value.
+
+export function FadedKnob({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col items-center gap-2 opacity-45">
+      <div className="relative h-14 w-14 rounded-full border border-border bg-background">
+        <div
+          className="absolute left-1/2 top-1/2 h-5 w-0.5 rounded-full bg-muted"
+          style={{ transform: "translate(-50%, -100%)", transformOrigin: "bottom center" }}
+        />
+      </div>
+      <div className="text-center">
+        <p className="text-[10px] font-medium tracking-wide text-muted uppercase">{label}</p>
+        <p className="text-xs text-muted">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+export function FadedField({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col items-center gap-2 opacity-45">
+      <span className="rounded-md border border-border bg-background px-3 py-1 text-xs font-medium text-muted">{value}</span>
+      <p className="text-[10px] font-medium tracking-wide text-muted uppercase">{label}</p>
+    </div>
+  );
+}
+
+// A row of mutually-exclusive options with no data to indicate which is
+// selected (e.g. Compressor's 7 circuit-mode tabs) -- shown as a faded row
+// with none highlighted, rather than guessing/asserting a selection.
+export function FadedTabs({ options }: { options: string[] }) {
+  return (
+    <div className="flex flex-wrap gap-2 opacity-45">
+      {options.map((option) => (
+        <span key={option} className="rounded-md border border-border bg-background px-3 py-1.5 text-center text-[11px] font-medium text-muted">
+          {option}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+// A meter, graph, or curve display -- visual elements with no data backing
+// them at all (Compressor's gain-reduction meter, ChromaVerb's damping EQ
+// curve, Overdrive's drive/tone response graph). Shown as a labeled, faded
+// placeholder occupying the real panel's layout position, not a fabricated
+// chart implying real readings.
+export function FadedDisplay({ label }: { label: string }) {
+  return (
+    <div className="flex h-20 w-full min-w-[220px] flex-1 items-center justify-center rounded-lg border border-border bg-background/60 opacity-45">
+      <p className="text-[10px] font-medium tracking-wide text-muted uppercase">{label}</p>
+    </div>
+  );
+}
