@@ -43,7 +43,7 @@ export interface ResolvedEqBand {
 // band's other parameters wasn't set, fall back to the registry's own
 // default (not zero) -- e.g. Band 1 with only its frequency touched still
 // uses the registry's default 12 dB/Oct slope, matching
-// docs/images.md/ChannelEQ_example.png's real applied example.
+// docs/images/reference/ChannelEQ_example.png's real applied example.
 export function resolveChannelEqBands(
   plugin: PluginRegistryEntry,
   values: ControlValue[]

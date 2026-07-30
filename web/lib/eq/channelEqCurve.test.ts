@@ -18,7 +18,7 @@ function value(parameter: string, num: number): ControlValue {
   return { parameter, value: num, confidence: "high", wasRepaired: false };
 }
 
-// The real applied example from docs/images.md/ChannelEQ_example.png: only
+// The real applied example from docs/images/reference/ChannelEQ_example.png: only
 // bands 1/4/6/8 differ from their defaults. Band 8's Q (0.79) is genuinely
 // touched too, not just its frequency -- confirmed directly against the
 // reference screenshot's three-line band readout.

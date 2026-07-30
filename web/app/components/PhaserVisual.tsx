@@ -3,7 +3,7 @@ import type { PluginRegistryEntry } from "@/lib/registry/types";
 import type { ControlValue } from "@/lib/schema/chain";
 
 // Mirrors the real panel's SWEEP / LFO / FEEDBACK / OUT section grouping
-// (docs/images.md/Phaser_plugin.png) -- this is why Phaser needed Task 0's
+// (docs/images/reference/Phaser_plugin.png) -- this is why Phaser needed Task 0's
 // registry correction: the real plugin's structure (dual-rate LFOs, a
 // Ceiling/Floor sweep range, Sweep Mode, a separate Feedback section) is
 // what the registry now models. Phase and the LFO1/LFO2 Mix slider (LFO),

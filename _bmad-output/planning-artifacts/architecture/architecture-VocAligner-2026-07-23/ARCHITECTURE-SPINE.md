@@ -7,7 +7,7 @@ paradigm: 'Pipeline (Pipes-and-Filters) core, Ports & Adapters at the AI provide
 scope: 'Whole VocAligner MVP — landing/input, AI vocal-chain generation, results display'
 status: final
 created: '2026-07-23'
-updated: '2026-07-29'
+updated: '2026-08-01'
 binds: [FR-1, FR-2, FR-3, FR-4, FR-5, FR-6, FR-7]
 sources: ['_bmad-output/planning-artifacts/prds/prd-VocAligner-2026-07-23/prd.md']
 companions: []
@@ -168,6 +168,8 @@ web/
 
 ## Deferred
 
+- **DeEsser 2 settings are never generation targets.** Per PRD §8.9: Threshold, Max Reduction, and Frequency always render at Logic's own defaults, faded — the reasoning/generation stages should never be prompted to vary them per song. Only whether DeEsser 2 appears in the chain at all is a real reasoning-stage decision; its specific numeric settings are not. Implementation note for whenever the real pipeline touches this: simplest path is to never include DeEsser 2's controls in a generated `PluginInstance.controls[]` at all (the existing sparse-array/registry-default-fallback pattern already used for untouched Channel EQ bands handles this with no schema change) rather than generating-then-ignoring a value.
+- **"Standard practice" badge, not a separate results-page section.** Per PRD FR-6: a plugin whose settings are never researched (currently only DeEsser 2) stays in its true signal-chain position on the results page and just carries a small "Standard practice" label on its own card. Considered and rejected: physically regrouping such plugins into a separate section, which breaks the "list order = signal-chain order" guarantee FR-6 depends on unless each plugin's true chain position is re-displayed a second time to stay safe to rebuild from — not worth the added complexity for what a card-level label already communicates. No registry/schema change for this — it's a Plugin Visual component-level concern (currently only `DeEsser2Visual.tsx` needs it); don't build a generic registry-wide flag for a single case.
 - **Deployment target & environments.** Nothing decided yet beyond `next dev`/local — no hosting provider, no staging/prod split, no CI/CD config exists. Matches the founder's stated near-term priority ("works locally first"). Revisit before Milestone 8 (public beta).
 - **Cache storage technology.** AD-7/AD-8/AD-10 fix the key, versioning, and what's stored; *where* it's physically stored (in-memory, Redis, a DB) is open. `docs/ROADMAP.md`'s pending "Database" item suggests one's coming, but which isn't decided.
 - **Rate-limiting / abuse-prevention mechanism.** Confirmed non-goal for MVP (PRD §5); revisit alongside the live-Anthropic cutover, since that's when unmetered requests start costing real money per call.

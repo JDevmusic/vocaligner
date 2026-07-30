@@ -2,7 +2,7 @@ import { FadedField, KnobSection, NumberKnob, PluginPanel } from "./controls/Plu
 import type { PluginRegistryEntry } from "@/lib/registry/types";
 import type { ControlValue } from "@/lib/schema/chain";
 
-// Full real panel structure (docs/images.md/Flnager_plugin.png): Rate/
+// Full real panel structure (docs/images/reference/Flnager_plugin.png): Rate/
 // Intensity/Feedback/Mix (all real data) plus a Tempo Sync toggle on Rate --
 // real, faded, no backing data.
 export function FlangerVisual({ plugin, values }: { plugin: PluginRegistryEntry; values: ControlValue[] }) {

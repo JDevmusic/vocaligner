@@ -5,11 +5,11 @@
 landing-pages/
 
 I like the format of this landing page, with relevant buttons at the top, central hero and an image 
- ![Landing_page_layout_1](images.md/landing_page1.png) [Landing_page_layout_1](Inspiration.md)
+ ![Landing_page_layout_1](images/landing/landing_page1.png) [Landing_page_layout_1](Inspiration.md)
 
 
 I like the format of explaining 'What is inside Vocaligner' with possible an image of the EQ settings to the left of the explanation.
-![how_it_works](images.md/how_it_works.png)
+![how_it_works](images/landing/how_it_works.png)
 
 The following page should include a 'Your Vocal Chains' showing the vocal chains researched and saved that can be accessed at any time from the app
 
@@ -27,4 +27,4 @@ https://linear.app/ - I like how the landing page loads in, fades in from the to
 
 plugin-ui/
 
-![compressor_plugin](images.md/Compressor_plugin.png)
+![compressor_plugin](images/reference/Compressor_plugin.png)

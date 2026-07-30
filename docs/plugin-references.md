@@ -1,45 +1,31 @@
 
+# Plugin Reference Data
 
-Reference screenshots
-Control names
-Which controls usually change
-Which controls almost never change
-Default values
-Valid ranges
-Educational text
-React component requirements
+Ground-truth data extracted from real Logic Pro screenshots, for building each
+bespoke Plugin Visual against — not invented or approximated. Covers, per
+plugin where established: control names, which controls usually/almost never
+change, default values, valid ranges, educational text, and any React
+component requirements the reference surfaced.
 
-compressor.png
-![Compressor_plug-in](<Screenshot 2026-07-26 at 16.56.06.png>)
+Real reference screenshots live in `docs/images/reference/`:
 
-channel-eq.png
-![ChannelEQ_plug-in](<Screenshot 2026-07-26 at 16.55.20.png>)
+| Plugin | Reference screenshot |
+|---|---|
+| Channel EQ | `ChannelEQ_plugin.png` (neutral/default state), `ChannelEQ_example.png` (applied example) |
+| Compressor | `Compressor_plugin.png` |
+| DeEsser 2 | `DeEsser_plugin.png` |
+| ChromaVerb | `Chromaverb_plugin.png` |
+| Pitch Correction | `PitchCorrection_plugin.png`, plus `PitchCorrection_Rootnotes.png` / `PitchCorrection_Scales.png` for the full dropdown option lists |
+| Tape Delay | `TapeDelay_plugin.png` |
+| Overdrive | `Overdrive_plugin.png` |
+| Flanger | `Flnager_plugin.png` (filename typo, left as-is to match what's on disk) |
+| Chorus | `Chorus_plugin.png` |
+| Phaser | `Phaser_plugin.png` |
 
-deesser.png
-![Desser_plug-in](<Screenshot 2026-07-26 at 16.57.20.png>)
-
-chromaverb.png
-![Chromaverb_plug-in](<Screenshot 2026-07-26 at 16.56.32.png>)
-
-
-Pitch_correction.png
-![pitch_correction_plu-in](<Screenshot 2026-07-26 at 16.57.53.png>)
-
-tape-delay.png
-![Tape_delay_plug-in](<Screenshot 2026-07-26 at 16.58.22.png>)
-
-Overdive.png
-![Overdrive_plug-in](<Screenshot 2026-07-26 at 16.58.47.png>)
-
-
-Flanger.png
-![Flanger_plug-in](<Screenshot 2026-07-26 at 16.59.14.png>)
-
-Chorus.png
-![Chorus_plug-in](<Screenshot 2026-07-26 at 16.59.30.png>)
-
-Phaser.png
-![Phaser_plug-in](<Screenshot 2026-07-26 at 16.59.46.png>)
+Design-spike iteration history (disposable mockups that validated each
+bespoke visual before real component code was written) lives in
+`docs/images/spikes/<plugin>/`. Final production-component screenshots live
+in `docs/built/`.
 
 ---
 
@@ -120,12 +106,12 @@ Each band has Frequency (Hz), Gain (dB), and Q — **bands 1 and 8 additionally
 have a Slope (dB/Octave: 12 or 24), on top of their own Q, not instead of
 it.** The condensed table below (and the original version of this doc)
 under-specified this — Band 1's real readout is three numbers (Frequency,
-Slope, Q), confirmed directly against `docs/images.md/ChannelEQ_example.png`'s
+Slope, Q), confirmed directly against `docs/images/reference/ChannelEQ_example.png`'s
 band-data row. 24dB/Oct is modeled as two cascaded 12dB/Oct filter stages at
 the band's own resolved Q, not a separate/fixed constant.
 
 Default values, read directly from a neutral-state Logic screenshot
-(`docs/images.md/ChannelEQ_plugin.png`, "Original Audio" — every band grayed
+(`docs/images/reference/ChannelEQ_plugin.png`, "Original Audio" — every band grayed
 out, curve dead flat at 0dB):
 
 | Band | Frequency | Gain | Slope | Q | Type |
@@ -144,7 +130,7 @@ Master output Gain: 0.0 dB.
 **A band absent from a `PluginInstance`'s `controls[]` array must contribute
 zero to the rendered curve** — never fall back to computing its filter
 response at the default frequency above. This is not a styling detail: in
-`docs/images.md/ChannelEQ_example.png` (a real applied example), only 4 of
+`docs/images/reference/ChannelEQ_example.png` (a real applied example), only 4 of
 the 8 bands actually differ from their defaults (Band 1 freq → 69.5 Hz, Band 4
 gain → −4.4 dB, Band 6 freq/gain/Q → 2980 Hz / +1.5 dB / Q 0.93, Band 8
 freq/Q → 12000 Hz / Q 0.79) — the other bands are genuinely untouched, and the
