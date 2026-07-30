@@ -78,11 +78,11 @@ function LfoMixSlider() {
 // already says FEEDBACK.
 export function PhaserVisual({ plugin, values }: { plugin: PluginRegistryEntry; values: ControlValue[] }) {
   return (
-    <PluginPanel plugin={plugin} width="1150px" aspectRatio="2.45 / 1">
-      <div className="grid flex-1 divide-x divide-border px-6 py-5" style={{ gridTemplateColumns: "2.3fr 3.8fr 3.1fr 0.9fr" }}>
-        <div className="flex flex-col gap-4 pr-6">
+    <PluginPanel plugin={plugin} width="1000px" aspectRatio="2.45 / 1">
+      <div className="grid flex-1 divide-x divide-border px-5 py-5" style={{ gridTemplateColumns: "2.3fr 3.8fr 3.1fr minmax(90px, 0.9fr)" }}>
+        <div className="flex flex-col gap-4 pr-5">
           <SectionHeading>Sweep</SectionHeading>
-          <div className="flex justify-center gap-8">
+          <div className="flex justify-center gap-6">
             <div className="flex flex-col items-center gap-[50px]">
               <NumberArcKnob plugin={plugin} values={values} parameter="stages" minLabel="4" maxLabel="12" />
               <StringDropdown plugin={plugin} values={values} parameter="sweepMode" />
@@ -91,9 +91,9 @@ export function PhaserVisual({ plugin, values }: { plugin: PluginRegistryEntry; 
           </div>
         </div>
 
-        <div className="flex flex-col gap-5 px-6">
+        <div className="flex flex-col gap-5 px-5">
           <SectionHeading>LFO</SectionHeading>
-          <div className="flex items-start justify-center gap-8">
+          <div className="flex items-start justify-center gap-6">
             <div className="flex flex-col items-center gap-2">
               <NumberArcKnob plugin={plugin} values={values} parameter="rate1" minLabel="0" maxLabel="10" />
               <FadedSyncIcon />
@@ -107,9 +107,9 @@ export function PhaserVisual({ plugin, values }: { plugin: PluginRegistryEntry; 
           <LfoMixSlider />
         </div>
 
-        <div className="flex flex-col gap-4 px-6">
+        <div className="flex flex-col gap-4 px-5">
           <SectionHeading>Feedback</SectionHeading>
-          <div className="flex items-start justify-center gap-8">
+          <div className="flex items-start justify-center gap-6">
             <div className="flex flex-col items-center gap-4">
               <NumberArcKnob plugin={plugin} values={values} parameter="feedback" label="Level" />
               <BooleanToggle plugin={plugin} values={values} parameter="warmth" />
@@ -119,7 +119,7 @@ export function PhaserVisual({ plugin, values }: { plugin: PluginRegistryEntry; 
           </div>
         </div>
 
-        <div className="flex flex-col gap-4 pl-6">
+        <div className="flex flex-col gap-4 pl-5">
           <SectionHeading>Out</SectionHeading>
           <div className="flex items-start justify-center">
             <NumberVerticalFader plugin={plugin} values={values} parameter="mix" plusPrefix />

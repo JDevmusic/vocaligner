@@ -85,7 +85,7 @@ function CutRangeSlider() {
 // invented single "mix" crossfade knob).
 export function TapeDelayVisual({ plugin, values }: { plugin: PluginRegistryEntry; values: ControlValue[] }) {
   return (
-    <PluginPanel plugin={plugin} width="900px" aspectRatio="1.22 / 1">
+    <PluginPanel plugin={plugin} width="1000px" aspectRatio="1.22 / 1">
       <div className="flex flex-1 divide-x divide-border px-5 py-5">
         <div className="flex flex-col gap-4 pr-6" style={{ flexGrow: 3 }}>
           <div className="grid divide-x divide-border" style={{ gridTemplateColumns: "1.15fr 1fr" }}>

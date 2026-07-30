@@ -80,7 +80,7 @@ export function OverdriveVisual({ plugin, values }: { plugin: PluginRegistryEntr
   const toneHz = typeof toneRaw === "number" ? toneRaw : 0;
 
   return (
-    <PluginPanel plugin={plugin} width="820px" aspectRatio="1.58 / 1">
+    <PluginPanel plugin={plugin} width="715px" aspectRatio="1.58 / 1">
       <div className="grid flex-1 divide-x divide-border px-5 py-5" style={{ gridTemplateColumns: "1fr 1.15fr" }}>
         <div className="grid grid-cols-2 items-start justify-items-center gap-x-8 gap-y-10 pr-6">
           <NumberArcKnob plugin={plugin} values={values} parameter="drive" minMax />

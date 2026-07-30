@@ -130,7 +130,10 @@ export function ChannelEqVisual({ plugin, values }: { plugin: PluginRegistryEntr
   const bands = resolveChannelEqBands(plugin, values);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
+    <div
+      className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm"
+      style={{ width: "1000px", maxWidth: "100%" }}
+    >
       <div className="border-b border-border px-6 py-4">
         <span className="font-mono text-[11px] tracking-[0.2em] text-supporting uppercase">{plugin.category}</span>
         <h2 className="mt-0.5 text-lg font-semibold text-foreground">{plugin.displayName}</h2>

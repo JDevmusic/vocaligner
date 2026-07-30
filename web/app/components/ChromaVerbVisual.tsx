@@ -36,7 +36,7 @@ function PredelayField({ plugin, values }: { plugin: PluginRegistryEntry; values
 // height (a size-only difference, not the whole block shifted down).
 export function ChromaVerbVisual({ plugin, values }: { plugin: PluginRegistryEntry; values: ControlValue[] }) {
   return (
-    <PluginPanel plugin={plugin} width="820px" aspectRatio="1.3 / 1">
+    <PluginPanel plugin={plugin} width="1000px" aspectRatio="1.3 / 1">
       <div className="flex flex-1 flex-col gap-3 px-5 py-4">
         <div className="flex items-center justify-between gap-3">
           <p className="text-[11px] font-semibold tracking-[0.15em] text-supporting uppercase">Damping EQ</p>

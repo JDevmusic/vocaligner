@@ -55,7 +55,7 @@ function GainColumn({ children }: { children: React.ReactNode }) {
 // asserts a choice that wasn't made.
 export function CompressorVisual({ plugin, values }: { plugin: PluginRegistryEntry; values: ControlValue[] }) {
   return (
-    <PluginPanel plugin={plugin} width="1200px" aspectRatio="1.3 / 1">
+    <PluginPanel plugin={plugin} width="1000px" aspectRatio="1.3 / 1">
       <div className="flex flex-1 divide-x divide-border px-6 py-5">
         <div className="flex flex-col pr-6" style={{ flexGrow: 1 }}>
           <GainColumn>
@@ -64,7 +64,7 @@ export function CompressorVisual({ plugin, values }: { plugin: PluginRegistryEnt
         </div>
 
         <div className="flex flex-col gap-4 px-6" style={{ flexGrow: 3 }}>
-          <FadedTabs options={CIRCUIT_MODES} />
+          <FadedTabs options={CIRCUIT_MODES} dense />
           <FadedDisplay label="Gain Reduction Meter" />
 
           <div className="grid grid-cols-4 items-start gap-6">

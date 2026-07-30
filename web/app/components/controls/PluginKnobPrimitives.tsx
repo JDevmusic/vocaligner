@@ -280,11 +280,14 @@ export function FadedField({ label, value }: { label: string; value: string }) {
 // A row of mutually-exclusive options with no data to indicate which is
 // selected (e.g. Compressor's 7 circuit-mode tabs) -- shown as a faded row
 // with none highlighted, rather than guessing/asserting a selection.
-export function FadedTabs({ options }: { options: string[] }) {
+export function FadedTabs({ options, dense }: { options: string[]; dense?: boolean }) {
   return (
-    <div className="flex flex-wrap gap-2 opacity-45">
+    <div className={`flex flex-wrap opacity-45 ${dense ? "gap-1" : "gap-2"}`}>
       {options.map((option) => (
-        <span key={option} className="rounded-md border border-border bg-background px-3 py-1.5 text-center text-[11px] font-medium text-muted">
+        <span
+          key={option}
+          className={`rounded-md border border-border bg-background text-center font-medium text-muted ${dense ? "px-1 py-0.5 text-[9px]" : "px-3 py-1.5 text-[11px]"}`}
+        >
           {option}
         </span>
       ))}

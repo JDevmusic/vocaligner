@@ -136,7 +136,7 @@ export function DeEsser2Visual({ plugin }: { plugin: PluginRegistryEntry; values
   const frequency = registryDefault(plugin, "frequency");
 
   return (
-    <PluginPanel plugin={plugin} width="1150px" aspectRatio="1.68 / 1" centerHeader badge="Standard practice">
+    <PluginPanel plugin={plugin} width="715px" aspectRatio="1.68 / 1" centerHeader badge="Standard practice">
       <div className="grid flex-1 divide-x divide-border px-5 py-5" style={{ gridTemplateColumns: "1fr 2.15fr" }}>
         <div className="flex gap-8 pr-6">
           <DbMeterStrip
