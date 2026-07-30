@@ -93,7 +93,7 @@ export function CompressorVisual({ plugin, values }: { plugin: PluginRegistryEnt
 
         <div className="flex gap-6 pl-6" style={{ flexGrow: 1.6 }}>
           <div className="flex flex-1 flex-col gap-5">
-            <FadedTabs options={["Side Chain", "Output"]} />
+            <FadedTabs options={["Side Chain", "Output"]} dense />
             {/* Mirrors the gain-reduction meter's flex-1 growth on the
                 middle section, so Limiter/Distortion land level with
                 Threshold/Ratio/Make Up (both columns are the same overall

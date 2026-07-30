@@ -286,7 +286,7 @@ export function FadedTabs({ options, dense }: { options: string[]; dense?: boole
       {options.map((option) => (
         <span
           key={option}
-          className={`rounded-md border border-border bg-background text-center font-medium text-muted ${dense ? "px-1 py-0.5 text-[9px]" : "px-3 py-1.5 text-[11px]"}`}
+          className={`rounded-md border border-border bg-background text-center font-medium text-muted ${dense ? "px-0.5 py-0.5 text-[9px]" : "px-3 py-1.5 text-[11px]"}`}
         >
           {option}
         </span>
