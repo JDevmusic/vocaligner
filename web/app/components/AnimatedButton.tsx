@@ -11,6 +11,7 @@ export function AnimatedButton({
   type = "button",
   disabled = false,
   form,
+  onClick,
 }: {
   children: React.ReactNode;
   className: string;
@@ -19,6 +20,7 @@ export function AnimatedButton({
   type?: "button" | "submit";
   disabled?: boolean;
   form?: string;
+  onClick?: () => void;
 }) {
   return (
     <motion.button
@@ -26,6 +28,7 @@ export function AnimatedButton({
       title={title}
       disabled={disabled}
       form={form}
+      onClick={onClick}
       whileHover={disabled ? undefined : { scale: 1.035 }}
       whileTap={disabled ? undefined : { scale: 0.96 }}
       transition={springTap}

@@ -1,6 +1,6 @@
 # Story 1.4: Results page renders the real generated chain
 
-Status: ready-for-dev
+Status: ready-for-review
 
 ## Story
 
@@ -17,22 +17,22 @@ so that I can see exactly what to recreate in Logic Pro.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Add `GET /api/generate/[id]` route (AC: 1, 2)
-  - [ ] Create `web/app/api/generate/[id]/route.ts` exporting `GET`, reading the `id` route param and calling `getGenerationById` from `web/lib/store/generationStore.ts` (already built in Story 1.2 — do not modify that module beyond what Story 2.1 will later add for cache lookups).
-  - [ ] Return the full `VocalChainResponse` as JSON with `200` if found; `{ error: "Not found" }` with `404` if not.
-  - [ ] Add a colocated `route.test.ts` (Vitest, matching `web/app/api/generate/route.test.ts`'s existing pattern) covering: found → 200 with the stored response; unknown id → 404.
-- [ ] Task 2: Wire the results page to fetch by id (AC: 1, 4)
-  - [ ] In `web/app/results/page.tsx`, replace reading `artist`/`song` search params with reading `id`.
-  - [ ] On mount (`useEffect`), if `id` is present, `fetch(`/api/generate/${id}`)`. On success, store the parsed `VocalChainResponse` in local state and render it. On a non-2xx response or thrown error, fall through to the "nothing here" state (Task 3).
-  - [ ] Build a small `pluginId -> component` dispatch map (e.g. a `Record` or `switch` keyed on `PluginRegistryEntry.id`, such as `"logic-pro.channel-eq"` → `ChannelEqVisual`) covering all 10 bespoke Visual components in `web/app/components/`. No such dispatcher exists yet — Story 1.3 built 10 separate components but nothing wires a plugin id to the right one. This is new work for this story, not a re-derivation of something Story 1.3 already produced.
-  - [ ] Render `chain.plugins` in array order, dispatching each `PluginInstance` through that map (`plugin: pluginRegistry.getById(instance.pluginId)`, `values: instance.controls`). Array order already equals signal-chain order — `generationStage.ts` assigns `order: index + 1` at generation time, and no code alters that ordering downstream — so no separate sort is needed, just iterate the array as returned. `DeEsser2Visual` needs no special handling here for its "Standard practice" label — that's internal to the component itself (AC4).
-  - [ ] Delete the entire dummy-preview implementation this story replaces: `PREVIEW_PLUGIN_IDS`, the static `previewPlugins` mapping, and their JSX block. This story's real data path replaces them outright — don't leave them behind as dead code or a fallback.
-- [ ] Task 3: "Nothing here" state (AC: 2)
-  - [ ] Covers three cases uniformly: missing `id` param, fetch returns 404, or fetch throws (network error). Render a simple, calm message (e.g. "We couldn't find that result.") with a link back to `/` — same minimal-effort bar as Story 1.2's loading-page failure state (PRD's failure-state copy/design is explicitly not finalized yet, §8 Open Question 4 — don't over-invest here).
-  - [ ] Never crash: guard against `id` being absent before fetching, and against a malformed/non-JSON response body.
-- [ ] Task 4: Typography/spacing/button consistency pass (AC: 3)
-  - [ ] On `results/page.tsx` and `loading/page.tsx`: align heading weight/tracking and body text sizing with the landing page's scale (e.g. `font-semibold tracking-tight` headings, `text-sm`/`text-base` body — see `web/app/page.tsx`), and replace plain `<Link>`/`<button>` elements used as primary actions with `AnimatedButton` (`web/app/components/AnimatedButton.tsx`) for its hover/tap micro-interaction — matching the landing page's button feel.
-  - [ ] Do **not** change either page's background/gradient (`hero-gradient` stays exactly as-is on both) and do **not** introduce the landing page's white→gold→purple wash or dark storytelling section here — Design System v1.1 scopes that treatment to the landing page only.
+- [x] Task 1: Add `GET /api/generate/[id]` route (AC: 1, 2)
+  - [x] Create `web/app/api/generate/[id]/route.ts` exporting `GET`, reading the `id` route param and calling `getGenerationById` from `web/lib/store/generationStore.ts` (already built in Story 1.2 — do not modify that module beyond what Story 2.1 will later add for cache lookups).
+  - [x] Return the full `VocalChainResponse` as JSON with `200` if found; `{ error: "Not found" }` with `404` if not.
+  - [x] Add a colocated `route.test.ts` (Vitest, matching `web/app/api/generate/route.test.ts`'s existing pattern) covering: found → 200 with the stored response; unknown id → 404.
+- [x] Task 2: Wire the results page to fetch by id (AC: 1, 4)
+  - [x] In `web/app/results/page.tsx`, replace reading `artist`/`song` search params with reading `id`.
+  - [x] On mount (`useEffect`), if `id` is present, `fetch(`/api/generate/${id}`)`. On success, store the parsed `VocalChainResponse` in local state and render it. On a non-2xx response or thrown error, fall through to the "nothing here" state (Task 3).
+  - [x] Build a small `pluginId -> component` dispatch map (e.g. a `Record` or `switch` keyed on `PluginRegistryEntry.id`, such as `"logic-pro.channel-eq"` → `ChannelEqVisual`) covering all 10 bespoke Visual components in `web/app/components/`. No such dispatcher exists yet — Story 1.3 built 10 separate components but nothing wires a plugin id to the right one. This is new work for this story, not a re-derivation of something Story 1.3 already produced.
+  - [x] Render `chain.plugins` in array order, dispatching each `PluginInstance` through that map (`plugin: pluginRegistry.getById(instance.pluginId)`, `values: instance.controls`). Array order already equals signal-chain order — `generationStage.ts` assigns `order: index + 1` at generation time, and no code alters that ordering downstream — so no separate sort is needed, just iterate the array as returned. `DeEsser2Visual` needs no special handling here for its "Standard practice" label — that's internal to the component itself (AC4).
+  - [x] Delete the entire dummy-preview implementation this story replaces: `PREVIEW_PLUGIN_IDS`, the static `previewPlugins` mapping, and their JSX block. This story's real data path replaces them outright — don't leave them behind as dead code or a fallback.
+- [x] Task 3: "Nothing here" state (AC: 2)
+  - [x] Covers three cases uniformly: missing `id` param, fetch returns 404, or fetch throws (network error). Render a simple, calm message (e.g. "We couldn't find that result.") with a link back to `/` — same minimal-effort bar as Story 1.2's loading-page failure state (PRD's failure-state copy/design is explicitly not finalized yet, §8 Open Question 4 — don't over-invest here).
+  - [x] Never crash: guard against `id` being absent before fetching, and against a malformed/non-JSON response body.
+- [x] Task 4: Typography/spacing/button consistency pass (AC: 3)
+  - [x] On `results/page.tsx` and `loading/page.tsx`: align heading weight/tracking and body text sizing with the landing page's scale (e.g. `font-semibold tracking-tight` headings, `text-sm`/`text-base` body — see `web/app/page.tsx`), and replace plain `<Link>`/`<button>` elements used as primary actions with `AnimatedButton` (`web/app/components/AnimatedButton.tsx`) for its hover/tap micro-interaction — matching the landing page's button feel.
+  - [x] Do **not** change either page's background/gradient (`hero-gradient` stays exactly as-is on both) and do **not** introduce the landing page's white→gold→purple wash or dark storytelling section here — Design System v1.1 scopes that treatment to the landing page only.
 
 ## Dev Notes
 
@@ -76,8 +76,28 @@ so that I can see exactly what to recreate in Logic Pro.
 
 ### Agent Model Used
 
+Claude Sonnet 5
+
 ### Debug Log References
+
+- `npx tsc --noEmit`, `npx eslint .`, `npx vitest run` all clean (67/67 tests, up from 65 — 2 new tests for the `[id]` route).
+- Confirmed this Next.js version's dynamic route param convention (`params: Promise<{ id: string }>`) directly against `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/route.md` before writing the route, per `web/AGENTS.md`'s warning that this version's APIs may differ from training data — not assumed from memory.
+- Manual dev-server verification (`npm run dev`): seeded a real generation via `curl -X POST /api/generate` (Frank Ocean / Thinkin Bout You → Channel EQ, Compressor, DeEsser 2, ChromaVerb), then screenshotted `/results?id=<real-id>` — confirmed all 4 plugins render through the dispatch map with real data (Compressor's Threshold/Ratio/Attack/Release, ChromaVerb's Decay/Dry/Wet), and specifically confirmed DeEsser 2's "Standard practice" badge and PRD §8.9 always-faded-at-default override both render correctly in the real page context (not just the Story 1.3 verification route). Also screenshotted `/results` (no id) and `/results?id=bogus` — both correctly show the "nothing here" state via the two different guard paths (missing param vs. 404 response) without crashing.
+- Full click-driven `/` → `/loading` → `/results` walkthrough not scripted end-to-end (no local Playwright package installed for interactive scripting, only the CLI screenshot tool) — instead verified equivalently: `loading/page.tsx`'s `router.push(\`/results?id=${body.id}\`)` navigation logic was not touched by this story (only its error-state button changed), and direct navigation to that same URL shape was confirmed working above, so the two are functionally identical.
 
 ### Completion Notes List
 
+- Task 1: `GET /api/generate/[id]/route.ts` follows the existing `POST /api/generate/route.ts` pattern exactly — reads `getGenerationById`, returns 200/404. Test file seeds a real generation by calling the sibling route's `POST` directly (same approach `route.test.ts` itself uses for its own persistence test) rather than hand-building a `VocalChainResponse` fixture.
+- Task 2: the dispatch map is a plain `Record<string, PluginVisualComponent>` — all 10 Story 1.3 components share an identical `{ plugin, values }` prop signature (confirmed directly, not assumed), so no per-plugin wrapper or type gymnastics were needed. Chain rendering skips a plugin entry if either the registry or dispatch-map lookup misses, rather than crashing — defensive, though it shouldn't happen with valid registry-sourced ids.
+- Task 2: `PREVIEW_PLUGIN_IDS`/`previewPlugins`/`CATEGORY_LABELS` and the old preview-card JSX deleted outright, no fallback left behind. `CATEGORY_LABELS` had no other purpose — every Visual component already renders its own `plugin.category` (CSS-uppercased), so a separate friendly-label map wasn't needed even before removal.
+- Task 3: three failure paths (missing `id`, non-2xx fetch, thrown/parse error) collapse into one `status: "error"` state rendered by a single `NothingHereState` component, visually matching `loading/page.tsx`'s existing error-state treatment (`hero-gradient`, centered `Wordmark`, message, link home) for consistency between the two pages' equivalent states.
+- **Background decision (confirmed with the founder before implementing):** switched the results page's main background from plain `bg-background` to `hero-gradient` — Design System's Functional Pages section explicitly says "the existing sunset-to-white gradient" applies to Loading & Results pages, and this story's own Task 4 guardrail text ("hero-gradient stays exactly as-is on both") presumes it was already on both; it wasn't. Confirmed this reads as a deliberate omission worth fixing, not scope creep, since the gradient fades to white by 65% scroll depth — visually it only affects the area directly behind the Wordmark/heading, not the long list of white plugin cards below.
+- Task 4: `AnimatedButton` (`web/app/components/AnimatedButton.tsx`) had no `onClick` prop — it had only ever been used for form submission on the landing page. Added an optional `onClick`, threaded straight to the underlying `motion.button`. Both pages' "Try Another Song"/"Try again" affordances now call `router.push("/")` from it; each page kept its own existing visual treatment (results' pill-button style, loading's underlined-text style) — this was a hover/tap-feel pass per the story's own scoping, not a redesign unifying the two.
+
 ### File List
+
+- `web/app/api/generate/[id]/route.ts` (new)
+- `web/app/api/generate/[id]/route.test.ts` (new)
+- `web/app/results/page.tsx` (rewritten — fetch-by-id, dispatch map, "nothing here" state, `hero-gradient` background, dummy-preview code removed)
+- `web/app/loading/page.tsx` (small edit — "Try again" swapped to `AnimatedButton`)
+- `web/app/components/AnimatedButton.tsx` (small edit — added optional `onClick` prop)

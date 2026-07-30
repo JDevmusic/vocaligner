@@ -1,41 +1,110 @@
 "use client";
 
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { AnimatedButton } from "../components/AnimatedButton";
+import { ChannelEqVisual } from "../components/ChannelEqVisual";
+import { ChorusVisual } from "../components/ChorusVisual";
+import { ChromaVerbVisual } from "../components/ChromaVerbVisual";
+import { CompressorVisual } from "../components/CompressorVisual";
+import { DeEsser2Visual } from "../components/DeEsser2Visual";
+import { FlangerVisual } from "../components/FlangerVisual";
+import { OverdriveVisual } from "../components/OverdriveVisual";
+import { PhaserVisual } from "../components/PhaserVisual";
+import { PitchCorrectionVisual } from "../components/PitchCorrectionVisual";
+import { TapeDelayVisual } from "../components/TapeDelayVisual";
 import { Wordmark } from "../components/Wordmark";
 import { pluginRegistry } from "@/lib/registry/pluginRegistry";
-import { formatParameterLabel } from "@/lib/format/parameterLabel";
+import type { PluginRegistryEntry } from "@/lib/registry/types";
+import type { ControlValue } from "@/lib/schema/chain";
+import type { VocalChainResponse } from "@/lib/schema/vocalChain";
 
-const PREVIEW_PLUGIN_IDS = [
-  "logic-pro.channel-eq",
-  "logic-pro.compressor",
-  "logic-pro.chromaverb",
-  "logic-pro.pitch-correction",
-];
+type PluginVisualComponent = (props: { plugin: PluginRegistryEntry; values: ControlValue[] }) => React.JSX.Element;
 
-const CATEGORY_LABELS: Record<string, string> = {
-  eq: "EQ",
-  dynamics: "Dynamics",
-  "de-esser": "De-Esser",
-  space: "Space",
-  pitch: "Pitch",
-  character: "Character",
-  modulation: "Modulation",
-  other: "Other",
+const PLUGIN_VISUAL_COMPONENTS: Record<string, PluginVisualComponent> = {
+  "logic-pro.channel-eq": ChannelEqVisual,
+  "logic-pro.compressor": CompressorVisual,
+  "logic-pro.de-esser-2": DeEsser2Visual,
+  "logic-pro.chromaverb": ChromaVerbVisual,
+  "logic-pro.tape-delay": TapeDelayVisual,
+  "logic-pro.pitch-correction": PitchCorrectionVisual,
+  "logic-pro.overdrive": OverdriveVisual,
+  "logic-pro.flanger": FlangerVisual,
+  "logic-pro.phaser": PhaserVisual,
+  "logic-pro.chorus": ChorusVisual,
 };
 
-function ResultsContent() {
-  const searchParams = useSearchParams();
-  const artist = searchParams.get("artist");
-  const song = searchParams.get("song");
+type Status = "loading" | "error" | "ready";
 
-  const previewPlugins = PREVIEW_PLUGIN_IDS.map((id) => pluginRegistry.getById(id)).filter(
-    (plugin) => plugin !== undefined
+function NothingHereState() {
+  const router = useRouter();
+  return (
+    <div className="hero-gradient flex min-h-screen flex-1 flex-col items-center justify-center px-6 text-center">
+      <Wordmark />
+      <p className="mt-8 text-lg font-medium text-foreground sm:text-xl">
+        We couldn&apos;t find that result.
+      </p>
+      <AnimatedButton
+        title="Back to Home"
+        onClick={() => router.push("/")}
+        className="mt-6 text-sm font-medium text-muted underline underline-offset-4 hover:text-foreground"
+      >
+        Back to Home
+      </AnimatedButton>
+    </div>
   );
+}
+
+function LoadingState() {
+  return (
+    <div className="hero-gradient flex min-h-screen flex-1 flex-col items-center justify-center px-6 text-center">
+      <Wordmark />
+      <p className="mt-8 text-lg font-medium text-foreground sm:text-xl">Loading your results&hellip;</p>
+    </div>
+  );
+}
+
+function ResultsContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id");
+  const [status, setStatus] = useState<Status>(id ? "loading" : "error");
+  const [chainResponse, setChainResponse] = useState<VocalChainResponse | null>(null);
+
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const response = await fetch(`/api/generate/${id}`);
+        if (!response.ok) {
+          if (!cancelled) setStatus("error");
+          return;
+        }
+        const body = (await response.json()) as VocalChainResponse;
+        if (!cancelled) {
+          setChainResponse(body);
+          setStatus("ready");
+        }
+      } catch {
+        if (!cancelled) setStatus("error");
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  if (status === "error") return <NothingHereState />;
+  if (status === "loading" || !chainResponse) return <LoadingState />;
+
+  const { input, chain } = chainResponse;
 
   return (
-    <div className="flex min-h-screen flex-1 flex-col bg-background">
+    <div className="hero-gradient flex min-h-screen flex-1 flex-col">
       <main className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col items-center px-6 py-24 text-center sm:py-32">
         <Wordmark />
 
@@ -43,53 +112,26 @@ function ResultsContent() {
           Your Vocal Chain
         </h1>
 
-        {artist && song ? (
-          <p className="mt-4 text-lg text-muted">
-            For &ldquo;{song}&rdquo; by {artist}
-          </p>
-        ) : null}
-
-        <p className="mt-6 max-w-md text-sm text-supporting">
-          We&apos;re building the full generation pipeline. Here&apos;s a preview of how your
-          chain will be presented.
+        <p className="mt-4 text-lg text-muted">
+          For &ldquo;{input.song}&rdquo; by {input.artist}
         </p>
 
-        <div className="mt-12 flex w-full max-w-2xl flex-col gap-4">
-          {previewPlugins.map((plugin, index) => (
-            <div
-              key={plugin.id}
-              className="flex flex-col gap-4 rounded-2xl border border-black/5 bg-white p-6 text-left shadow-sm sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div className="flex items-center gap-4">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black/5 text-sm font-semibold text-foreground">
-                  {index + 1}
-                </span>
-                <div>
-                  <p className="text-base font-semibold text-foreground">{plugin.displayName}</p>
-                  <p className="text-sm text-muted">{CATEGORY_LABELS[plugin.category] ?? plugin.category}</p>
-                </div>
-              </div>
-
-              <div className="flex gap-6 pl-12 sm:pl-0">
-                {plugin.controls.slice(0, 2).map((control) => (
-                  <div key={control.parameter} className="text-left">
-                    <p className="text-xs font-medium tracking-wide text-muted uppercase">
-                      {formatParameterLabel(control.parameter)}
-                    </p>
-                    <p className="mt-1 text-sm font-medium text-black/20">—</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
+        <div className="mt-12 flex w-full flex-col items-center gap-8">
+          {chain.plugins.map((instance) => {
+            const plugin = pluginRegistry.getById(instance.pluginId);
+            const Component = PLUGIN_VISUAL_COMPONENTS[instance.pluginId];
+            if (!plugin || !Component) return null;
+            return <Component key={instance.order} plugin={plugin} values={instance.controls} />;
+          })}
         </div>
 
-        <Link
-          href="/"
-          className="mt-10 rounded-lg border border-black/10 bg-white px-6 py-3 text-base font-medium text-foreground transition-colors hover:bg-black/[.03]"
+        <AnimatedButton
+          title="Try Another Song"
+          onClick={() => router.push("/")}
+          className="mt-12 rounded-lg border border-black/10 bg-white px-6 py-3 text-base font-medium text-foreground transition-colors hover:bg-black/[.03]"
         >
           Try Another Song
-        </Link>
+        </AnimatedButton>
       </main>
     </div>
   );

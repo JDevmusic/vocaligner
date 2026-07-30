@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
+import { AnimatedButton } from "../components/AnimatedButton";
 import { Wordmark } from "../components/Wordmark";
 
 const PHASE_DURATION_MS = 900;
@@ -81,12 +81,13 @@ function LoadingContent() {
           Something went wrong generating your vocal chain.
         </p>
 
-        <Link
-          href="/"
+        <AnimatedButton
+          title="Try Again"
+          onClick={() => router.push("/")}
           className="mt-6 text-sm font-medium text-muted underline underline-offset-4 hover:text-foreground"
         >
           Try again
-        </Link>
+        </AnimatedButton>
       </div>
     );
   }
