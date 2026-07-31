@@ -182,20 +182,23 @@ export function freqToX(hz: number): number {
   return 40 + t * 860;
 }
 
-// Validated against the real reference (ChannelEQ_example.png): the plot's
-// left (0-60) and right (+15/-15) axes don't share a zero point -- the real
-// plugin gives the region beyond +-15dB far more dramatic visual weight than
-// a linear continuation of the inner scale would. Generous scale inside
-// +-15dB, steepened scale beyond.
-export const BASELINE_Y = 150;
-const INNER_DB = 15;
-const INNER_PX_PER_DB = 7.5;
-const OUTER_PX_PER_DB = 6.5;
+// Right-hand gain axis: perfectly linear across the plot's own established
+// top/bottom edges (4 and 330, same as the frequency gridlines' y1/y2 in
+// ChannelEqVisual.tsx). Pixel-measured directly against the reference
+// (ChannelEQ_plugin.png): +15 sits at the plot's top edge, 0 sits at dead
+// center, -15 sits at the bottom edge -- evenly spaced throughout, matching
+// the left-hand 0-60 axis rendered alongside it. An earlier "generous
+// inside +-15dB, steepened outside" two-slope model was carried over
+// without ever being checked against a real pixel measurement -- there's no
+// non-linear compression in the actual reference, so it's gone.
+const PLOT_TOP_Y = 4;
+const PLOT_BOTTOM_Y = 330;
+const AXIS_DB_RANGE = 15; // the axis runs +-15dB, top to bottom
+
+export const BASELINE_Y = (PLOT_TOP_Y + PLOT_BOTTOM_Y) / 2;
 
 export function dbToY(db: number): number {
-  if (db >= -INNER_DB) return BASELINE_Y - db * INNER_PX_PER_DB;
-  const innerEdgeY = BASELINE_Y + INNER_DB * INNER_PX_PER_DB;
-  return innerEdgeY + (-INNER_DB - db) * OUTER_PX_PER_DB;
+  return PLOT_TOP_Y + ((AXIS_DB_RANGE - db) / (2 * AXIS_DB_RANGE)) * (PLOT_BOTTOM_Y - PLOT_TOP_Y);
 }
 
 export function computeCurvePoints(bands: ResolvedEqBand[], masterGainDb = 0): { x: number; y: number }[] {
@@ -205,7 +208,7 @@ export function computeCurvePoints(bands: ResolvedEqBand[], masterGainDb = 0): {
     const t = i / steps;
     const freq = 20 * Math.pow(1000, t);
     const db = totalResponseDb(bands, freq, masterGainDb);
-    points.push({ x: freqToX(freq), y: Math.min(330, dbToY(db)) });
+    points.push({ x: freqToX(freq), y: Math.min(PLOT_BOTTOM_Y, dbToY(db)) });
   }
   return points;
 }

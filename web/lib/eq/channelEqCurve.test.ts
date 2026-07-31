@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ControlValue } from "../schema/chain";
 import { logicProStockPlugins } from "../registry/logicPro";
 import {
+  BASELINE_Y,
   FREQ_MAJOR,
   FREQ_TICKS,
   bandResponseDb,
@@ -113,10 +114,23 @@ describe("axis helpers", () => {
   });
 
   it("dbToY places 0dB on the baseline and is monotonically decreasing in y as db increases", () => {
-    expect(dbToY(0)).toBe(150);
+    expect(dbToY(0)).toBe(BASELINE_Y);
     expect(dbToY(15)).toBeLessThan(dbToY(0));
     expect(dbToY(-15)).toBeGreaterThan(dbToY(0));
     expect(dbToY(-60)).toBeGreaterThan(dbToY(-15));
+  });
+
+  it("dbToY is perfectly linear across the plot's own top/bottom edges, matching the left-hand axis at every step", () => {
+    // Pixel-measured against the reference: +15/0/-15 line up exactly with
+    // the left axis's 0/30/60 at the plot's top edge, dead center, and
+    // bottom edge respectively -- no non-linear compression.
+    expect(dbToY(15)).toBeCloseTo(4, 6);
+    expect(dbToY(0)).toBeCloseTo(167, 6);
+    expect(dbToY(-15)).toBeCloseTo(330, 6);
+    // Linear means equal dB steps produce equal pixel steps throughout.
+    const stepNearTop = dbToY(10) - dbToY(15);
+    const stepNearBottom = dbToY(-10) - dbToY(-15);
+    expect(stepNearTop).toBeCloseTo(-stepNearBottom, 6);
   });
 });
 

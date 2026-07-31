@@ -39,6 +39,56 @@ function BandIcon({ kind, active }: { kind: ChannelEqBandKind; active: boolean }
   return <svg width="22" height="14" viewBox="0 0 22 14" aria-hidden="true"><path d="M11,2 L19,7 L11,12 L3,7 Z" {...common} /></svg>;
 }
 
+const PLOT_MARGIN_FRACTION = (40 / 940) * 100;
+
+// The real plugin's band-type icons sit at 8 fixed, evenly-spaced columns --
+// one per band, aligned with BandData's number columns below -- not at each
+// band's actual frequency on the log-scale axis drawn inside the graph.
+// Those are two unrelated layouts that happen to share a card.
+function BandIconRow({ bands }: { bands: ResolvedEqBand[] }) {
+  return (
+    <div className="flex gap-3 px-5 pb-1">
+      <div className="w-7 shrink-0" />
+      <div className="flex flex-1" style={{ paddingLeft: `${PLOT_MARGIN_FRACTION}%`, paddingRight: `${PLOT_MARGIN_FRACTION}%` }}>
+        {bands.map((band) => (
+          <div key={band.index} className="flex flex-1 justify-center">
+            <BandIcon kind={band.kind} active={band.enabled} />
+          </div>
+        ))}
+      </div>
+      <div className="w-16 shrink-0" />
+    </div>
+  );
+}
+
+const LEFT_SCALE_VALUES = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
+// Matches the plot's own established top/bottom edges (4 and 330, inside the
+// 335-tall viewBox) so this column's rows line up with the grid exactly,
+// not with this flex row's full, slightly taller box.
+const PLOT_TOP_FRACTION = (4 / 335) * 100;
+const PLOT_BOTTOM_FRACTION = (5 / 335) * 100;
+
+// A separate, static scale, unrelated to the curve's own dB math, that sits
+// to the left of the graph exactly as the "Gain" readout sits to its right.
+// Matches the real reference's left-hand 0-60 column (most likely the
+// Analyzer spectrum overlay's scale, shown as unsigned dBFS-from-full-scale)
+// -- not wired to any live data, just rendered as fixed labels per
+// docs/images/reference/ChannelEQ_plugin.png.
+function LeftScaleColumn() {
+  return (
+    <div
+      className="flex w-7 shrink-0 flex-col items-end justify-between text-[9px] text-supporting"
+      style={{ paddingTop: `${PLOT_TOP_FRACTION}%`, paddingBottom: `${PLOT_BOTTOM_FRACTION}%` }}
+    >
+      {LEFT_SCALE_VALUES.map((value) => (
+        <span key={value} className="leading-none">
+          {value}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function EQGraph({ bands }: { bands: ResolvedEqBand[] }) {
   const points = computeCurvePoints(bands);
   const stroke = strokePath(points);
@@ -47,14 +97,8 @@ function EQGraph({ bands }: { bands: ResolvedEqBand[] }) {
 
   return (
     <div className="flex gap-3 px-5">
+      <LeftScaleColumn />
       <div className="relative flex-1">
-        <div className="relative h-6">
-          {bands.map((band) => (
-            <div key={band.index} className="absolute" style={{ left: freqToX(band.freq) - 11, top: 0 }}>
-              <BandIcon kind={band.kind} active={band.enabled} />
-            </div>
-          ))}
-        </div>
         <svg viewBox="0 0 940 335" className="w-full" role="img" aria-label="Frequency response computed from the generated band settings">
           <defs>
             <linearGradient id="eqFill" x1="0" y1="0" x2="0" y2="1">
@@ -103,11 +147,10 @@ function EQGraph({ bands }: { bands: ResolvedEqBand[] }) {
   );
 }
 
-const PLOT_MARGIN_FRACTION = (40 / 940) * 100;
-
 function BandData({ bands }: { bands: ResolvedEqBand[] }) {
   return (
     <div className="mt-3 flex gap-3 px-5 pb-4 pt-2">
+      <div className="w-7 shrink-0" />
       <div className="flex flex-1" style={{ paddingLeft: `${PLOT_MARGIN_FRACTION}%`, paddingRight: `${PLOT_MARGIN_FRACTION}%` }}>
         {bands.map((band) => (
           <div key={band.index} className={`flex-1 ${band.enabled ? "" : "opacity-40"}`}>
@@ -139,6 +182,7 @@ export function ChannelEqVisual({ plugin, values }: { plugin: PluginRegistryEntr
         <h2 className="mt-0.5 text-lg font-semibold text-foreground">{plugin.displayName}</h2>
       </div>
       <div className="pt-5">
+        <BandIconRow bands={bands} />
         <EQGraph bands={bands} />
         <BandData bands={bands} />
         <div className="flex gap-2 border-t border-border px-5 py-3 opacity-45">
