@@ -123,6 +123,16 @@
   );
 }
 
+/* Results page background -- 2026-07-31 founder decision (see
+   DESIGN_SYSTEM.md's Primary Background / Other Pages section): swapped
+   from the shared sunset hero-gradient to the same near-black purple used
+   by the landing page's storytelling sections (MeetSection/Footer), for
+   contrast against the plugin cards' own white surfaces. Scope is results
+   only -- loading/landing still use hero-gradient. */
+.results-gradient {
+  background: linear-gradient(to bottom, var(--wash-purple) 0%, var(--wash-purple-deep) 30%, var(--wash-purple-deep) 100%);
+}
+
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);

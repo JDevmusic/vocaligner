@@ -39,15 +39,15 @@ type Status = "loading" | "error" | "ready";
 function NothingHereState() {
   const router = useRouter();
   return (
-    <div className="hero-gradient flex min-h-screen flex-1 flex-col items-center justify-center px-6 text-center">
-      <Wordmark />
-      <p className="mt-8 text-lg font-medium text-foreground sm:text-xl">
+    <div className="results-gradient flex min-h-screen flex-1 flex-col items-center justify-center px-6 text-center">
+      <Wordmark className="text-white/70" />
+      <p className="mt-8 text-lg font-medium text-white sm:text-xl">
         We couldn&apos;t find that result.
       </p>
       <AnimatedButton
         title="Back to Home"
         onClick={() => router.push("/")}
-        className="mt-6 text-sm font-medium text-muted underline underline-offset-4 hover:text-foreground"
+        className="mt-6 text-sm font-medium text-white/70 underline underline-offset-4 hover:text-white"
       >
         Back to Home
       </AnimatedButton>
@@ -57,9 +57,9 @@ function NothingHereState() {
 
 function LoadingState() {
   return (
-    <div className="hero-gradient flex min-h-screen flex-1 flex-col items-center justify-center px-6 text-center">
-      <Wordmark />
-      <p className="mt-8 text-lg font-medium text-foreground sm:text-xl">Loading your results&hellip;</p>
+    <div className="results-gradient flex min-h-screen flex-1 flex-col items-center justify-center px-6 text-center">
+      <Wordmark className="text-white/70" />
+      <p className="mt-8 text-lg font-medium text-white sm:text-xl">Loading your results&hellip;</p>
     </div>
   );
 }
@@ -104,15 +104,15 @@ function ResultsContent() {
   const { input, chain } = chainResponse;
 
   return (
-    <div className="hero-gradient flex min-h-screen flex-1 flex-col">
+    <div className="results-gradient flex min-h-screen flex-1 flex-col">
       <main className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col items-center px-6 py-24 text-center sm:py-32">
-        <Wordmark />
+        <Wordmark className="text-white/70" />
 
-        <h1 className="mt-6 text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
+        <h1 className="mt-6 text-4xl font-semibold tracking-tight text-white sm:text-5xl">
           Your Vocal Chain
         </h1>
 
-        <p className="mt-4 text-lg text-muted">
+        <p className="mt-4 text-lg text-white/70">
           For &ldquo;{input.song}&rdquo; by {input.artist}
         </p>
 
