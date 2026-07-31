@@ -155,44 +155,49 @@ export function DeEsser2Visual({ plugin }: { plugin: PluginRegistryEntry; values
           />
         </div>
 
-        <div className="flex flex-col items-center gap-8 pl-6 pt-2">
-          <div className="flex justify-center gap-14">
-            <FadedArcKnob label="Threshold" value={`${threshold} dB`} numericValue={threshold} min={thresholdRange.min} max={thresholdRange.max} minLabel="-60" maxLabel="0" />
-            <ArcKnob
-              label="Max Reduction"
-              value={`${maxReduction} dB`}
-              angleDeg={invertedKnobRotationDeg(maxReduction, maxReductionRange.min, maxReductionRange.max)}
-              faded
-              minLabel="25"
-              maxLabel="0"
-            />
-            <FadedArcKnob label="Frequency" value={`${frequency} Hz`} numericValue={frequency} min={2000} max={10000} minLabel="1200" maxLabel="12k" />
-          </div>
+        {/* Grid (not a centered flex stack) so all three rows -- knobs,
+            Mode, Range/Filter/Filter Solo -- share exactly the same three
+            column positions, and the whole block is left-anchored flush
+            against the meters' divider (matching the reference), with any
+            leftover width falling entirely on the right rather than split
+            on both sides. Mode only occupies the first (Threshold) column;
+            the other two cells in its row are empty spacers. */}
+        <div className="grid items-start gap-x-14 gap-y-6 pl-6 pt-2" style={{ gridTemplateColumns: "repeat(3, max-content)" }}>
+          <FadedArcKnob label="Threshold" value={`${threshold} dB`} numericValue={threshold} min={thresholdRange.min} max={thresholdRange.max} minLabel="-60" maxLabel="0" />
+          <ArcKnob
+            label="Max Reduction"
+            value={`${maxReduction} dB`}
+            angleDeg={invertedKnobRotationDeg(maxReduction, maxReductionRange.min, maxReductionRange.max)}
+            faded
+            minLabel="25"
+            maxLabel="0"
+          />
+          <FadedArcKnob label="Frequency" value={`${frequency} Hz`} numericValue={frequency} min={2000} max={10000} minLabel="1200" maxLabel="12k" />
 
-          <div className="flex flex-col items-center gap-6">
+          <div className="flex flex-col items-center" style={{ marginTop: 8 }}>
             <Dropdown label="Mode" value="Relative" faded />
+          </div>
+          <div />
+          <div />
 
-            <div className="flex items-start gap-14">
-              <div className="flex flex-col items-center gap-1.5">
-                <p className="text-[11px] font-medium text-foreground opacity-45">Range</p>
-                <FadedTabs options={["Split", "Wide"]} />
-              </div>
-              <div className="flex flex-col items-center gap-1.5">
-                <p className="text-[11px] font-medium text-foreground opacity-45">Filter</p>
-                <div className="flex gap-2">
-                  <FadedIconButton>
-                    <LowCutIcon />
-                  </FadedIconButton>
-                  <FadedIconButton>
-                    <NotchIcon />
-                  </FadedIconButton>
-                </div>
-              </div>
-              <div className="flex flex-col items-center gap-1.5">
-                <p className="text-[11px] font-medium text-foreground opacity-45">Filter Solo</p>
-                <FadedTabs options={["Off"]} />
-              </div>
+          <div className="flex flex-col items-center gap-1.5">
+            <p className="text-[11px] font-medium text-foreground opacity-45">Range</p>
+            <FadedTabs options={["Split", "Wide"]} />
+          </div>
+          <div className="flex flex-col items-center gap-1.5">
+            <p className="text-[11px] font-medium text-foreground opacity-45">Filter</p>
+            <div className="flex gap-2">
+              <FadedIconButton>
+                <LowCutIcon />
+              </FadedIconButton>
+              <FadedIconButton>
+                <NotchIcon />
+              </FadedIconButton>
             </div>
+          </div>
+          <div className="flex flex-col items-center gap-1.5">
+            <p className="text-[11px] font-medium text-foreground opacity-45">Filter Solo</p>
+            <FadedTabs options={["Off"]} />
           </div>
         </div>
       </div>
