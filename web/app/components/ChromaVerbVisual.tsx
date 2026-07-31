@@ -1,4 +1,4 @@
-import { FadedArcKnob, FadedField, FadedSyncIcon, NumberArcKnob, NumberVerticalFader, PluginPanel, formatKnobValue } from "./controls/PluginKnobPrimitives";
+import { FadedArcKnob, FadedSyncIcon, FadedTabs, NumberArcKnob, NumberVerticalFader, PluginPanel, formatKnobValue } from "./controls/PluginKnobPrimitives";
 import { resolveControlValue } from "@/lib/registry/controlValues";
 import type { PluginRegistryEntry } from "@/lib/registry/types";
 import type { ControlValue } from "@/lib/schema/chain";
@@ -40,11 +40,18 @@ export function ChromaVerbVisual({ plugin, values }: { plugin: PluginRegistryEnt
       <div className="flex flex-1 flex-col gap-3 px-5 py-4">
         <div className="flex items-center justify-between gap-3">
           <p className="text-[11px] font-semibold tracking-[0.15em] text-supporting uppercase">Damping EQ</p>
-          <FadedField label="Algorithm" value="Room" />
-          <div className="flex gap-1">
-            <FadedField label="Main" value="Main" />
-            <FadedField label="Details" value="Details" />
-          </div>
+          {/* Room is the algorithm name, not a caption+value pair -- the
+              reference shows it alone, large and bold. Still faded/muted
+              rather than the reference's highlighted orange, though: it's
+              not backed by real registry data here, same reasoning as
+              every other unbacked-but-real-position element on this card. */}
+          <span className="rounded-lg border border-border bg-background px-4 py-1.5 text-base font-semibold text-muted opacity-45">Room</span>
+          {/* Neither option is backed by real data (this toggles the graph's
+              own display mode, not a generated parameter), so -- same
+              convention as Compressor's circuit-mode tabs or Side Chain/
+              Output -- neither renders as selected, even though the
+              reference shows "Main" active. */}
+          <FadedTabs options={["Main", "Details"]} />
         </div>
 
         <div className="flex w-full flex-1 items-center justify-center rounded-md border border-border bg-background/60 opacity-45">
@@ -52,8 +59,8 @@ export function ChromaVerbVisual({ plugin, values }: { plugin: PluginRegistryEnt
         </div>
 
         <div className="flex items-start divide-x divide-border border-t border-border pt-4">
-          <div className="flex flex-col gap-4 pr-9">
-            <div className="flex items-start gap-6">
+          <div className="flex flex-col gap-4 pr-[58px]">
+            <div className="flex items-start gap-12">
               <FadedArcKnob label="Attack" value="0 %" numericValue={0} size={REGULAR_SIZE} />
               <FadedArcKnob label="Size" value="60 %" numericValue={60} size={REGULAR_SIZE} />
               <FadedArcKnob label="Density" value="60 %" numericValue={60} size={REGULAR_SIZE} />
@@ -61,16 +68,16 @@ export function ChromaVerbVisual({ plugin, values }: { plugin: PluginRegistryEnt
             <PredelayField plugin={plugin} values={values} />
           </div>
 
-          <div className="flex flex-col items-center gap-2 px-9">
+          <div className="flex flex-col items-center gap-2 px-[58px]">
             <NumberArcKnob plugin={plugin} values={values} parameter="decay" size={DECAY_SIZE} minMax icon={<FadedSyncIcon />} />
-            <FadedField label="Freeze" value="Freeze" />
+            <FadedTabs options={["Freeze"]} />
           </div>
 
-          <div className="flex items-start px-9">
+          <div className="flex items-start px-[58px]">
             <FadedArcKnob label="Distance" value="50 %" numericValue={50} size={REGULAR_SIZE} />
           </div>
 
-          <div className="flex items-start gap-6 pl-9">
+          <div className="flex items-start gap-6 pl-[58px]">
             <NumberVerticalFader plugin={plugin} values={values} parameter="dry" />
             <NumberVerticalFader plugin={plugin} values={values} parameter="wet" />
           </div>
