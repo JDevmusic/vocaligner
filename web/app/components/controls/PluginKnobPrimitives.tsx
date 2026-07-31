@@ -114,8 +114,18 @@ export function Knob({
 }) {
   const start = knobPolarPoint(angleDeg, 11);
   const end = knobPolarPoint(angleDeg, 25);
+  // Label above the dial, sized to the dial itself -- matches ArcKnob's
+  // convention (this file's other knob family) and the real reference,
+  // rather than the small label-below treatment this used to render.
+  // Knob's only consumer is Compressor, whose own two sizes (PRIMARY_SIZE
+  // 104, SECONDARY_SIZE 78) sit well under ArcKnob's >=130 "large" cutoff,
+  // so the threshold here is its own, picked to fall between those two.
+  const isLarge = size >= 90;
   return (
     <div className={`flex flex-col items-center gap-1 ${faded ? "opacity-45" : ""}`}>
+      <p className={`whitespace-nowrap text-center font-medium tracking-wide text-muted uppercase ${isLarge ? "text-xs" : "text-[9px]"}`}>
+        {label}
+      </p>
       <svg width={size} height={size} viewBox="0 0 120 120">
         <circle cx="60" cy="60" r="27" fill="var(--background)" stroke="var(--border)" strokeWidth="1.5" />
         {ticks.map((t, i) => {
@@ -141,10 +151,9 @@ export function Knob({
           strokeLinecap="round"
         />
       </svg>
-      <div className="text-center">
-        <p className="text-[9px] font-medium tracking-wide text-muted uppercase">{label}</p>
-        <p className={faded ? "text-[10px] text-muted" : "text-[10px] font-semibold text-foreground"}>{value}</p>
-      </div>
+      <p className={`whitespace-nowrap text-center ${isLarge ? "text-sm" : "text-[10px]"} ${faded ? "text-muted" : "font-semibold text-foreground"}`}>
+        {value}
+      </p>
     </div>
   );
 }
@@ -300,9 +309,19 @@ export function FadedTabs({ options, dense }: { options: string[]; dense?: boole
 // curve, Overdrive's drive/tone response graph). Shown as a labeled, faded
 // placeholder occupying the real panel's layout position, not a fabricated
 // chart implying real readings.
-export function FadedDisplay({ label }: { label: string }) {
+//
+// `aspectRatio` sizes the box to the real plugin's own measured proportions
+// (e.g. Compressor's meter, ~2.92:1) instead of the default flex-1 behavior,
+// which stretches to fill whatever space its flex container has free -- a
+// placeholder with no content of its own has nothing to size itself by, so
+// left unconstrained it can end up dominating the panel instead of matching
+// the real element's real footprint.
+export function FadedDisplay({ label, aspectRatio }: { label: string; aspectRatio?: string }) {
   return (
-    <div className="flex h-20 w-full min-w-[220px] flex-1 items-center justify-center rounded-lg border border-border bg-background/60 opacity-45">
+    <div
+      className={`flex w-full min-w-[220px] items-center justify-center rounded-lg border border-border bg-background/60 opacity-45 ${aspectRatio ? "" : "h-20 flex-1"}`}
+      style={aspectRatio ? { aspectRatio } : undefined}
+    >
       <p className="text-[10px] font-medium tracking-wide text-muted uppercase">{label}</p>
     </div>
   );

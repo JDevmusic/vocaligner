@@ -24,6 +24,39 @@ const MIX_TICKS = [
   { angleDeg: 135, label: "Output" },
 ];
 
+// The real panel's meter box is a much smaller fraction of the panel than a
+// flex-1 placeholder assumes -- measured directly against the reference
+// (docs/images/reference/Compressor_plugin.png): the meter's outer bezel is
+// ~1101px wide by ~421px tall at the screenshot's own resolution (the first
+// pass at this measurement missed how much thicker the bezel is at the
+// bottom than the top -- re-measured to the true outer edge, not just the
+// grey gauge content), a ~2.62:1 ratio.
+const METER_ASPECT_RATIO = "2.62 / 1";
+
+// Large, two-line circuit-mode buttons spanning the meter box's full width --
+// validated against the reference, where this row's width matches the meter
+// box's width exactly. Bespoke to Compressor (the generic FadedTabs' dense
+// single-line pills don't match this specific row), all 7 options are real
+// two-word labels so splitting on the space is reliable.
+function CircuitModeTabs({ options }: { options: string[] }) {
+  return (
+    <div className="flex w-full gap-1.5 opacity-45">
+      {options.map((option) => {
+        const [first, second] = option.split(" ");
+        return (
+          <span
+            key={option}
+            className="flex flex-1 flex-col items-center justify-center rounded-md border border-border bg-background px-1 py-2.5 text-center text-[10px] font-medium leading-tight text-muted"
+          >
+            <span>{first}</span>
+            <span>{second}</span>
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 // A full-height meter-strip-into-knob column -- no live signal to show (so
 // just a faded placeholder bar, not fabricated readings), knob pinned at
 // the bottom. Same pattern as the panel's outer edges on both sides.
@@ -55,8 +88,8 @@ function GainColumn({ children }: { children: React.ReactNode }) {
 // asserts a choice that wasn't made.
 export function CompressorVisual({ plugin, values }: { plugin: PluginRegistryEntry; values: ControlValue[] }) {
   return (
-    <PluginPanel plugin={plugin} width="1000px" aspectRatio="1.3 / 1">
-      <div className="flex flex-1 divide-x divide-border px-6 py-5">
+    <PluginPanel plugin={plugin} width="1000px">
+      <div className="flex divide-x divide-border px-6 py-5">
         <div className="flex flex-col pr-6" style={{ flexGrow: 1 }}>
           <GainColumn>
             <FadedKnob label="Input Gain" value="0 dB" min={-30} max={30} def={0} size={SECONDARY_SIZE} />
@@ -64,15 +97,28 @@ export function CompressorVisual({ plugin, values }: { plugin: PluginRegistryEnt
         </div>
 
         <div className="flex flex-col gap-4 px-6" style={{ flexGrow: 3 }}>
-          <FadedTabs options={CIRCUIT_MODES} dense />
-          <FadedDisplay label="Gain Reduction Meter" />
+          <CircuitModeTabs options={CIRCUIT_MODES} />
+          <FadedDisplay label="Gain Reduction Meter" aspectRatio={METER_ASPECT_RATIO} />
 
           <div className="grid grid-cols-4 items-start gap-6">
             <NumberKnob plugin={plugin} values={values} parameter="threshold" size={PRIMARY_SIZE} />
             <NumberKnob plugin={plugin} values={values} parameter="ratio" size={PRIMARY_SIZE} />
             <NumberKnob plugin={plugin} values={values} parameter="makeupGain" size={PRIMARY_SIZE} />
-            <div className="flex flex-col items-center gap-2">
-              <SectionHeading>Auto Gain</SectionHeading>
+            <div className="relative flex flex-col items-center" style={{ marginTop: 20.25 }}>
+              {/* Every knob now has its own label above its dial (matches
+                  the reference/ArcKnob convention), so Threshold/Ratio/Make
+                  Up's own dial centers no longer sit at the row's top edge --
+                  they're offset by that label's height + gap-1 (~20px).
+                  This cell's marginTop reproduces that same offset so the
+                  button stack (first flow child) starts where the knobs'
+                  own SVGs do, landing the two centers together. The floated
+                  "Auto Gain" heading below rides along with this shift too,
+                  which is what actually clears the meter's bottom edge --
+                  without it, the heading (anchored to this cell's top)
+                  overlapped the meter. */}
+              <div className="absolute inset-x-0 bottom-full pb-1">
+                <SectionHeading>Auto Gain</SectionHeading>
+              </div>
               <div className="flex flex-col gap-1.5 opacity-45">
                 <FadedTabs options={["Off"]} />
                 <FadedTabs options={["0 dB"]} />
@@ -85,7 +131,7 @@ export function CompressorVisual({ plugin, values }: { plugin: PluginRegistryEnt
             <FadedKnob label="Knee" value="0.60" min={0.2} max={0.8} def={0.6} size={SECONDARY_SIZE} />
             <NumberKnob plugin={plugin} values={values} parameter="attack" size={SECONDARY_SIZE} />
             <NumberKnob plugin={plugin} values={values} parameter="release" size={SECONDARY_SIZE} />
-            <div className="flex items-center pt-8">
+            <div className="flex flex-col items-center pt-8">
               <FadedTabs options={["Auto"]} />
             </div>
           </div>
@@ -94,19 +140,28 @@ export function CompressorVisual({ plugin, values }: { plugin: PluginRegistryEnt
         <div className="flex gap-6 pl-6" style={{ flexGrow: 1.6 }}>
           <div className="flex flex-1 flex-col gap-5">
             <FadedTabs options={["Side Chain", "Output"]} dense />
-            {/* Mirrors the gain-reduction meter's flex-1 growth on the
-                middle section, so Limiter/Distortion land level with
-                Threshold/Ratio/Make Up (both columns are the same overall
-                height, so an equal-proportioned spacer on this side keeps
-                them starting at the same Y) rather than riding much higher
-                since this column has far less content above it. */}
-            <div className="flex-1" />
-            <div className="flex flex-col items-center gap-2">
+            {/* Side Chain/Output's single-line tabs are shorter than Circuit
+                Mode's two-line ones on the other side, so the normal gap-5
+                alone lands Limiter above the meter's top edge instead of
+                level with it. This adds exactly the difference (measured:
+                circuit-tabs-row height 47px vs side-chain-row height 19.5px,
+                minus the 4px gap-4/gap-5 difference) on top of that gap. */}
+            <div className="flex flex-col items-center gap-2" style={{ marginTop: 23.5 }}>
               <SectionHeading>Limiter</SectionHeading>
               <FadedTabs options={["On"]} />
               <FadedKnob label="Threshold" value="-4 dB" min={-10} max={0} def={-4} size={SECONDARY_SIZE} />
             </div>
-            <FadedKnob label="Distortion" value="Off" ticks={DISTORTION_TICKS} size={SECONDARY_SIZE} />
+            {/* The real reference has a genuinely bigger gap here than
+                between Distortion and Mix below it (pixel-measured: ~11% of
+                panel height, vs ~2.5% for Distortion-Mix) -- this column's
+                content is naturally shorter than the middle column's two
+                knob rows, and this is where that real proportional
+                difference actually sits, not an arbitrary balancer. Sized
+                so Mix lands level with Row 2/Output Gain (on top of the
+                existing gap-5, for a ~62px total gap). */}
+            <div style={{ marginTop: 42.3 }}>
+              <FadedKnob label="Distortion" value="Off" ticks={DISTORTION_TICKS} size={SECONDARY_SIZE} />
+            </div>
             <FadedKnob label="Mix" value="1:1" ticks={MIX_TICKS} size={SECONDARY_SIZE} />
           </div>
           <GainColumn>
