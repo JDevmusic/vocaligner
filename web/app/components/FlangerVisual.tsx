@@ -22,7 +22,29 @@ export function FlangerVisual({ plugin, values }: { plugin: PluginRegistryEntry;
         </div>
         <div className="flex items-start gap-5">
           <NumberArcKnob plugin={plugin} values={values} parameter="rate" size={KNOB_SIZE} minMax />
-          <NumberArcKnob plugin={plugin} values={values} parameter="intensity" size={KNOB_SIZE} />
+          {/* Intensity's real dial doesn't follow its printed 0-100 range
+              linearly -- pixel-measured against the reference (needle
+              direction fit directly from its pixel coordinates, independent
+              of any assumed knob center, to avoid the center-estimation
+              error a naive radius/angle scan is prone to): at 50.0%, the
+              needle sits at ~25deg clockwise of 12 o'clock (~59% of the
+              270deg sweep), not 0deg/50% as plain linear predicts. Mix,
+              same 0-100 range, right next to it on the same reference,
+              measures ~0deg at its own 50% -- confirming this is specific
+              to Intensity, not a shared bug. logFloor=18.3 is fit by
+              solving `logKnobRotationDeg`'s formula backward from that one
+              measured point (the only real Intensity reference value this
+              project has); the registry's real min/max (0/100) and the
+              printed "50.0%" label are unchanged, only the internal angle
+              math uses the fitted floor -- same treatment as ChromaVerb's
+              Decay. Single-point fit: re-tighten if a second real Intensity
+              reference value ever turns up.
+              Separately (not fixed here, flagging for a future round):
+              Feedback's needle on this same reference (67%, bipolar -100..
+              100) measures ~101deg where a linear bipolar mapping predicts
+              ~90deg -- a smaller but real-looking deviation worth checking
+              later. */}
+          <NumberArcKnob plugin={plugin} values={values} parameter="intensity" size={KNOB_SIZE} log logFloor={18.3} />
           <NumberArcKnob plugin={plugin} values={values} parameter="feedback" size={KNOB_SIZE} bipolar />
           <NumberArcKnob plugin={plugin} values={values} parameter="mix" size={KNOB_SIZE} />
         </div>
