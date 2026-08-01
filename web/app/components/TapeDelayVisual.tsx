@@ -44,7 +44,7 @@ function DeviationField() {
 
 function SmoothingSlider() {
   return (
-    <div className="flex flex-col gap-1.5 opacity-45">
+    <div className="mx-auto mt-auto flex w-1/2 flex-col gap-1.5 opacity-45">
       <div className="flex items-baseline justify-between">
         <p className="whitespace-nowrap text-[11px] font-medium text-foreground">Smoothing</p>
         <p className="whitespace-nowrap text-sm font-semibold text-muted">40 ms</p>
@@ -56,7 +56,7 @@ function SmoothingSlider() {
 
 function CutRangeSlider() {
   return (
-    <div className="flex flex-col gap-1.5 opacity-45">
+    <div className="mt-auto flex flex-col gap-1.5 opacity-45">
       <div className="flex items-baseline justify-between">
         <div>
           <p className="whitespace-nowrap text-[11px] font-medium text-foreground">Low Cut</p>
@@ -67,7 +67,9 @@ function CutRangeSlider() {
           <p className="whitespace-nowrap text-sm font-semibold text-muted">1500 Hz</p>
         </div>
       </div>
-      <DualRangeTrack orientation="horizontal" lowerPercent={47} upperPercent={58} faded />
+      <div className="mx-auto w-3/5">
+        <DualRangeTrack orientation="horizontal" lowerPercent={47} upperPercent={58} faded />
+      </div>
     </div>
   );
 }
