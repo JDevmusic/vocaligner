@@ -90,10 +90,34 @@ function knobPolarPoint(angleDeg: number, radius: number) {
 
 // Computes ticks for a real numeric range -- the mechanical, no-research-
 // needed path used by every NumberKnob and any FadedKnob given a real min/max.
-export function numericTicks(min: number, max: number): KnobTick[] {
-  return niceTickValues(min, max).map((t) => ({
-    angleDeg: getKnobRotationDeg(t, min, max),
-    label: String(Math.round(t * 100) / 100),
+// `values` overrides the auto-generated evenly-spaced set entirely (e.g.
+// Compressor Ratio's real dial ticks are deliberately irregular -- 1, 1.4, 2,
+// 3, 5, 8, 12, 20, 30 -- with increasing gaps toward the high end, something
+// the evenly-spaced generator can't produce); `exclude` instead just drops
+// specific values from whichever set (auto-generated or explicit) would
+// otherwise be shown. `log` switches every tick's angle from the default
+// linear `getKnobRotationDeg` to `logKnobRotationDeg` -- for a wide-range
+// dial that reads log-scaled on the real panel (Compressor's Ratio/Release),
+// linear angles bunch the low end illegibly close to the minimum stop, same
+// problem Overdrive's Tone knob had (`NumberArcKnob`'s own `log` option).
+// `formatLabel` overrides the default plain-rounded-number label for a
+// specific dial's printed convention (e.g. Release's 1000/2000/5000 print
+// as "1k"/"2k"/"5k" on the real panel, same convention as Channel EQ's own
+// `freqLabelText`) -- defaults to the plain-number behavior every other
+// numeric knob in the app relies on, so this is opt-in per knob, not a
+// shared format change.
+export function numericTicks(
+  min: number,
+  max: number,
+  options?: { values?: number[]; exclude?: number[]; log?: boolean; formatLabel?: (value: number) => string }
+): KnobTick[] {
+  const raw = options?.values ?? niceTickValues(min, max);
+  const filtered = options?.exclude ? raw.filter((v) => !options.exclude!.includes(v)) : raw;
+  const rotation = options?.log ? logKnobRotationDeg : getKnobRotationDeg;
+  const formatLabel = options?.formatLabel ?? ((value: number) => String(Math.round(value * 100) / 100));
+  return filtered.map((t) => ({
+    angleDeg: rotation(t, min, max),
+    label: formatLabel(t),
   }));
 }
 
@@ -217,7 +241,31 @@ interface ControlProps {
 // Compressor design spike -- Threshold/Ratio/Make Up (data-backed, primary)
 // are visibly larger than Knee/Attack/Release (secondary) below them,
 // matching the real panel's own emphasis.
-export function NumberKnob({ plugin, values, parameter, size }: ControlProps & { size?: number }) {
+// `tickValues`/`excludeTicks` pass straight through to `numericTicks` --
+// see its own comment for what each does. Both are optional escape hatches
+// off the default evenly-spaced auto-generated set. `log` switches both the
+// value needle and every tick from linear to `logKnobRotationDeg` -- for a
+// wide-range dial the real panel renders log-scaled (Compressor's
+// Ratio/Release), same convention as `NumberArcKnob`'s own `log` option.
+// `formatTickLabel` passes through to `numericTicks`'s `formatLabel` --
+// only overrides a specific tick's printed text, not the knob's own
+// value/unit readout below the dial (`formatKnobValue`, unaffected).
+export function NumberKnob({
+  plugin,
+  values,
+  parameter,
+  size,
+  tickValues,
+  excludeTicks,
+  log,
+  formatTickLabel,
+}: ControlProps & {
+  size?: number;
+  tickValues?: number[];
+  excludeTicks?: number[];
+  log?: boolean;
+  formatTickLabel?: (value: number) => string;
+}) {
   const definition = plugin.controls.find((c) => c.parameter === parameter);
   const raw = resolveControlValue(plugin, values, parameter);
   const value = typeof raw === "number" ? raw : 0;
@@ -226,8 +274,8 @@ export function NumberKnob({ plugin, values, parameter, size }: ControlProps & {
     <Knob
       label={formatParameterLabel(parameter)}
       value={formatKnobValue(parameter, value, definition?.unit)}
-      angleDeg={getKnobRotationDeg(value, range.min, range.max)}
-      ticks={numericTicks(range.min, range.max)}
+      angleDeg={log ? logKnobRotationDeg(value, range.min, range.max) : getKnobRotationDeg(value, range.min, range.max)}
+      ticks={numericTicks(range.min, range.max, { values: tickValues, exclude: excludeTicks, log, formatLabel: formatTickLabel })}
       size={size}
     />
   );

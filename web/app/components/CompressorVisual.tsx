@@ -24,6 +24,33 @@ const MIX_TICKS = [
   { angleDeg: 135, label: "Output" },
 ];
 
+// Ratio's real dial ticks are deliberately irregular -- increasing gaps
+// toward the high end (0.4, 0.6, 1, 2, 3, 4, 8, 10) -- read directly off
+// the reference, not something the shared evenly-spaced auto-generator can
+// produce. Passed as explicit values to `NumberKnob`, which still computes
+// each one's angle from the real value via the normal knob rotation math --
+// log-scaled (`log` prop below), not linear: Ratio's 1-30 range is wide
+// enough that the real dial reads log-scaled, same as Overdrive's Tone --
+// a linear mapping bunches 1/1.4/2/3 illegibly close to the minimum stop.
+const RATIO_TICK_VALUES = [1, 1.4, 2, 3, 5, 8, 12, 20, 30];
+
+// Release's real dial ticks, read directly off the reference -- same
+// reasoning as Ratio above: a 5-5000ms range reads log-scaled, and the
+// generic evenly-spaced auto-generator doesn't match the reference's own
+// tick set at all.
+const RELEASE_TICK_VALUES = [5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000];
+
+// The reference prints Release's four-figure ticks abbreviated ("1k"/"2k"/
+// "5k"), same "k" convention as Channel EQ's own `freqLabelText` -- everything
+// else on this dial (5-500) stays a plain number.
+function formatReleaseTickLabel(value: number): string {
+  return value >= 1000 ? `${value / 1000}k` : String(value);
+}
+
+// A deliberate deviation from the reference (which does print "40" here):
+// the founder asked for it dropped, not a fidelity correction.
+const MAKEUP_GAIN_EXCLUDED_TICKS = [40];
+
 // The real panel's meter box is a much smaller fraction of the panel than a
 // flex-1 placeholder assumes -- measured directly against the reference
 // (docs/images/reference/Compressor_plugin.png): the meter's outer bezel is
@@ -102,8 +129,14 @@ export function CompressorVisual({ plugin, values }: { plugin: PluginRegistryEnt
 
           <div className="grid grid-cols-4 items-start gap-6">
             <NumberKnob plugin={plugin} values={values} parameter="threshold" size={PRIMARY_SIZE} />
-            <NumberKnob plugin={plugin} values={values} parameter="ratio" size={PRIMARY_SIZE} />
-            <NumberKnob plugin={plugin} values={values} parameter="makeupGain" size={PRIMARY_SIZE} />
+            <NumberKnob plugin={plugin} values={values} parameter="ratio" size={PRIMARY_SIZE} tickValues={RATIO_TICK_VALUES} log />
+            <NumberKnob
+              plugin={plugin}
+              values={values}
+              parameter="makeupGain"
+              size={PRIMARY_SIZE}
+              excludeTicks={MAKEUP_GAIN_EXCLUDED_TICKS}
+            />
             <div className="relative flex flex-col items-center" style={{ marginTop: 20.25 }}>
               {/* Every knob now has its own label above its dial (matches
                   the reference/ArcKnob convention), so Threshold/Ratio/Make
@@ -128,9 +161,17 @@ export function CompressorVisual({ plugin, values }: { plugin: PluginRegistryEnt
           </div>
 
           <div className="grid grid-cols-4 items-start gap-6">
-            <FadedKnob label="Knee" value="0.60" min={0.2} max={0.8} def={0.6} size={SECONDARY_SIZE} />
+            <FadedKnob label="Knee" value="0.60" min={0} max={1.0} def={0.6} size={SECONDARY_SIZE} />
             <NumberKnob plugin={plugin} values={values} parameter="attack" size={SECONDARY_SIZE} />
-            <NumberKnob plugin={plugin} values={values} parameter="release" size={SECONDARY_SIZE} />
+            <NumberKnob
+              plugin={plugin}
+              values={values}
+              parameter="release"
+              size={SECONDARY_SIZE}
+              tickValues={RELEASE_TICK_VALUES}
+              log
+              formatTickLabel={formatReleaseTickLabel}
+            />
             <div className="flex flex-col items-center pt-8">
               <FadedTabs options={["Auto"]} />
             </div>

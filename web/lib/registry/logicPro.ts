@@ -64,11 +64,11 @@ const rawEntries: PluginRegistryEntry[] = [
     daw: "logic-pro",
     tier: "stock",
     controls: [
-      { parameter: "threshold", type: "number", unit: "dB", min: -60, max: 0, default: -20 },
-      { parameter: "ratio", type: "number", min: 1, max: 20, default: 4 },
-      { parameter: "attack", type: "number", unit: "ms", min: 0.1, max: 100, default: 10 },
-      { parameter: "release", type: "number", unit: "ms", min: 10, max: 1000, default: 150 },
-      { parameter: "makeupGain", type: "number", unit: "dB", min: 0, max: 24, default: 0 },
+      { parameter: "threshold", type: "number", unit: "dB", min: -50, max: 0, default: -20 },
+      { parameter: "ratio", type: "number", min: 1, max: 30, default: 4 },
+      { parameter: "attack", type: "number", unit: "ms", min: 0, max: 200, default: 10 },
+      { parameter: "release", type: "number", unit: "ms", min: 5, max: 5000, default: 150 },
+      { parameter: "makeupGain", type: "number", unit: "dB", min: -20, max: 50, default: 0 },
     ],
     education: {
       whyUsed:
