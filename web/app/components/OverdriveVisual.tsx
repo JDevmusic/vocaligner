@@ -85,8 +85,16 @@ export function OverdriveVisual({ plugin, values }: { plugin: PluginRegistryEntr
         <div className="grid grid-cols-2 items-start justify-items-center gap-x-8 gap-y-10 pr-6">
           <NumberArcKnob plugin={plugin} values={values} parameter="drive" minMax />
           <NumberArcKnob plugin={plugin} values={values} parameter="output" minMax refValue={0} refLabel="0" />
-          <NumberArcKnob plugin={plugin} values={values} parameter="tone" minLabel="20" maxLabel="20k" />
-          <BooleanToggle plugin={plugin} values={values} parameter="levelCompensation" />
+          <NumberArcKnob plugin={plugin} values={values} parameter="tone" minLabel="20" maxLabel="20k" log />
+          {/* NumberArcKnob has two text lines (label + value) above its dial;
+              BooleanToggle's TogglePill only has one (its label) above the
+              button, so top-aligning them in this grid row leaves the
+              button sitting above Tone's own dial center. mt-6 tops up that
+              one-line difference, same fix as Compressor's Auto Gain
+              offset. */}
+          <div className="mt-[51px]">
+            <BooleanToggle plugin={plugin} values={values} parameter="levelCompensation" />
+          </div>
         </div>
         <div className="flex pl-6">
           <ResponseGraph driveDb={driveDb} toneHz={toneHz} />

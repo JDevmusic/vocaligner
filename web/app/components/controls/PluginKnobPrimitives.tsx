@@ -1,4 +1,4 @@
-import { getKnobRotationDeg, invertedKnobRotationDeg } from "@/lib/controls/knobRotation";
+import { getKnobRotationDeg, invertedKnobRotationDeg, logKnobRotationDeg } from "@/lib/controls/knobRotation";
 import { niceTickValues } from "@/lib/controls/knobTicks";
 import { formatParameterLabel } from "@/lib/format/parameterLabel";
 import { resolveControlRange, resolveControlValue } from "@/lib/registry/controlValues";
@@ -191,11 +191,16 @@ function formatNumber(value: number): string {
   return String(Math.round(value * 100) / 100);
 }
 
-// Ratio is the one existing control that needs plugin-specific display
-// convention (Logic shows compressor ratio as "4:1", not "4"); everything
-// else is a plain rounded value + its registry unit.
+// A few controls need plugin-specific display convention instead of
+// formatNumber's trailing-zero-dropping default: Ratio prints "4:1", not
+// "4" (Compressor); Overdrive's Drive/Output print a fixed decimal count
+// on the real panel (Drive: 2dp "6.00", Output: 1dp "-0.0") confirmed
+// against Overdrive_plugin.png, regardless of whether the underlying value
+// happens to round cleanly.
 export function formatKnobValue(parameter: string, value: number, unit?: string): string {
   if (parameter === "ratio") return `${formatNumber(value)}:1`;
+  if (parameter === "drive") return unit ? `${value.toFixed(2)} ${unit}` : value.toFixed(2);
+  if (parameter === "output") return unit ? `${value.toFixed(1)} ${unit}` : value.toFixed(1);
   return unit ? `${formatNumber(value)} ${unit}` : formatNumber(value);
 }
 
@@ -453,6 +458,7 @@ export interface NumberArcKnobProps extends ControlProps {
   maxLabel?: string;
   bipolar?: boolean;
   invert?: boolean;
+  log?: boolean;
   label?: string;
   icon?: React.ReactNode;
   refValue?: number;
@@ -463,22 +469,27 @@ export interface NumberArcKnobProps extends ControlProps {
 // (confirmed against the reference's own printed labels, not assumed) --
 // same fraction-of-range math as a normal knob, just mapped onto the angle
 // range backwards, via `invertedKnobRotationDeg` from
-// `web/lib/controls/knobRotation.ts`. `label` overrides the auto-derived
-// parameter label for cases where the real panel's own label differs from
-// the registry parameter name (e.g. Phaser's `feedback` control is labeled
-// "Level" on the real panel -- the section header already says FEEDBACK).
-// `minLabel`/`maxLabel` override `minMax`'s auto-derived registry min/max
-// text for a cosmetic display difference (e.g. Overdrive's Tone prints
-// "20k" on the real panel, not the registry's literal "20000") -- the
-// underlying value/range/fill math is unaffected, only the printed text.
-export function NumberArcKnob({ plugin, values, parameter, size, minMax, minLabel, maxLabel, bipolar, invert, label, icon, refValue, refLabel }: NumberArcKnobProps) {
+// `web/lib/controls/knobRotation.ts`. `log`: Overdrive's Tone dial sweeps a
+// frequency range (20Hz-20kHz), which reads log-scaled rather than linear
+// (confirmed against the reference -- see `logKnobRotationDeg`'s own
+// comment). `label` overrides the auto-derived parameter label for cases
+// where the real panel's own label differs from the registry parameter
+// name (e.g. Phaser's `feedback` control is labeled "Level" on the real
+// panel -- the section header already says FEEDBACK). `minLabel`/`maxLabel`
+// override `minMax`'s auto-derived registry min/max text for a cosmetic
+// display difference (e.g. Overdrive's Tone prints "20k" on the real
+// panel, not the registry's literal "20000") -- the underlying
+// value/range/fill math is unaffected, only the printed text.
+export function NumberArcKnob({ plugin, values, parameter, size, minMax, minLabel, maxLabel, bipolar, invert, log, label, icon, refValue, refLabel }: NumberArcKnobProps) {
   const definition = plugin.controls.find((c) => c.parameter === parameter);
   const raw = resolveControlValue(plugin, values, parameter);
   const value = typeof raw === "number" ? raw : 0;
   const range = resolveControlRange(plugin, parameter);
   const angleDeg = invert
     ? invertedKnobRotationDeg(value, range.min, range.max)
-    : arcKnobRotationDeg(value, range.min, range.max);
+    : log
+      ? logKnobRotationDeg(value, range.min, range.max)
+      : arcKnobRotationDeg(value, range.min, range.max);
   const startDeg = bipolar ? arcKnobRotationDeg((range.min + range.max) / 2, range.min, range.max) : ARC_KNOB_MIN_DEG;
   const resolvedMinLabel = minLabel ?? (minMax ? String(invert ? range.max : range.min) : undefined);
   const resolvedMaxLabel = maxLabel ?? (minMax ? String(invert ? range.min : range.max) : undefined);
