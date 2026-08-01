@@ -715,7 +715,13 @@ export function StringDropdown({ plugin, values, parameter }: ControlProps) {
 // Large, centered section title (SWEEP, DELAY, FEEDBACK, etc.) -- validated
 // in the Tape Delay and Phaser design spikes, where the real panel's own
 // titles are noticeably large and centered within their section's width,
-// not `KnobSection`'s small left-aligned heading.
-export function SectionHeading({ children }: { children: React.ReactNode }) {
-  return <p className="text-center text-base font-semibold tracking-[0.15em] text-supporting uppercase">{children}</p>;
+// not `KnobSection`'s small left-aligned heading. `large` sizes the text up
+// further still -- Phaser's own reference titles read noticeably bigger
+// than this default already is, pixel-measured relative to its own knob
+// diameter. Opt-in per plugin rather than a default change, since Compressor/
+// DeEsser 2/Tape Delay/etc. already signed off on the current default size.
+export function SectionHeading({ children, large }: { children: React.ReactNode; large?: boolean }) {
+  return (
+    <p className={`text-center font-semibold tracking-[0.15em] text-supporting uppercase ${large ? "text-3xl" : "text-base"}`}>{children}</p>
+  );
 }

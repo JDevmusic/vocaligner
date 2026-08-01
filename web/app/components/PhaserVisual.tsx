@@ -1,4 +1,5 @@
 import {
+  ArcKnob,
   BooleanToggle,
   DualRangeTrack,
   FadedArcKnob,
@@ -12,14 +13,65 @@ import {
   StringDropdown,
   formatKnobValue,
 } from "./controls/PluginKnobPrimitives";
+import { formatParameterLabel } from "@/lib/format/parameterLabel";
 import { resolveControlValue } from "@/lib/registry/controlValues";
 import type { PluginRegistryEntry } from "@/lib/registry/types";
 import type { ControlValue } from "@/lib/schema/chain";
 
-function logFraction(value: number, min: number, max: number): number {
-  const clampedMin = Math.max(min, 1e-6);
+// `epsilon` floors the range's minimum before taking its log, same trick
+// Ceiling/Floor below needs for its own Hz range -- generalized here (was
+// hardcoded 1e-6) because Rate 1/2's 0-10 range needs a much bigger floor:
+// see RATE_LOG_EPSILON below for why 1e-6 doesn't transfer.
+function logFraction(value: number, min: number, max: number, epsilon = 1e-6): number {
+  const clampedMin = Math.max(min, epsilon);
   const clamped = Math.min(max, Math.max(clampedMin, value));
   return (Math.log(clamped) - Math.log(clampedMin)) / (Math.log(max) - Math.log(clampedMin));
+}
+
+const ARC_MIN_DEG = -135;
+const ARC_MAX_DEG = 135;
+
+// Rate 1/2's real dial reads log-scaled, not linear (confirmed by pixel-
+// measuring both needles' actual angles in the reference: at their real
+// values, Rate 1 (0.24Hz) sits at roughly -120deg and Rate 2 (0.48Hz) at
+// roughly -85deg, versus a plain linear mapping's -122deg/-122deg -- Rate 2
+// is barely past Rate 1 under linear, but the reference shows it noticeably
+// further along). Unlike Tone's 20Hz-20kHz mapping (Overdrive,
+// `logKnobRotationDeg`), this range starts at exactly 0, so a direct log10
+// mapping is undefined at the minimum -- the epsilon-floor trick `logFraction`
+// already uses for Ceiling/Floor's Hz slider transfers, but NOT with that
+// same 1e-6 floor: over an 0-10 range, 1e-6 is so small it compresses both
+// real values up near the maximum (a direct check put Rate 1 past 75%,
+// nowhere close to the reference). RATE_LOG_EPSILON=0.214 is instead fit by
+// least-squares against both measured needle angles simultaneously --
+// landing within ~7deg of each (roughly a quarter of a clock-hour), the
+// closest a single-parameter epsilon can get both points at once.
+const RATE_LOG_EPSILON = 0.214;
+
+function rateKnobAngleDeg(value: number, min: number, max: number): number {
+  const fraction = logFraction(value, min, max, RATE_LOG_EPSILON);
+  return ARC_MIN_DEG + fraction * (ARC_MAX_DEG - ARC_MIN_DEG);
+}
+
+// Rate 1/2 need the custom log mapping above, which `NumberArcKnob` has no
+// hook for -- rendered via the lower-level `ArcKnob` directly instead,
+// reproducing the same label/value/minLabel formatting `NumberArcKnob`
+// would have produced.
+function RateKnob({ plugin, values, parameter }: { plugin: PluginRegistryEntry; values: ControlValue[]; parameter: string }) {
+  const definition = plugin.controls.find((c) => c.parameter === parameter);
+  const raw = resolveControlValue(plugin, values, parameter);
+  const value = typeof raw === "number" ? raw : 0;
+  const min = definition?.min ?? 0;
+  const max = definition?.max ?? 10;
+  return (
+    <ArcKnob
+      label={formatParameterLabel(parameter)}
+      value={formatKnobValue(parameter, value, definition?.unit)}
+      angleDeg={rateKnobAngleDeg(value, min, max)}
+      minLabel="0"
+      maxLabel="10"
+    />
+  );
 }
 
 // Ceiling/Floor is one shared dual-handle vertical range slider, not two
@@ -43,7 +95,12 @@ function CeilingFloorSlider({ plugin, values }: { plugin: PluginRegistryEntry; v
       <p className="whitespace-nowrap text-[11px] font-medium text-foreground">Ceiling</p>
       <p className="whitespace-nowrap text-sm font-semibold text-brand-accent">{formatKnobValue("ceiling", ceiling, ceilingDef?.unit)}</p>
       <DualRangeTrack orientation="vertical" lowerPercent={bottomFraction} upperPercent={topFraction} />
-      <p className="whitespace-nowrap text-[11px] font-medium text-foreground">Floor</p>
+      {/* Floor sat higher than Sweep Mode beside it -- the reference has
+          both on the same baseline. This column's own gap-1 is too tight
+          to reach that row on its own (Sweep Mode's column instead relies
+          on a fixed 50px gap against Stages); pixel-measured against the
+          render to land Floor's caption on the same row. */}
+      <p className="mt-[29px] whitespace-nowrap text-[11px] font-medium text-foreground">Floor</p>
       <p className="whitespace-nowrap text-sm font-semibold text-brand-accent">{formatKnobValue("floor", floor, floorDef?.unit)}</p>
     </div>
   );
@@ -81,7 +138,7 @@ export function PhaserVisual({ plugin, values }: { plugin: PluginRegistryEntry; 
     <PluginPanel plugin={plugin} width="1000px" aspectRatio="2.45 / 1">
       <div className="grid flex-1 divide-x divide-border px-5 py-5" style={{ gridTemplateColumns: "2.3fr 3.8fr 3.1fr minmax(90px, 0.9fr)" }}>
         <div className="flex flex-col gap-4 pr-5">
-          <SectionHeading>Sweep</SectionHeading>
+          <SectionHeading large>Sweep</SectionHeading>
           <div className="flex justify-center gap-6">
             <div className="flex flex-col items-center gap-[50px]">
               <NumberArcKnob plugin={plugin} values={values} parameter="stages" minLabel="4" maxLabel="12" />
@@ -92,35 +149,46 @@ export function PhaserVisual({ plugin, values }: { plugin: PluginRegistryEntry; 
         </div>
 
         <div className="flex flex-col gap-5 px-5">
-          <SectionHeading>LFO</SectionHeading>
+          <SectionHeading large>LFO</SectionHeading>
           <div className="flex items-start justify-center gap-6">
-            <div className="flex flex-col items-center gap-2">
-              <NumberArcKnob plugin={plugin} values={values} parameter="rate1" minLabel="0" maxLabel="10" />
-              <FadedSyncIcon />
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <NumberArcKnob plugin={plugin} values={values} parameter="rate2" minLabel="0" maxLabel="10" />
-              <FadedSyncIcon />
+            {/* Mix's slider only spans Rate 1+2's own width in the reference,
+                stopping well short of Phase -- nested in its own column so
+                LfoMixSlider's `w-full` matches just these two knobs, not the
+                whole LFO section (Phase sits outside this wrapper). */}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-start gap-6">
+                <div className="flex flex-col items-center gap-2">
+                  <RateKnob plugin={plugin} values={values} parameter="rate1" />
+                  <FadedSyncIcon />
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <RateKnob plugin={plugin} values={values} parameter="rate2" />
+                  <FadedSyncIcon />
+                </div>
+              </div>
+              <LfoMixSlider />
             </div>
             <FadedArcKnob label="Phase" value="+180 °" numericValue={180} min={0} max={360} />
           </div>
-          <LfoMixSlider />
         </div>
 
         <div className="flex flex-col gap-4 px-5">
-          <SectionHeading>Feedback</SectionHeading>
+          <SectionHeading large>Feedback</SectionHeading>
           <div className="flex items-start justify-center gap-6">
             <div className="flex flex-col items-center gap-4">
               <NumberArcKnob plugin={plugin} values={values} parameter="feedback" label="Level" />
               <BooleanToggle plugin={plugin} values={values} parameter="warmth" />
             </div>
-            <FadedVerticalFader label="Low Cut" value="20 Hz" percent={3} />
-            <FadedVerticalFader label="High Cut" value="20000 Hz" percent={97} />
+            {/* Taller than the shared FADER_HEIGHT default -- pixel-measured
+                against the reference, both faders visibly extend below the
+                Warmth button beside them, not stop above it. */}
+            <FadedVerticalFader label="Low Cut" value="20 Hz" percent={3} height={190} />
+            <FadedVerticalFader label="High Cut" value="20000 Hz" percent={97} height={190} />
           </div>
         </div>
 
         <div className="flex flex-col gap-4 pl-5">
-          <SectionHeading>Out</SectionHeading>
+          <SectionHeading large>Out</SectionHeading>
           <div className="flex items-start justify-center">
             <NumberVerticalFader plugin={plugin} values={values} parameter="mix" plusPrefix />
           </div>
