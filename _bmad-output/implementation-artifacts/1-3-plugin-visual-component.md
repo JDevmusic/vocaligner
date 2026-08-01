@@ -192,6 +192,7 @@ Claude Sonnet 5
   - **Second sub-round: LFO Mix slider too wide**, stretching under Phase when the reference's track stops at Rate 2's right edge. Fixed by re-scoping (not resizing) the slider — nested Rate 1+2 in their own column so its existing `w-full` means "full width of Rate 1+2," with Phase moved outside that wrapper.
   - Both sub-rounds verified by the founder against re-rendered screenshots before sign-off. See `docs/DESIGN_SYSTEM.md` v1.27/v1.28.
 - **All 10 Plugin Visual components have now been reviewed against their real Logic Pro references and signed off by the founder** (Channel EQ, Compressor, DeEsser 2, ChromaVerb, Pitch Correction, and Overdrive fixed across multiple rounds each; Tape Delay, Flanger, and Chorus approved unchanged). This closes out the founder-directed visual QA pass referenced throughout this Dev Agent Record — see individual entries above for the full history per plugin.
+- **Post-approval fix, Channel EQ (2026-08-01):** a second look after full sign-off caught that `BandData`'s per-band numbers were left-aligned within their column while `BandIconRow`'s icons above them are centered — an oversight in the original v1.17 icon fix, which matched the two rows' column widths but never checked they shared text alignment too. Fixed by centering `BandData`'s content the same way. See `docs/DESIGN_SYSTEM.md` v1.29. Verified by the founder against a re-rendered screenshot before sign-off.
 
 ### File List
 

@@ -153,7 +153,7 @@ function BandData({ bands }: { bands: ResolvedEqBand[] }) {
       <div className="w-7 shrink-0" />
       <div className="flex flex-1" style={{ paddingLeft: `${PLOT_MARGIN_FRACTION}%`, paddingRight: `${PLOT_MARGIN_FRACTION}%` }}>
         {bands.map((band) => (
-          <div key={band.index} className={`flex-1 ${band.enabled ? "" : "opacity-40"}`}>
+          <div key={band.index} className={`flex flex-1 flex-col items-center ${band.enabled ? "" : "opacity-40"}`}>
             <p className={band.enabled ? "text-xs font-semibold text-foreground" : "text-xs font-medium text-foreground"}>
               {formatBandFreq(band.freq)}
             </p>
