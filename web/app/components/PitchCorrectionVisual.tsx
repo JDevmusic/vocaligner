@@ -181,9 +181,15 @@ export function PitchCorrectionVisual({ plugin, values }: { plugin: PluginRegist
               Note/Scale/Chord spacing, which already matches. */}
           <div className="mt-[59px]">
             <p className="text-[10px] font-medium tracking-wide text-muted uppercase opacity-45">Show Pitch</p>
-            <div className="mt-0.5 flex items-center gap-2 opacity-45">
-              <span className="whitespace-nowrap rounded-md border border-border bg-background px-2.5 py-1 text-[11px] text-muted">Input</span>
-              <span className="whitespace-nowrap rounded-md border border-border bg-background px-2.5 py-1 text-[11px] text-muted">Output</span>
+            {/* One joined segmented pill (shared outer border, thin internal
+                divider) -- not FadedTabs' gap-separated look, which other
+                already-approved plugins rely on for their own genuinely
+                gap-separated tab rows (Side Chain/Output, Main/Details).
+                The reference shows Input/Output as a single continuous
+                control, not two independent buttons. */}
+            <div className="mt-0.5 flex items-center overflow-hidden rounded-md border border-border bg-background opacity-45">
+              <span className="whitespace-nowrap border-r border-border px-2.5 py-1 text-[11px] text-muted">Input</span>
+              <span className="whitespace-nowrap px-2.5 py-1 text-[11px] text-muted">Output</span>
             </div>
           </div>
         </div>
