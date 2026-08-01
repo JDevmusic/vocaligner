@@ -28,19 +28,19 @@ export function MeetSection() {
         <div>
           <motion.span
             variants={item}
-            className="font-mono text-xs tracking-[0.2em] text-white/55 uppercase"
+            className="font-mono text-xs tracking-[0.2em] text-on-dark/55 uppercase"
           >
             How it works
           </motion.span>
 
           <motion.h2
             variants={item}
-            className="mt-4 text-4xl leading-[1.05] font-semibold tracking-tight text-white sm:text-5xl"
+            className="mt-4 text-4xl leading-[1.05] font-semibold tracking-tight text-on-dark sm:text-5xl"
           >
             Meet VocAligner.
           </motion.h2>
 
-          <motion.p variants={item} className="mt-5 max-w-md text-base leading-relaxed text-white/70 sm:text-lg">
+          <motion.p variants={item} className="mt-5 max-w-md text-base leading-relaxed text-on-dark/70 sm:text-lg">
             It listens the way a mix engineer does — studying the tone,
             dynamics and space of the records you love — then hands back a
             stock Logic Pro chain you can build in minutes.
@@ -52,11 +52,11 @@ export function MeetSection() {
             <motion.div
               key={step.title}
               variants={item}
-              className="rounded-xl border border-white/10 bg-white/5 p-5"
+              className="rounded-xl border border-on-dark/10 bg-on-dark/5 p-5"
             >
-              <span className="font-mono text-xs text-white/40">0{index + 1}</span>
-              <h3 className="mt-2 text-base font-semibold text-white">{step.title}</h3>
-              <p className="mt-1.5 text-sm text-white/60">{step.description}</p>
+              <span className="font-mono text-xs text-on-dark/40">0{index + 1}</span>
+              <h3 className="mt-2 text-base font-semibold text-on-dark">{step.title}</h3>
+              <p className="mt-1.5 text-sm text-on-dark/60">{step.description}</p>
             </motion.div>
           ))}
         </div>

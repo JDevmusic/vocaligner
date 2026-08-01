@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { motion, MotionConfig } from "motion/react";
-import { Mark } from "./components/Mark";
+import { BrandMark } from "./components/BrandMark";
 import { AnimatedButton } from "./components/AnimatedButton";
 import { MeetSection } from "./components/MeetSection";
 import { Footer } from "./components/Footer";
@@ -37,7 +37,7 @@ export default function Home() {
           className="relative flex min-h-screen flex-col"
           style={{
             background:
-              "linear-gradient(180deg, #ffffff 0%, var(--sunset-fade) 14%, var(--sunset-start) 36%, var(--sunset-start) 58%, var(--wash-lavender) 80%, var(--wash-purple) 100%)",
+              "linear-gradient(180deg, var(--background) 0%, var(--sunset-fade) 14%, var(--sunset-start) 36%, var(--sunset-start) 58%, var(--wash-lavender) 80%, var(--wash-purple) 100%)",
           }}
         >
           <div
@@ -46,12 +46,9 @@ export default function Home() {
             aria-hidden="true"
           />
 
-          <nav className="relative border-b border-black/[0.06]">
-            <div className="mx-auto flex w-full max-w-[1200px] items-center gap-2.5 px-6 py-7 sm:px-10">
-              <Mark className="h-4 w-auto text-foreground" />
-              <span className="text-sm font-semibold tracking-[0.15em] text-foreground uppercase">
-                VocAligner
-              </span>
+          <nav className="relative border-b border-foreground/[0.06]">
+            <div className="mx-auto flex w-full max-w-[1200px] items-center px-6 py-7 sm:px-10">
+              <BrandMark />
             </div>
           </nav>
 
@@ -104,7 +101,7 @@ export default function Home() {
                 onChange={(event) => setArtist(event.target.value)}
                 placeholder="Frank Ocean"
                 size={12}
-                className="min-w-0 border-b-2 border-black/30 bg-transparent px-1 pb-0.5 text-center text-foreground outline-none placeholder:text-black/35 focus:border-black"
+                className="min-w-0 border-b-2 border-foreground/30 bg-transparent px-1 pb-0.5 text-center text-foreground outline-none placeholder:text-foreground/35 focus:border-foreground"
               />
               <span>on</span>
               <label className="sr-only" htmlFor="song">Song</label>
@@ -115,7 +112,7 @@ export default function Home() {
                 onChange={(event) => setSong(event.target.value)}
                 placeholder="Thinkin Bout You"
                 size={16}
-                className="min-w-0 border-b-2 border-black/30 bg-transparent px-1 pb-0.5 text-center text-foreground outline-none placeholder:text-black/35 focus:border-black"
+                className="min-w-0 border-b-2 border-foreground/30 bg-transparent px-1 pb-0.5 text-center text-foreground outline-none placeholder:text-foreground/35 focus:border-foreground"
               />
               <span>, in Logic Pro.</span>
             </form>
@@ -126,7 +123,7 @@ export default function Home() {
                 form="hero-form"
                 disabled={!canGenerate}
                 title="Generate Vocal Chain"
-                className="rounded-full bg-black px-8 py-3.5 text-base font-semibold text-white shadow-[0_6px_24px_-6px_rgba(63,31,74,0.4)] transition-shadow enabled:hover:shadow-[0_8px_30px_-4px_rgba(63,31,74,0.55)] disabled:cursor-not-allowed disabled:bg-black/[.06] disabled:text-foreground/30 disabled:shadow-none"
+                className="rounded-full bg-foreground px-8 py-3.5 text-base font-semibold text-background shadow-[0_6px_24px_-6px_color-mix(in_srgb,var(--wash-purple)_40%,transparent)] transition-shadow enabled:hover:shadow-[0_8px_30px_-4px_color-mix(in_srgb,var(--wash-purple)_55%,transparent)] disabled:cursor-not-allowed disabled:bg-foreground/[.06] disabled:text-foreground/30 disabled:shadow-none"
               >
                 Generate Vocal Chain
               </AnimatedButton>
@@ -134,12 +131,12 @@ export default function Home() {
           </motion.div>
 
           <footer className="relative mx-auto w-full max-w-[1200px] px-6 pb-10 text-center">
-            <div className="mx-auto flex max-w-lg flex-wrap items-center justify-center gap-x-3 gap-y-2 text-xs text-white/65">
+            <div className="mx-auto flex max-w-lg flex-wrap items-center justify-center gap-x-3 gap-y-2 text-xs text-on-dark/65">
               {CHAIN_PREVIEW.map((plugin, index) => (
                 <span key={plugin} className="flex items-center gap-3">
                   {plugin}
                   {index < CHAIN_PREVIEW.length - 1 ? (
-                    <span className="text-white/25" aria-hidden="true">·</span>
+                    <span className="text-on-dark/25" aria-hidden="true">·</span>
                   ) : null}
                 </span>
               ))}
