@@ -144,14 +144,14 @@ export function DeEsser2Visual({ plugin }: { plugin: PluginRegistryEntry; values
             restingValueLabel="-∞"
             ticks={DETECTION_TICKS}
             markerValue={threshold}
-            markerLabel={String(Math.round(threshold * 10) / 10)}
+            markerLabel={threshold.toFixed(1)}
           />
           <DbMeterStrip
             heading="Reduction"
             restingValueLabel="0.0"
             ticks={REDUCTION_TICKS}
             markerValue={maxReduction}
-            markerLabel={String(Math.round(maxReduction * 10) / 10)}
+            markerLabel={maxReduction.toFixed(1)}
           />
         </div>
 
@@ -162,11 +162,18 @@ export function DeEsser2Visual({ plugin }: { plugin: PluginRegistryEntry; values
             leftover width falling entirely on the right rather than split
             on both sides. Mode only occupies the first (Threshold) column;
             the other two cells in its row are empty spacers. */}
+        {/* Threshold/Max Reduction print a fixed 1dp on the real panel
+            ("-9.5 dB", "20.0 dB", confirmed against DeEsser_plugin.png) --
+            toFixed(1) rather than a raw template literal, which happened to
+            work for Threshold's own default (-9.5, already has a decimal
+            digit) but silently dropped Max Reduction's ("20 dB" instead of
+            "20.0 dB", since its default is a whole number). Same fix
+            mirrored on both meters' marker labels below. */}
         <div className="grid items-start gap-x-14 gap-y-6 pl-6 pt-2" style={{ gridTemplateColumns: "repeat(3, max-content)" }}>
-          <FadedArcKnob label="Threshold" value={`${threshold} dB`} numericValue={threshold} min={thresholdRange.min} max={thresholdRange.max} minLabel="-60" maxLabel="0" />
+          <FadedArcKnob label="Threshold" value={`${threshold.toFixed(1)} dB`} numericValue={threshold} min={thresholdRange.min} max={thresholdRange.max} minLabel="-60" maxLabel="0" />
           <ArcKnob
             label="Max Reduction"
-            value={`${maxReduction} dB`}
+            value={`${maxReduction.toFixed(1)} dB`}
             angleDeg={invertedKnobRotationDeg(maxReduction, maxReductionRange.min, maxReductionRange.max)}
             faded
             minLabel="25"

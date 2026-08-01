@@ -220,11 +220,25 @@ function formatNumber(value: number): string {
 // "4" (Compressor); Overdrive's Drive/Output print a fixed decimal count
 // on the real panel (Drive: 2dp "6.00", Output: 1dp "-0.0") confirmed
 // against Overdrive_plugin.png, regardless of whether the underlying value
-// happens to round cleanly.
+// happens to round cleanly. Rate (Chorus and Flanger both use this exact
+// parameter name -- Phaser's are "rate1"/"rate2", unaffected) prints a
+// fixed 3dp on the real panel ("0.500 Hz", "0.133 Hz", confirmed against
+// both Chorus_plugin.png and Flanger_plugin.png), not formatNumber's 2dp
+// trailing-zero-dropping default. Intensity (also shared by exact name
+// between Chorus and Flanger only) prints a fixed 1dp ("10.0 %", "50.0 %")
+// -- confirmed real and control-specific, not a blanket "all percentages
+// get a decimal" rule: Flanger's own Feedback/Mix, same reference
+// screenshot, print "67 %"/"50 %" with no decimal at all. Decay
+// (ChromaVerb) prints a fixed 2dp ("1.10 s"), confirmed against
+// Chromaverb_plugin.png -- formatNumber's default would drop the trailing
+// zero and show "1.1 s".
 export function formatKnobValue(parameter: string, value: number, unit?: string): string {
   if (parameter === "ratio") return `${formatNumber(value)}:1`;
   if (parameter === "drive") return unit ? `${value.toFixed(2)} ${unit}` : value.toFixed(2);
   if (parameter === "output") return unit ? `${value.toFixed(1)} ${unit}` : value.toFixed(1);
+  if (parameter === "rate") return unit ? `${value.toFixed(3)} ${unit}` : value.toFixed(3);
+  if (parameter === "intensity") return unit ? `${value.toFixed(1)} ${unit}` : value.toFixed(1);
+  if (parameter === "decay") return unit ? `${value.toFixed(2)} ${unit}` : value.toFixed(2);
   return unit ? `${formatNumber(value)} ${unit}` : formatNumber(value);
 }
 

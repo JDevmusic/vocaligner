@@ -18,10 +18,15 @@ import {
   strokePath,
 } from "@/lib/eq/channelEqCurve";
 
-// No decimal shown for a whole-number frequency (e.g. "250 Hz"); one decimal
-// place when the value genuinely has a fractional part (e.g. "69.5 Hz").
+// Not simply "decimal only if the value genuinely has a fractional part" --
+// pixel-verified against ChannelEQ_plugin.png's printed band values, band 1
+// (20Hz) and band 2 (75Hz) show "20.0 Hz"/"75.0 Hz" despite being whole
+// numbers, while every band >=100Hz (100/250/1040/2500/7500/20000, also all
+// whole numbers) shows no decimal at all. The real rule is a magnitude
+// threshold: frequencies below 100Hz always print one decimal place,
+// 100Hz and above never do.
 function formatBandFreq(freq: number): string {
-  return Number.isInteger(freq) ? `${freq} Hz` : `${freq.toFixed(1)} Hz`;
+  return freq < 100 ? `${freq.toFixed(1)} Hz` : `${Math.round(freq)} Hz`;
 }
 
 function formatBandGain(db: number): string {
