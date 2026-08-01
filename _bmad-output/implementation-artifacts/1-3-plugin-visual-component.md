@@ -1,6 +1,6 @@
 # Story 1.3: Build the bespoke Plugin Visual components
 
-Status: ready-for-review
+Status: in-progress
 
 > **Progress (2026-07-30):** All tasks complete — see Dev Agent Record below. Task 0 (registry correction), Task 2 (Channel EQ), and Task 3 (Pitch Correction) landed first as their own commit sequence; Task 1 (the other 8 knob-based visuals) and the remainder of Task 4 followed in a second pass once those two were signed off. Task 1's first pass regressed to a generic single-row-of-available-knobs layout, dropping every real panel element without backing data (meters, mode tabs, Limiter/Distortion sections, etc.) instead of showing them faded in place; fixed in a follow-up pass once the founder caught it against the real references, and the Plugin Visual Fidelity Standards generalized this rule (previously stated only for Pitch Correction) to apply to every plugin explicitly.
 
@@ -239,3 +239,38 @@ Claude Sonnet 5
 - `web/app/components/FlangerVisual.tsx` (Task 5: rewritten to match the approved spike design)
 - `web/app/components/PhaserVisual.tsx` (Task 5: rewritten to match the approved spike design)
 - `web/app/components/ChorusVisual.tsx` (Task 5: rewritten to match the approved spike design)
+
+### Review Findings
+
+Independent code review (2026-08-02) via `bmad-code-review`: three parallel layers (Blind Hunter/adversarial, Edge Case Hunter, Acceptance Auditor against this story's ACs + AD-6 + PRD FR-6/FR-7/§8.9), each blind to the others and to the founder-directed visual QA history above. Scope: `git diff main...bmad` restricted to this story's 26 files (not the full branch, which also carries Stories 1.1/1.2/1.4). Per this review's own brief, no pixel measurement, knob angle, or spacing already covered by the Dev Agent Record above was re-litigated — findings below are code correctness/logic/architecture only. Every finding was independently re-verified against the live code (and, where relevant, the real reference screenshot) before being triaged; two Acceptance Auditor findings did not survive that check (see Dismissed).
+
+**Patch (fixed, verified via `tsc`/`eslint`/`vitest`, committed `37e5a8e` + `4856be9`):**
+
+- [x] [Review][Patch] `logKnobRotationDeg` produced `-Infinity` at a control's own registry minimum whenever `floor` sits above `min` — Flanger's Intensity (`min=0`, `logFloor=18.3`) hit this at a legal value of exactly 0%, producing an invalid `rotate(-Infinitydeg)` transform. [`web/lib/controls/knobRotation.ts:49`]
+- [x] [Review][Patch] `DualRangeTrack` had no defense against an inverted range (Ceiling < Floor) — nothing upstream enforces that cross-field ordering, only each value's own min/max. Would have produced a negative-width/height fill. [`web/app/components/controls/PluginKnobPrimitives.tsx` (`DualRangeTrack`), reached via `PhaserVisual.tsx`'s `CeilingFloorSlider`]
+- [x] [Review][Patch] `NumberVerticalFader`'s linear percent branch was unclamped (and a degenerate `min === max` range would divide by zero) — every other value-to-visual-position helper in the same file already clamps. [`web/app/components/controls/PluginKnobPrimitives.tsx` (`NumberVerticalFader`)]
+- [x] [Review][Patch] AD-6 violation: raw `bg-white` (explicitly named as a disallowed Tailwind palette utility in ARCHITECTURE-SPINE.md's AD-6) used across the shared card shell and its duplicates, contradicting this story's own Task 4 "no raw hex/Tailwind palette utilities" completion claim. Added a `--plugin-card` token (same "fixed regardless of theme" pattern as the existing `--on-dark`). [`PluginKnobPrimitives.tsx`, `ChannelEqVisual.tsx`, `PitchCorrectionVisual.tsx`]
+- [x] [Review][Patch] DeEsser 2's Frequency knob drove its needle off a hardcoded `min={2000} max={10000}` that contradicted its own printed dial labels (`minLabel="1200" maxLabel="12k"`) — verified against `DeEsser_plugin.png` directly: the labels were correct, the registry's range was stale. Corrected the registry to 1200-12000Hz and had the component read it via `registryRange()` instead of duplicating the (wrong) numbers inline. [`web/lib/registry/logicPro.ts`, `web/app/components/DeEsser2Visual.tsx`]
+- [x] [Review][Patch] Pitch Correction's Correction meter mislabeled its -50 Cent tick as "50" (missing minus sign — copy-paste slip). [`web/app/components/PitchCorrectionVisual.tsx:84`]
+- [x] [Review][Patch] Channel EQ's `computeCurvePoints` only clamped the plot's bottom edge — a single band's legal ±18dB gain (see `band2Gain`..`band7Gain`'s registry range) draws past the chart's own ±15dB axis on its own, off the top of the SVG viewBox, instead of visually flattening the way a deep cut already correctly does at the bottom. [`web/lib/eq/channelEqCurve.ts:211`]
+
+**Defer (real, pre-existing, not actionable in this pass — logged to `deferred-work.md`):**
+
+- [x] [Review][Defer] `invert` prop on `NumberArcKnob` is dead/untested — deferred, pre-existing (DeEsser 2's Max Reduction, the one real motivating case, bypasses it via a hand-computed `ArcKnob` call instead)
+- [x] [Review][Defer] `channelEqCurve.ts`'s `GAIN_TICKS`/`GAIN_LABELED` include values below -15dB that never render — deferred, pre-existing (dead leftovers from the removed two-slope axis model)
+- [x] [Review][Defer] `ChannelEqVisual.tsx`/`PitchCorrectionVisual.tsx` hand-roll their own card-shell markup instead of using the shared `PluginPanel` — deferred, pre-existing (real "don't duplicate UI" violation, but a mechanical extraction risks regressing two already pixel-signed-off components; needs its own careful pass)
+- [x] [Review][Defer] `formatKnobValue`'s per-parameter overrides (`ratio`/`drive`/`output`/`rate`/`intensity`/`decay`) are keyed by bare name with no plugin scoping — deferred, pre-existing (forward-looking risk only; no current collision)
+- [x] [Review][Defer] Three separate log-scale implementations exist (`logFraction` in `PluginKnobPrimitives.tsx`, a second `logFraction` with a configurable epsilon in `PhaserVisual.tsx`, and `logKnobRotationDeg` in `knobRotation.ts`) — deferred, pre-existing (maintainability; a fix to one won't propagate)
+- [x] [Review][Defer] `resolveChannelEqBands`'s numeric fallback defaults an unresolved control (including Q) to 0, which would divide-by-zero in the biquad math if ever reached — deferred, pre-existing (currently defended entirely by `validateAndRepairChain` clamping to registry min/max upstream, matching this project's documented "callers never re-validate `ModelClient` output" convention; not defended by the component itself)
+- [x] [Review][Defer] The 24dB/Oct cut-band model cascades two identical 12dB/Oct stages at the same Q rather than a real 4-pole design's differing per-stage Qs — deferred, pre-existing (a deliberate, already-tested approximation documented in this story's own Dev Notes; only affects the curve's shape at the cutoff knee, not its asymptotic slope)
+- [x] [Review][Defer] `niceTickValues` rounds every tick to 3 decimal places, which would collapse distinct ticks for a hypothetical future sub-0.001-wide control range — deferred, pre-existing (no current registry control affected)
+- [x] [Review][Defer] `toneCurveY` (Overdrive) only clamps its lower bound, not the upper bound its own comment claims — deferred, pre-existing (currently inert; a lowpass response never exceeds ~0dB)
+- [x] [Review][Defer] Bipolar knob fill treats a range's arithmetic midpoint as "zero" — deferred, pre-existing (correct for every bipolar control wired up today, all symmetric; would misplace the fill for a hypothetical future asymmetric bipolar range)
+- [x] [Review][Defer] DeEsser 2's "always render Threshold/Max Reduction/Frequency at Logic's defaults" rule (PRD §8.9) is enforced only by the component never reading `values` — deferred, pre-existing (currently correct, confirmed by reading the full file; nothing stops a future edit from "fixing" this incorrectly)
+- [x] [Review][Defer] `numericTicks`' `exclude` option uses exact value equality rather than a float tolerance — deferred, pre-existing (currently safe; the only caller, Compressor's Make Up "40", excludes a clean integer)
+
+**Dismissed as noise / false positive / out of scope (3):**
+
+- Compressor's Knee range (code: 0-1.0) was flagged as disagreeing with `DESIGN_SYSTEM.md`'s prose ("0.2-0.8") — verified directly against `Compressor_plugin.png`: the code is correct, matching the reference's own printed min/max labels; the design doc's summary sentence was the imprecise one. No code change.
+- `results/page.tsx`'s unguarded destructuring on a malformed API response, and its removed artist/song query-param branch — both are Story 1.4's live-data-wiring work (commit `65442e8`), not this story's scope (Story 1.3 ships fixture data only, per AC6). Flagged for Story 1.4's own review instead.
+- Hand-measured pixel-offset magic numbers throughout (Compressor's `marginTop` values, Phaser's `mt-[29px]`, Pitch Correction's `mt-[59px]`, etc.) — the deliberate, founder-verified output of the visual QA pass documented in this Dev Agent Record and `DESIGN_SYSTEM.md` v1.5-v1.35, not oversights. Out of this review's scope per its own brief.
