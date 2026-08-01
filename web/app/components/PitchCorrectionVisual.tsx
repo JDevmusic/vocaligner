@@ -81,7 +81,7 @@ const CORRECTION_TICKS: { value: number; label?: string }[] = [
   { value: 25 },
   { value: 0, label: "0" },
   { value: -25 },
-  { value: -50, label: "50" },
+  { value: -50, label: "-50" },
   { value: -75 },
   { value: -100, label: "-100" },
 ];
@@ -147,7 +147,7 @@ export function PitchCorrectionVisual({ plugin, values }: { plugin: PluginRegist
     // reproduced by hand here (width+aspectRatio on the outer box, h-full
     // flex-col card, flex-1 overflow-hidden content) rather than imported.
     <div style={{ width: "715px", aspectRatio: "1.26 / 1", maxWidth: "100%" }}>
-      <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
+      <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-plugin-card shadow-sm">
         <div className="border-b border-border px-6 py-3">
           <span className="font-mono text-[11px] tracking-[0.2em] text-supporting uppercase">{plugin.category}</span>
           <h2 className="mt-0.5 text-lg font-semibold text-foreground">{plugin.displayName}</h2>

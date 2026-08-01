@@ -48,7 +48,18 @@ export function invertedKnobRotationDeg(value: number, min: number, max: number)
 // single-point solve indefinitely.
 export function logKnobRotationDeg(value: number, min: number, max: number, floor: number = min): number {
   if (max <= min || floor <= 0) return KNOB_MIN_DEG;
+  // Clamp the incoming value to the printed [min, max] range first (unchanged
+  // from before -- a value below `min`, e.g. Flanger's Intensity at its own
+  // registry min of 0, is still a legal control value and must still map to
+  // the dial's minimum-stop angle, not silently clip *further* than the real
+  // control ever goes). Only the *log10 argument* additionally floors at
+  // `floor`, which can sit above `min` (Flanger's Intensity: min=0, floor=
+  // 18.3) -- without this second step, Math.log10(0) = -Infinity propagates
+  // into an invalid `rotate(-Infinitydeg)` transform. Values between `min`
+  // and `floor` collapse to the floor's own angle (KNOB_MIN_DEG), matching
+  // how the dial's needle actually bottoms out physically.
   const clamped = Math.min(max, Math.max(min, value));
-  const t = (Math.log10(clamped) - Math.log10(floor)) / (Math.log10(max) - Math.log10(floor));
+  const logArg = Math.max(clamped, floor);
+  const t = (Math.log10(logArg) - Math.log10(floor)) / (Math.log10(max) - Math.log10(floor));
   return KNOB_MIN_DEG + t * (KNOB_MAX_DEG - KNOB_MIN_DEG);
 }

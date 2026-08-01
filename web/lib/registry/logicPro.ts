@@ -95,7 +95,7 @@ const rawEntries: PluginRegistryEntry[] = [
     // read off docs/images/reference/DeEsser_plugin.png's own printed
     // values.
     controls: [
-      { parameter: "frequency", type: "number", unit: "Hz", min: 2000, max: 10000, default: 6000 },
+      { parameter: "frequency", type: "number", unit: "Hz", min: 1200, max: 12000, default: 6000 },
       { parameter: "threshold", type: "number", unit: "dB", min: -60, max: 0, default: -9.5 },
       { parameter: "maxReduction", type: "number", unit: "dB", min: 0, max: 25, default: 20 },
     ],

@@ -179,7 +179,7 @@ export function ChannelEqVisual({ plugin, values }: { plugin: PluginRegistryEntr
 
   return (
     <div
-      className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm"
+      className="overflow-hidden rounded-2xl border border-border bg-plugin-card shadow-sm"
       style={{ width: "1000px", maxWidth: "100%" }}
     >
       <div className="border-b border-border px-6 py-4">

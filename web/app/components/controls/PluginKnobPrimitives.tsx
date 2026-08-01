@@ -40,7 +40,7 @@ export function PluginPanel({
   const sizeStyle = width || aspectRatio ? { width, aspectRatio, maxWidth: "100%" } : undefined;
   return (
     <div style={sizeStyle}>
-      <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
+      <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-plugin-card shadow-sm">
         <div className={`border-b border-border px-6 py-4 ${centerHeader ? "text-center" : ""}`}>
           <div className={`flex items-center gap-2 ${centerHeader ? "justify-center" : ""}`}>
             <span className="font-mono text-[11px] tracking-[0.2em] text-supporting uppercase">{plugin.category}</span>
@@ -680,7 +680,18 @@ export function NumberVerticalFader({ plugin, values, parameter, log: useLog, pl
   const raw = resolveControlValue(plugin, values, parameter);
   const value = typeof raw === "number" ? raw : 0;
   const range = resolveControlRange(plugin, parameter);
-  const percent = useLog ? logFraction(value, range.min, range.max) * 100 : ((value - range.min) / (range.max - range.min)) * 100;
+  // Clamp the linear branch the same way `logFraction` already clamps its
+  // own input, and the same way every knob-rotation helper in this codebase
+  // clamps (getKnobRotationDeg/invertedKnobRotationDeg/logKnobRotationDeg) --
+  // an out-of-[min,max] value would otherwise produce a fill percent outside
+  // [0,100], rendering the track's fill past its own bounds instead of
+  // pinning to a full/empty fader.
+  const clampedValue = Math.min(range.max, Math.max(range.min, value));
+  const percent = useLog
+    ? logFraction(value, range.min, range.max) * 100
+    : range.max === range.min
+      ? 0
+      : ((clampedValue - range.min) / (range.max - range.min)) * 100;
   const display = `${plusPrefix && value >= 0 ? "+" : ""}${formatKnobValue(parameter, value, definition?.unit)}`;
   return <VerticalFader label={formatParameterLabel(parameter)} value={display} percent={percent} height={height} />;
 }
@@ -708,7 +719,7 @@ export function HorizontalFillTrack({ percent, handleShape = "circle" }: { perce
     <div className="relative h-1.5 w-full rounded-full bg-border">
       <div className="absolute left-0 top-0 h-full rounded-full bg-muted" style={{ width: `${percent}%` }} />
       <div
-        className={`absolute top-1/2 h-3 -translate-x-1/2 -translate-y-1/2 border border-border bg-white ${
+        className={`absolute top-1/2 h-3 -translate-x-1/2 -translate-y-1/2 border border-border bg-plugin-card ${
           handleShape === "circle" ? "w-3 rounded-full" : "w-1.5 rounded-sm"
         }`}
         style={{ left: `${percent}%` }}
@@ -733,15 +744,22 @@ export function DualRangeTrack({
   faded?: boolean;
 }) {
   const fillColor = faded ? "bg-muted" : "bg-brand-accent";
+  // Defensive ordering: callers derive these percents from two independent
+  // registry values (e.g. Phaser's Ceiling/Floor) with no cross-field
+  // validation upstream guaranteeing ceiling >= floor -- only each value's
+  // own min/max is clamped. An inverted pair would otherwise produce a
+  // negative-width/height fill with no visible track at all.
+  const lower = Math.min(lowerPercent, upperPercent);
+  const upper = Math.max(lowerPercent, upperPercent);
   if (orientation === "horizontal") {
     return (
       <div className="relative h-1.5 w-full rounded-full bg-border">
         <div
           className={`absolute top-0 h-full rounded-full ${fillColor}`}
-          style={{ left: `${lowerPercent}%`, width: `${upperPercent - lowerPercent}%` }}
+          style={{ left: `${lower}%`, width: `${upper - lower}%` }}
         />
-        <div className="absolute top-1/2 h-3 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-sm border border-border bg-white" style={{ left: `${lowerPercent}%` }} />
-        <div className="absolute top-1/2 h-3 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-sm border border-border bg-white" style={{ left: `${upperPercent}%` }} />
+        <div className="absolute top-1/2 h-3 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-sm border border-border bg-plugin-card" style={{ left: `${lower}%` }} />
+        <div className="absolute top-1/2 h-3 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-sm border border-border bg-plugin-card" style={{ left: `${upper}%` }} />
       </div>
     );
   }
@@ -749,10 +767,10 @@ export function DualRangeTrack({
     <div className="relative w-1.5 rounded-full bg-border" style={{ height: FADER_HEIGHT }}>
       <div
         className={`absolute left-0 w-full rounded-full ${fillColor}`}
-        style={{ bottom: `${lowerPercent}%`, height: `${upperPercent - lowerPercent}%` }}
+        style={{ bottom: `${lower}%`, height: `${upper - lower}%` }}
       />
-      <div className="absolute left-1/2 h-1.5 w-4 -translate-x-1/2 translate-y-1/2 rounded-sm border border-border bg-white" style={{ bottom: `${upperPercent}%` }} />
-      <div className="absolute left-1/2 h-1.5 w-4 -translate-x-1/2 translate-y-1/2 rounded-sm border border-border bg-white" style={{ bottom: `${lowerPercent}%` }} />
+      <div className="absolute left-1/2 h-1.5 w-4 -translate-x-1/2 translate-y-1/2 rounded-sm border border-border bg-plugin-card" style={{ bottom: `${upper}%` }} />
+      <div className="absolute left-1/2 h-1.5 w-4 -translate-x-1/2 translate-y-1/2 rounded-sm border border-border bg-plugin-card" style={{ bottom: `${lower}%` }} />
     </div>
   );
 }

@@ -134,6 +134,7 @@ export function DeEsser2Visual({ plugin }: { plugin: PluginRegistryEntry; values
   const maxReduction = registryDefault(plugin, "maxReduction");
   const maxReductionRange = registryRange(plugin, "maxReduction");
   const frequency = registryDefault(plugin, "frequency");
+  const frequencyRange = registryRange(plugin, "frequency");
 
   return (
     <PluginPanel plugin={plugin} width="715px" aspectRatio="1.68 / 1" centerHeader badge="Standard practice">
@@ -179,7 +180,7 @@ export function DeEsser2Visual({ plugin }: { plugin: PluginRegistryEntry; values
             minLabel="25"
             maxLabel="0"
           />
-          <FadedArcKnob label="Frequency" value={`${frequency} Hz`} numericValue={frequency} min={2000} max={10000} minLabel="1200" maxLabel="12k" />
+          <FadedArcKnob label="Frequency" value={`${frequency} Hz`} numericValue={frequency} min={frequencyRange.min} max={frequencyRange.max} minLabel="1200" maxLabel="12k" />
 
           <div className="flex flex-col items-center" style={{ marginTop: 8 }}>
             <Dropdown label="Mode" value="Relative" faded />

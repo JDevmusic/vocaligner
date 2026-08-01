@@ -111,4 +111,15 @@ describe("logKnobRotationDeg", () => {
   it("a custom floor still clamps the printed value range to min/max, not the floor", () => {
     expect(logKnobRotationDeg(0.1, 0.3, 100, 0.06)).toBeCloseTo(logKnobRotationDeg(0.3, 0.3, 100, 0.06), 6);
   });
+
+  it("matches Flanger's real Intensity case: a floor above min never produces -Infinity/NaN at the control's own registry min", () => {
+    // Flanger's Intensity is 0-100% (min=0) with a fitted logFloor of 18.3 --
+    // a plain `Math.max(min, value)` clamp lets `value=0` reach
+    // Math.log10(0) = -Infinity. Regression for that bug: a value at or
+    // below `min` should bottom out at the dial's minimum-stop angle, never
+    // an infinite or NaN result.
+    const deg = logKnobRotationDeg(0, 0, 100, 18.3);
+    expect(deg).toBe(-135);
+    expect(Number.isFinite(deg)).toBe(true);
+  });
 });

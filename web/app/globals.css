@@ -36,6 +36,7 @@
   --wash-purple: #3f1f4a;
   --wash-purple-deep: #150a18; /* continues the wash-purple family further into near-black, for sections that pick up where the hero's gradient ends */
   --on-dark: #ffffff; /* fixed light text/border color for the landing page's always-dark sections (hero's gradient tail, MeetSection, Footer) -- these don't follow the light/dark theme toggle, so --foreground (which flips) isn't the right token here */
+  --plugin-card: #ffffff; /* the Plugin Visual card surface stays white/light regardless of the results page's own dark background (DESIGN_SYSTEM.md's Functional Pages section) or a future theme toggle -- same "fixed regardless" rationale as --on-dark above, not --background (which flips in .dark) */
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -76,6 +77,7 @@
   --color-accent: var(--accent);
   --color-brand-accent: var(--brand-accent);
   --color-on-dark: var(--on-dark);
+  --color-plugin-card: var(--plugin-card);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
