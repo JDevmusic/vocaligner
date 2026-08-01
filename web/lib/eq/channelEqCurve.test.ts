@@ -6,6 +6,7 @@ import {
   FREQ_MAJOR,
   FREQ_TICKS,
   bandResponseDb,
+  computeCurvePoints,
   dbToY,
   freqToX,
   resolveChannelEqBands,
@@ -131,6 +132,22 @@ describe("axis helpers", () => {
     const stepNearTop = dbToY(10) - dbToY(15);
     const stepNearBottom = dbToY(-10) - dbToY(-15);
     expect(stepNearTop).toBeCloseTo(-stepNearBottom, 6);
+  });
+});
+
+describe("computeCurvePoints", () => {
+  it("clamps both edges -- a single band's legal +-18dB gain shouldn't draw past the plot's own +-15dB axis", () => {
+    // band2Gain's registry range is -18 to 18 (see logicPro.ts) -- past the
+    // chart's own +-15dB axis on its own, no summing of multiple bands
+    // needed. Regression: only the bottom edge (deep cuts) was clamped
+    // before, so a boosted band like this drew off the top of the SVG
+    // viewBox instead of visually flattening at the top edge.
+    const boosted = resolveChannelEqBands(channelEq, [value("band2Gain", 18)]);
+    const points = computeCurvePoints(boosted);
+    for (const p of points) {
+      expect(p.y).toBeGreaterThanOrEqual(dbToY(15));
+      expect(p.y).toBeLessThanOrEqual(dbToY(-15));
+    }
   });
 });
 

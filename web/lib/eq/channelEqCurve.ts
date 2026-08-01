@@ -208,7 +208,13 @@ export function computeCurvePoints(bands: ResolvedEqBand[], masterGainDb = 0): {
     const t = i / steps;
     const freq = 20 * Math.pow(1000, t);
     const db = totalResponseDb(bands, freq, masterGainDb);
-    points.push({ x: freqToX(freq), y: Math.min(PLOT_BOTTOM_Y, dbToY(db)) });
+    // Clamp both edges: a single band's gain can legally reach +-18dB (see
+    // logicPro.ts's bandNGain range), past the plot's own +-15dB axis --
+    // only the bottom (deep cuts) was clamped before, so a boosted band
+    // anywhere near or past +15dB drew off the top of the SVG viewBox
+    // instead of visually flattening along the top edge the way a deep cut
+    // already does at the bottom.
+    points.push({ x: freqToX(freq), y: Math.max(PLOT_TOP_Y, Math.min(PLOT_BOTTOM_Y, dbToY(db))) });
   }
   return points;
 }
