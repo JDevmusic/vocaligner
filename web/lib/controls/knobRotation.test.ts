@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getKnobRotationDeg, invertedKnobRotationDeg } from "./knobRotation";
+import { getKnobRotationDeg, invertedKnobRotationDeg, logKnobRotationDeg } from "./knobRotation";
 
 describe("getKnobRotationDeg", () => {
   it("maps the minimum value to -135deg", () => {
@@ -65,5 +65,50 @@ describe("invertedKnobRotationDeg", () => {
     const min = 0;
     const max = 25;
     expect(invertedKnobRotationDeg(value, min, max)).toBeCloseTo(-getKnobRotationDeg(value, min, max), 6);
+  });
+});
+
+describe("logKnobRotationDeg", () => {
+  it("maps the minimum value to -135deg", () => {
+    expect(logKnobRotationDeg(20, 20, 20000)).toBeCloseTo(-135, 6);
+  });
+
+  it("maps the maximum value to +135deg", () => {
+    expect(logKnobRotationDeg(20000, 20, 20000)).toBeCloseTo(135, 6);
+  });
+
+  it("clamps values below the minimum", () => {
+    expect(logKnobRotationDeg(1, 20, 20000)).toBeCloseTo(-135, 6);
+  });
+
+  it("clamps values above the maximum", () => {
+    expect(logKnobRotationDeg(999999, 20, 20000)).toBeCloseTo(135, 6);
+  });
+
+  it("returns the minimum-stop angle for a degenerate or non-positive-floor range", () => {
+    expect(logKnobRotationDeg(5, 10, 10)).toBe(-135);
+    expect(logKnobRotationDeg(5, 0, 10)).toBe(-135);
+  });
+
+  it("matches Overdrive's real Tone example (980Hz of 20-20000Hz -> well past the linear mapping's ~5%)", () => {
+    const linearFraction = (980 - 20) / (20000 - 20);
+    const deg = logKnobRotationDeg(980, 20, 20000);
+    expect(deg).toBeGreaterThan(-135 + linearFraction * 270 + 50);
+  });
+
+  it("defaults `floor` to `min`, unchanged from a plain log10 mapping", () => {
+    const withDefault = logKnobRotationDeg(980, 20, 20000);
+    const withExplicitFloor = logKnobRotationDeg(980, 20, 20000, 20);
+    expect(withDefault).toBeCloseTo(withExplicitFloor, 6);
+  });
+
+  it("matches ChromaVerb's real Decay example (1.1s of 0.3-100s, fitted floor 0.06 -> ~39% of the sweep)", () => {
+    const deg = logKnobRotationDeg(1.1, 0.3, 100, 0.06);
+    const fraction = (deg - -135) / 270;
+    expect(fraction).toBeCloseTo(0.39, 2);
+  });
+
+  it("a custom floor still clamps the printed value range to min/max, not the floor", () => {
+    expect(logKnobRotationDeg(0.1, 0.3, 100, 0.06)).toBeCloseTo(logKnobRotationDeg(0.3, 0.3, 100, 0.06), 6);
   });
 });

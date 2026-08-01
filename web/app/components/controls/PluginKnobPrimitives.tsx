@@ -507,6 +507,7 @@ export interface NumberArcKnobProps extends ControlProps {
   bipolar?: boolean;
   invert?: boolean;
   log?: boolean;
+  logFloor?: number;
   label?: string;
   icon?: React.ReactNode;
   refValue?: number;
@@ -520,7 +521,10 @@ export interface NumberArcKnobProps extends ControlProps {
 // `web/lib/controls/knobRotation.ts`. `log`: Overdrive's Tone dial sweeps a
 // frequency range (20Hz-20kHz), which reads log-scaled rather than linear
 // (confirmed against the reference -- see `logKnobRotationDeg`'s own
-// comment). `label` overrides the auto-derived parameter label for cases
+// comment). `logFloor` passes through to that same function's own `floor`
+// param, for a dial whose effective log-scale minimum differs from its
+// printed one (ChromaVerb's Decay -- see `logKnobRotationDeg`'s comment for
+// why). `label` overrides the auto-derived parameter label for cases
 // where the real panel's own label differs from the registry parameter
 // name (e.g. Phaser's `feedback` control is labeled "Level" on the real
 // panel -- the section header already says FEEDBACK). `minLabel`/`maxLabel`
@@ -528,7 +532,7 @@ export interface NumberArcKnobProps extends ControlProps {
 // display difference (e.g. Overdrive's Tone prints "20k" on the real
 // panel, not the registry's literal "20000") -- the underlying
 // value/range/fill math is unaffected, only the printed text.
-export function NumberArcKnob({ plugin, values, parameter, size, minMax, minLabel, maxLabel, bipolar, invert, log, label, icon, refValue, refLabel }: NumberArcKnobProps) {
+export function NumberArcKnob({ plugin, values, parameter, size, minMax, minLabel, maxLabel, bipolar, invert, log, logFloor, label, icon, refValue, refLabel }: NumberArcKnobProps) {
   const definition = plugin.controls.find((c) => c.parameter === parameter);
   const raw = resolveControlValue(plugin, values, parameter);
   const value = typeof raw === "number" ? raw : 0;
@@ -536,7 +540,7 @@ export function NumberArcKnob({ plugin, values, parameter, size, minMax, minLabe
   const angleDeg = invert
     ? invertedKnobRotationDeg(value, range.min, range.max)
     : log
-      ? logKnobRotationDeg(value, range.min, range.max)
+      ? logKnobRotationDeg(value, range.min, range.max, logFloor)
       : arcKnobRotationDeg(value, range.min, range.max);
   const startDeg = bipolar ? arcKnobRotationDeg((range.min + range.max) / 2, range.min, range.max) : ARC_KNOB_MIN_DEG;
   const resolvedMinLabel = minLabel ?? (minMax ? String(invert ? range.max : range.min) : undefined);

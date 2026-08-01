@@ -69,7 +69,15 @@ export function ChromaVerbVisual({ plugin, values }: { plugin: PluginRegistryEnt
           </div>
 
           <div className="flex flex-col items-center gap-2 px-[58px]">
-            <NumberArcKnob plugin={plugin} values={values} parameter="decay" size={DECAY_SIZE} minMax icon={<FadedSyncIcon />} />
+            {/* Decay's 0.3-100s range reads log-scaled on the real dial, not
+                linear -- pixel-measuring the reference's own needle at its
+                shown value (1.1s) puts it at ~39% of the sweep, while a
+                plain log10 over the printed 0.3-100 range only predicts
+                ~22%. logFloor=0.06 is a fitted effective log-scale minimum
+                (see `logKnobRotationDeg`'s own comment) -- the printed
+                minLabel stays the registry's real "0.3", only the angle
+                math uses the fitted floor. */}
+            <NumberArcKnob plugin={plugin} values={values} parameter="decay" size={DECAY_SIZE} minMax icon={<FadedSyncIcon />} log logFloor={0.06} />
             <FadedTabs options={["Freeze"]} />
           </div>
 
