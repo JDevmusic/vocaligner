@@ -4,7 +4,7 @@ baseline_commit: 4d07793ca6c9a81d30fd2650e1716208a5fdec29
 
 # Story 1.2: Loading page performs a real generation request
 
-Status: review
+Status: done
 
 ## Story
 
@@ -36,6 +36,14 @@ so that what I see next is real, not a placeholder.
 - [x] Task 4: Failure state (AC: 4, 5)
   - [x] On a non-2xx response or a thrown/network error, stop the phase animation and render a simple inline failure message with a link back to `/`.
   - [x] Do not design a separate route or a polished component for this — keep it minimal and functional; the PRD explicitly leaves the failure-state design undecided.
+
+### Review Findings
+
+- [x] [Review][Patch] `body.id` was used to build the `/results?id=` redirect without checking it was actually a string first — currently unreachable given the server's schema-validated response contract (a 201 always carries a valid `VocalChainResponse`), but a one-line defensive check is cheap insurance against a future contract break [web/app/loading/page.tsx:61-66] — fixed: guard `typeof body?.id !== "string"` and fall into the existing failure state before navigating.
+- [x] [Review][Defer] No client-side timeout/`AbortController` on the `/api/generate` fetch — AC4 explicitly lists "times out" alongside 400/502/network-error as a failure mode requiring an explicit failure state, but a hung request currently leaves the loading page frozen at the last phase (100% progress) indefinitely, with no error shown [web/app/loading/page.tsx:45-73] — deferred: zero live risk today since `getModelClient()` only ever returns the deterministic, fast mock client (confirmed against project context — the real Anthropic adapter isn't wired in yet); track adding a timeout as part of whichever story wires in the real adapter (Phase 4a), rather than reopening this story now.
+- [x] [Review][Defer] `generationStore.test.ts` imports `lib/ai/generateVocalChain` and `lib/ai/mockModelClient` directly, a literal (not spirit) tension with AD-9's wording ("only `app/api/generate/route.ts` may import from `lib/ai/*`") [web/lib/store/generationStore.test.ts:2-3] — deferred: test-only code never reaches the client bundle, so the secrets/server-only risk AD-9 exists to prevent doesn't apply here; worth a small wording tweak to AD-9 in a future architecture-doc pass to explicitly exempt test files.
+- [x] [Review][Defer] React Strict Mode (on by default for the App Router since Next.js 13.5.1; unconfigured/default here — confirmed via `next.config.ts`) double-invokes the fetch effect in development, firing two real `/api/generate` POSTs per page load [web/app/loading/page.tsx:45-73] — deferred: production builds don't double-invoke, so there's no user-facing impact; becomes a real dev-cost concern once the real Anthropic adapter replaces the mock client — worth an idempotency guard at that point, not now.
+- Dismissed as noise or already handled (7): in-memory `generationStore` having no persistence/eviction/multi-instance support (explicitly authorized by this story's own Dev Notes as "in-memory is correct for now," deferred at the architecture level); the "Try Again" button routing to `/` rather than resubmitting (this is exactly what AC5 specifies — "a clear way back, e.g. a link to `/`"); one generic error message for every failure mode (AC5 explicitly leaves copy/design undecided — "plain and functional is sufficient"); empty `artist`/`song` reaching the API when `/loading` is visited without query params (correctly funnels into the existing 400 → failure-state path, which is exactly AC4's specified behavior); no rendering test for `loading/page.tsx` (explicitly called out as out of scope in this story's own Testing Note, no jsdom/RTL infra exists); `saveGeneration` silently overwriting on an id collision (server-generated UUIDs make collision a non-practical risk); `results/page.tsx` not consuming `?id=` correctly (verified fine — handled by a later commit, `65442e8`, not this story's concern).
 
 ## Dev Notes
 
@@ -99,3 +107,4 @@ None — implementation went cleanly, no blockers hit.
 ## Change Log
 
 - 2026-07-26: Story implemented end-to-end in one session (Tasks 1–4). No review follow-ups yet — first pass.
+- 2026-08-01: Independent code review (bmad-code-review: Blind Hunter, Edge Case Hunter, Acceptance Auditor). One patch applied (defensive `body.id` type check before navigating to `/results`). Three items deferred — a missing client-side timeout on the generation fetch (AC4 mentions "times out," but there's zero live risk while `getModelClient()` only returns the mock client; revisit when the real Anthropic adapter is wired in), a test file's direct `lib/ai/*` import that's in literal tension with AD-9's wording (test-only, no real risk), and React Strict Mode's dev-only double-fetch (no production impact). Seven other findings dismissed as noise or already-correct behavior (see Review Findings). `tsc --noEmit`, `eslint`, and the full Vitest suite (77/77) all pass post-patch.

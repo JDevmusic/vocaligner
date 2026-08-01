@@ -59,6 +59,11 @@ function LoadingContent() {
         }
 
         const body = await response.json();
+        if (typeof body?.id !== "string") {
+          if (!cancelled) setError(true);
+          return;
+        }
+
         if (!cancelled) router.push(`/results?id=${body.id}`);
       } catch {
         if (!cancelled) setError(true);
