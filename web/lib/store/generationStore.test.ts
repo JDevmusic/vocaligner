@@ -66,4 +66,35 @@ describe("generationStore", () => {
     expect(getCachedGeneration("Foo", "Bar::Baz")).toBeUndefined();
     expect(getCachedGeneration("Foo::Bar", "Baz")).toEqual(first);
   });
+
+  it("treats a schemaVersion mismatch as a cache miss", async () => {
+    const generation = await buildGeneration("Doja Cat", "Say So");
+    saveGeneration({ ...generation, meta: { ...generation.meta, schemaVersion: "0" } });
+
+    expect(getCachedGeneration("Doja Cat", "Say So")).toBeUndefined();
+  });
+
+  it("matches the same accented text regardless of Unicode normalization form", async () => {
+    // Precomposed \u00e9 (NFC, one code point) vs. a plain "e" followed by a
+    // standalone combining acute accent \u0301 (NFD, two code points) --
+    // render identically but are genuinely different strings until both are
+    // run through the same normalization form. Built from escapes, not typed
+    // literally, so the two forms can't accidentally end up identical.
+    const precomposed = "Beyonc\u00e9"; // NFC
+    const combining = "Beyonce\u0301"; // NFD
+    expect(precomposed).not.toBe(combining);
+    expect(precomposed.normalize("NFC")).toBe(combining.normalize("NFC"));
+
+    const generation = await buildGeneration(precomposed, "Cuff It");
+    saveGeneration(generation);
+
+    expect(getCachedGeneration(combining, "Cuff It")).toEqual(generation);
+  });
+
+  it("matches text differing only in internal whitespace width", async () => {
+    const generation = await buildGeneration("Kali Uchis", "After the Storm");
+    saveGeneration(generation);
+
+    expect(getCachedGeneration("Kali   Uchis", "After  the Storm")).toEqual(generation);
+  });
 });

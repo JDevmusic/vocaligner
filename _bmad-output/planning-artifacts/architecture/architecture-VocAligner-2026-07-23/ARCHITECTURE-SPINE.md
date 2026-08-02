@@ -7,7 +7,7 @@ paradigm: 'Pipeline (Pipes-and-Filters) core, Ports & Adapters at the AI provide
 scope: 'Whole VocAligner MVP — landing/input, AI vocal-chain generation, results display'
 status: final
 created: '2026-07-23'
-updated: '2026-08-01'
+updated: '2026-08-02'
 binds: [FR-1, FR-2, FR-3, FR-4, FR-5, FR-6, FR-7]
 sources: ['_bmad-output/planning-artifacts/prds/prd-VocAligner-2026-07-23/prd.md']
 companions: []
@@ -84,14 +84,14 @@ graph LR
 - *(Existing pages still have some un-tokenized palette utilities like `border-black/10` — see Deferred; this Rule governs new work, cleanup of existing pages is separate.)*
 
 ### AD-7 — Cache key and scope
-- **Binds:** FR-4 (Cache), the not-yet-built cache layer
+- **Binds:** FR-4 (Cache), `web/lib/store/generationStore.ts`
 - **Prevents:** two independent implementations of caching disagreeing on what counts as "the same request," or building per-user caching that doesn't fit a product with no accounts.
-- **Rule:** The cache is **global** — there is no per-user or per-session concept anywhere in the MVP data model (no auth exists), so a per-user cache isn't a coherent option yet. The cache key is the normalized pair `(trim + lowercase(Artist Input), trim + lowercase(Song Input))`. No fuzzy/typo matching in MVP. *Resolves PRD Open Questions 1 and 2.*
+- **Rule:** The cache is **global** — there is no per-user or per-session concept anywhere in the MVP data model (no auth exists), so a per-user cache isn't a coherent option yet. The cache key is the normalized pair `(normalize(Artist Input), normalize(Song Input))`, where `normalize` is: trim, lowercase, Unicode-canonicalize (`.normalize("NFC")`), and collapse internal whitespace runs to a single space. No fuzzy/typo matching in MVP — normalization only collapses text that is genuinely the same (identical letters, different encoding or spacing), never different spellings. *Resolves PRD Open Questions 1 and 2. Widened 2026-08-02 (Story 2.1 code review) from the original "trim + lowercase" wording to also cover Unicode normalization form and internal whitespace, both of which produce visually-identical text a user would reasonably expect to hit the same cache entry — see `web/lib/store/generationStore.ts`'s `normalizeText`.*
 
 ### AD-8 — Cache entries are versioned, not just keyed by input
-- **Binds:** the cache layer, `PIPELINE_VERSION`, `PROMPT_VERSION`
-- **Prevents:** a prompt tweak or pipeline restructure silently serving stale chains generated under a different (and now-superseded) system.
-- **Rule:** A cache lookup must match on `(Artist + Song key, PIPELINE_VERSION, PROMPT_VERSION)` together — not the artist/song key alone. Bumping either version invalidates old cache entries for the same input.
+- **Binds:** the cache layer, `PIPELINE_VERSION`, `PROMPT_VERSION`, `CURRENT_SCHEMA_VERSION`
+- **Prevents:** a prompt tweak, pipeline restructure, or response-schema change silently serving stale chains generated under a different (and now-superseded) system.
+- **Rule:** A cache lookup must match on `(Artist + Song key, PIPELINE_VERSION, PROMPT_VERSION, CURRENT_SCHEMA_VERSION)` together — not the artist/song key alone. Bumping any of the three versions invalidates old cache entries for the same input. *Widened 2026-08-02 (Story 2.1 code review) to check `CURRENT_SCHEMA_VERSION` explicitly, rather than relying on the convention that a schema-shape change always bumps `PIPELINE_VERSION` too — that convention is documented on `PIPELINE_VERSION` itself but wasn't code-enforced.*
 
 ### AD-9 — The AI pipeline is reached only through the API route
 - **Binds:** `web/app/**`, `web/lib/ai/**`
