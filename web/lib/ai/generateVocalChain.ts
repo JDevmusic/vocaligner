@@ -4,6 +4,7 @@ import type { RegistryContext } from "../registry/pluginRegistry";
 import { CURRENT_SCHEMA_VERSION, type VocalChainInput, type VocalChainResponse } from "../schema/vocalChain";
 import { validateAndRepairChain } from "../validation/repairChain";
 import type { ModelClient } from "./modelClient";
+import { PIPELINE_VERSION } from "./pipelineVersion";
 import { PROMPT_VERSION } from "./prompts/version";
 import { runGenerationStage } from "./stages/generationStage";
 import { runReasoningStage } from "./stages/reasoningStage";
@@ -52,6 +53,7 @@ export async function generateVocalChain(
     meta: {
       generatedAt: new Date().toISOString(),
       model: modelClient.modelId,
+      pipelineVersion: PIPELINE_VERSION,
       promptVersion: PROMPT_VERSION,
       schemaVersion: CURRENT_SCHEMA_VERSION,
       cacheHit: false,

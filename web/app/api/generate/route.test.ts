@@ -33,7 +33,12 @@ describe("POST /api/generate", () => {
   });
 
   it("persists a successful generation so it can be retrieved by id", async () => {
-    const response = await postGenerate({ artist: "Frank Ocean", song: "Thinkin Bout You" });
+    // Deliberately a different Artist + Song than the test above -- this test
+    // asserts on a fresh generation's persisted shape, and reusing the same
+    // pair would make this a cache hit instead (the stored record keeps
+    // cacheHit: false forever, but this response would say true, so they'd
+    // stop being equal).
+    const response = await postGenerate({ artist: "Steve Lacy", song: "Bad Habit" });
     const body = await response.json();
     const parsed = vocalChainResponseSchema.parse(body);
 
@@ -62,5 +67,39 @@ describe("POST /api/generate", () => {
       })
     );
     expect(response.status).toBe(400);
+  });
+
+  it("serves the second identical request from cache, without a fresh generation", async () => {
+    const first = await postGenerate({ artist: "Tyler, The Creator", song: "See You Again" });
+    const firstBody = await first.json();
+    const firstParsed = vocalChainResponseSchema.parse(firstBody);
+    expect(firstParsed.meta.cacheHit).toBe(false);
+
+    const second = await postGenerate({ artist: "Tyler, The Creator", song: "See You Again" });
+    expect(second.status).toBe(200);
+    const secondBody = await second.json();
+    const secondParsed = vocalChainResponseSchema.parse(secondBody);
+
+    // Same id and generatedAt as the first response proves this is the exact
+    // stored record replayed, not a new generation (a fresh one would produce
+    // a new randomUUID() and a new timestamp).
+    expect(secondParsed.id).toBe(firstParsed.id);
+    expect(secondParsed.meta.generatedAt).toBe(firstParsed.meta.generatedAt);
+    expect(secondParsed.meta.cacheHit).toBe(true);
+    expect(secondParsed.chain).toEqual(firstParsed.chain);
+  });
+
+  it("matches a repeat request regardless of case or surrounding whitespace", async () => {
+    const first = await postGenerate({ artist: "Kali Uchis", song: "After the Storm" });
+    const firstBody = await first.json();
+    const firstParsed = vocalChainResponseSchema.parse(firstBody);
+
+    const second = await postGenerate({ artist: "  KALI uchis  ", song: " after THE storm " });
+    expect(second.status).toBe(200);
+    const secondBody = await second.json();
+    const secondParsed = vocalChainResponseSchema.parse(secondBody);
+
+    expect(secondParsed.id).toBe(firstParsed.id);
+    expect(secondParsed.meta.cacheHit).toBe(true);
   });
 });

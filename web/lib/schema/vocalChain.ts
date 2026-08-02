@@ -14,6 +14,7 @@ export const vocalChainInputSchema = z.object({
 export const vocalChainMetaSchema = z.object({
   generatedAt: z.string(),
   model: z.string(),
+  pipelineVersion: z.string(),
   promptVersion: z.string(),
   schemaVersion: z.string(),
   cacheHit: z.boolean(),

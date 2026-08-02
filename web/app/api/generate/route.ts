@@ -1,7 +1,7 @@
 import { generateVocalChain, VocalChainGenerationError } from "@/lib/ai/generateVocalChain";
 import { getModelClient } from "@/lib/ai/getModelClient";
 import { vocalChainInputSchema } from "@/lib/schema/vocalChain";
-import { saveGeneration } from "@/lib/store/generationStore";
+import { getCachedGeneration, saveGeneration } from "@/lib/store/generationStore";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -17,6 +17,15 @@ export async function POST(request: Request) {
       { error: "Invalid input.", issues: parsedInput.error.issues },
       { status: 400 }
     );
+  }
+
+  const cached = getCachedGeneration(parsedInput.data.artist, parsedInput.data.song);
+  if (cached) {
+    // Never mutate the stored entry -- its `id` may later be fetched directly
+    // via GET /api/generate/[id], which must keep reflecting the true,
+    // permanent fact that this specific record was originally a fresh
+    // generation (Architecture AD-7/AD-8/AD-10).
+    return Response.json({ ...cached, meta: { ...cached.meta, cacheHit: true } }, { status: 200 });
   }
 
   try {
