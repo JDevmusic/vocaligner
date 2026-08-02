@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { AnimatedButton } from "../components/AnimatedButton";
 import { ChannelEqVisual } from "../components/ChannelEqVisual";
@@ -55,7 +55,6 @@ function ResultsStatusShell({ children }: { children: React.ReactNode }) {
 }
 
 function NothingHereState() {
-  const router = useRouter();
   return (
     <ResultsStatusShell>
       <p className="mt-8 text-lg font-medium text-white sm:text-xl">
@@ -63,7 +62,7 @@ function NothingHereState() {
       </p>
       <AnimatedButton
         title="Back to Home"
-        onClick={() => router.push("/")}
+        href="/"
         className="mt-6 text-sm font-medium text-white/70 underline underline-offset-4 hover:text-white"
       >
         Back to Home
@@ -81,7 +80,6 @@ function LoadingState() {
 }
 
 function ResultsContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const [result, setResult] = useState<FetchResult | null>(null);
@@ -157,7 +155,7 @@ function ResultsContent() {
 
         <AnimatedButton
           title="Try Another Song"
-          onClick={() => router.push("/")}
+          href="/"
           className="mt-12 rounded-lg border border-black/10 bg-white px-6 py-3 text-base font-medium text-foreground transition-colors hover:bg-black/[.03]"
         >
           Try Another Song

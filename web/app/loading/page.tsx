@@ -88,7 +88,7 @@ function LoadingContent() {
 
         <AnimatedButton
           title="Try again"
-          onClick={() => router.push("/")}
+          href="/"
           className="mt-6 text-sm font-medium text-muted underline underline-offset-4 hover:text-foreground"
         >
           Try again
