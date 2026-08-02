@@ -21,11 +21,18 @@ export async function POST(request: Request) {
 
   const cached = getCachedGeneration(parsedInput.data.artist, parsedInput.data.song);
   if (cached) {
-    // Never mutate the stored entry -- its `id` may later be fetched directly
-    // via GET /api/generate/[id], which must keep reflecting the true,
-    // permanent fact that this specific record was originally a fresh
-    // generation (Architecture AD-7/AD-8/AD-10).
-    return Response.json({ ...cached, meta: { ...cached.meta, cacheHit: true } }, { status: 200 });
+    // Deep-clone before flipping cacheHit -- `cached` is the same object
+    // still sitting in the store's Maps, so a shallow spread here would
+    // leave nested fields (chain/research/reasoning/validation) aliased
+    // between the response we return and the permanently stored record.
+    // structuredClone is safe: VocalChainResponse is plain JSON-shaped data
+    // (strings/numbers/booleans/arrays/objects only). Its `id` may later be
+    // fetched directly via GET /api/generate/[id], which must keep
+    // reflecting the true, permanent fact that this specific record was
+    // originally a fresh generation (Architecture AD-7/AD-8/AD-10).
+    const hitResponse = structuredClone(cached);
+    hitResponse.meta.cacheHit = true;
+    return Response.json(hitResponse, { status: 200 });
   }
 
   try {

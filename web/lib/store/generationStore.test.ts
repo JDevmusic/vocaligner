@@ -54,4 +54,16 @@ describe("generationStore", () => {
 
     expect(getCachedGeneration("Beyoncé", "Cuff It")).toBeUndefined();
   });
+
+  it("does not collide two distinct pairs whose normalized text would concatenate identically across a naive delimiter", async () => {
+    // "Foo::Bar" + "Baz" and "Foo" + "Bar::Baz" both concatenate to
+    // "foo::bar::baz" if the cache key were a raw `${artist}::${song}` join
+    // -- proves the key encoding doesn't let a delimiter inside the input
+    // shift the artist/song boundary.
+    const first = await buildGeneration("Foo::Bar", "Baz");
+    saveGeneration(first);
+
+    expect(getCachedGeneration("Foo", "Bar::Baz")).toBeUndefined();
+    expect(getCachedGeneration("Foo::Bar", "Baz")).toEqual(first);
+  });
 });

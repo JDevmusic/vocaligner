@@ -6,10 +6,14 @@ const generations = new Map<string, VocalChainResponse>();
 const cachedByKey = new Map<string, VocalChainResponse>();
 
 // Exact match only (Architecture AD-7) -- trim + lowercase, no fuzzy/typo
-// matching in MVP. "::" can't appear in a real trimmed artist/song value in a
-// way that would let two different pairs collide onto the same key.
+// matching in MVP. Encoded as JSON.stringify of a 2-element array (not a raw
+// string join with a "::" separator) so a delimiter appearing inside a
+// normalized artist or song value can never shift the key boundary and
+// collide two genuinely different pairs onto the same key -- e.g. artist
+// "Foo::Bar" + song "Baz" must not collide with artist "Foo" + song
+// "Bar::Baz".
 function normalizeCacheKey(artist: string, song: string): string {
-  return `${artist.trim().toLowerCase()}::${song.trim().toLowerCase()}`;
+  return JSON.stringify([artist.trim().toLowerCase(), song.trim().toLowerCase()]);
 }
 
 export function saveGeneration(response: VocalChainResponse): void {
