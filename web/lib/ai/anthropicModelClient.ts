@@ -4,7 +4,7 @@ import { ModelResponseValidationError, ModelTransportError } from "./errors";
 import type { GenerateStructuredInput, GenerateStructuredResult, ModelClient } from "./modelClient";
 
 const TOOL_NAME = "structured_output";
-const DEFAULT_MODEL = "claude-sonnet-4-5-20250929";
+const DEFAULT_MODEL = "claude-sonnet-5";
 const DEFAULT_MAX_TOKENS = 4096;
 const DEFAULT_TIMEOUT_MS = 30_000;
 const DEFAULT_MAX_RETRIES = 2;

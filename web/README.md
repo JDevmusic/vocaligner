@@ -2,6 +2,21 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+### Set up your API key (one-time)
+
+This app calls the real Anthropic AI to research and generate vocal chains. To use the real thing rather than the built-in offline practice mode:
+
+1. Copy `.env.example` to a new file called `.env.local`:
+   ```bash
+   cp .env.example .env.local
+   ```
+2. Get a key at [console.anthropic.com](https://console.anthropic.com/) and paste it in as `ANTHROPIC_API_KEY=your-real-key-here`.
+3. Restart the dev server if it's already running.
+
+`.env.local` is already excluded from git (see `.gitignore`) — your real key is never committed or pushed anywhere. If you skip this step entirely, the app automatically falls back to a fast, free, offline practice mode instead of failing.
+
+### Run the app
+
 First, run the development server:
 
 ```bash
