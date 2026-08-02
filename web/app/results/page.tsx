@@ -17,7 +17,7 @@ import { Wordmark } from "../components/Wordmark";
 import { pluginRegistry } from "@/lib/registry/pluginRegistry";
 import type { PluginRegistryEntry } from "@/lib/registry/types";
 import type { ControlValue } from "@/lib/schema/chain";
-import type { VocalChainResponse } from "@/lib/schema/vocalChain";
+import { vocalChainResponseSchema, type VocalChainResponse } from "@/lib/schema/vocalChain";
 
 type PluginVisualComponent = (props: { plugin: PluginRegistryEntry; values: ControlValue[] }) => React.JSX.Element;
 
@@ -34,13 +34,30 @@ const PLUGIN_VISUAL_COMPONENTS: Record<string, PluginVisualComponent> = {
   "logic-pro.chorus": ChorusVisual,
 };
 
-type Status = "loading" | "error" | "ready";
+// Tags a fetch result with the id it was fetched for, so staleness (an id
+// change while a previous id's result is still in state) can be detected by
+// comparing `result.id` against the current `id` at render time, instead of
+// needing to reset state synchronously inside the effect.
+type FetchResult =
+  | { id: string; status: "ready"; response: VocalChainResponse }
+  | { id: string; status: "error" };
+
+// Shared full-screen shell for the two non-content states below (loading /
+// nothing-here). Both need the same gradient background + centered Wordmark;
+// only the message and any action button differ.
+function ResultsStatusShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="results-gradient flex min-h-screen flex-1 flex-col items-center justify-center px-6 text-center">
+      <Wordmark className="text-white/70" />
+      {children}
+    </div>
+  );
+}
 
 function NothingHereState() {
   const router = useRouter();
   return (
-    <div className="results-gradient flex min-h-screen flex-1 flex-col items-center justify-center px-6 text-center">
-      <Wordmark className="text-white/70" />
+    <ResultsStatusShell>
       <p className="mt-8 text-lg font-medium text-white sm:text-xl">
         We couldn&apos;t find that result.
       </p>
@@ -51,16 +68,15 @@ function NothingHereState() {
       >
         Back to Home
       </AnimatedButton>
-    </div>
+    </ResultsStatusShell>
   );
 }
 
 function LoadingState() {
   return (
-    <div className="results-gradient flex min-h-screen flex-1 flex-col items-center justify-center px-6 text-center">
-      <Wordmark className="text-white/70" />
+    <ResultsStatusShell>
       <p className="mt-8 text-lg font-medium text-white sm:text-xl">Loading your results&hellip;</p>
-    </div>
+    </ResultsStatusShell>
   );
 }
 
@@ -68,27 +84,31 @@ function ResultsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
-  const [status, setStatus] = useState<Status>(id ? "loading" : "error");
-  const [chainResponse, setChainResponse] = useState<VocalChainResponse | null>(null);
+  const [result, setResult] = useState<FetchResult | null>(null);
 
   useEffect(() => {
     if (!id) return;
+    const resolvedId = id;
     let cancelled = false;
 
     async function load() {
       try {
-        const response = await fetch(`/api/generate/${id}`);
+        const response = await fetch(`/api/generate/${encodeURIComponent(resolvedId)}`);
         if (!response.ok) {
-          if (!cancelled) setStatus("error");
+          if (!cancelled) setResult({ id: resolvedId, status: "error" });
           return;
         }
-        const body = (await response.json()) as VocalChainResponse;
-        if (!cancelled) {
-          setChainResponse(body);
-          setStatus("ready");
+
+        const body: unknown = await response.json();
+        const parsed = vocalChainResponseSchema.safeParse(body);
+        if (!parsed.success) {
+          if (!cancelled) setResult({ id: resolvedId, status: "error" });
+          return;
         }
+
+        if (!cancelled) setResult({ id: resolvedId, status: "ready", response: parsed.data });
       } catch {
-        if (!cancelled) setStatus("error");
+        if (!cancelled) setResult({ id: resolvedId, status: "error" });
       }
     }
 
@@ -98,10 +118,15 @@ function ResultsContent() {
     };
   }, [id]);
 
-  if (status === "error") return <NothingHereState />;
-  if (status === "loading" || !chainResponse) return <LoadingState />;
+  // `result.id !== id` covers both "no fetch has resolved yet" and "id changed
+  // since the last fetch resolved" — both should show the loading state rather
+  // than a stale previous result, and this is derived at render time instead of
+  // needing a synchronous reset inside the effect above.
+  if (!id) return <NothingHereState />;
+  if (!result || result.id !== id) return <LoadingState />;
+  if (result.status === "error") return <NothingHereState />;
 
-  const { input, chain } = chainResponse;
+  const { input, chain } = result.response;
 
   return (
     <div className="results-gradient flex min-h-screen flex-1 flex-col">
@@ -117,11 +142,16 @@ function ResultsContent() {
         </p>
 
         <div className="mt-12 flex w-full flex-col items-center gap-8">
-          {chain.plugins.map((instance) => {
+          {chain.plugins.map((instance, index) => {
             const plugin = pluginRegistry.getById(instance.pluginId);
             const Component = PLUGIN_VISUAL_COMPONENTS[instance.pluginId];
-            if (!plugin || !Component) return null;
-            return <Component key={instance.order} plugin={plugin} values={instance.controls} />;
+            if (!plugin || !Component) {
+              console.warn(`No registry entry or Visual component for plugin id "${instance.pluginId}" — skipping.`);
+              return null;
+            }
+            // Array index, not `instance.order`: order is only schema-constrained to be
+            // a positive int, not unique, so it isn't a safe React key on its own.
+            return <Component key={index} plugin={plugin} values={instance.controls} />;
           })}
         </div>
 

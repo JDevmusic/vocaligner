@@ -59,7 +59,7 @@ function LoadingContent() {
         }
 
         const body = await response.json();
-        if (typeof body?.id !== "string") {
+        if (typeof body?.id !== "string" || body.id.length === 0) {
           if (!cancelled) setError(true);
           return;
         }
@@ -87,7 +87,7 @@ function LoadingContent() {
         </p>
 
         <AnimatedButton
-          title="Try Again"
+          title="Try again"
           onClick={() => router.push("/")}
           className="mt-6 text-sm font-medium text-muted underline underline-offset-4 hover:text-foreground"
         >
