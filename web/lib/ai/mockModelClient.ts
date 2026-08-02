@@ -91,7 +91,7 @@ function buildMockGeneration() {
         rationale: "Even out dynamic swings between phrases.",
         controls: [
           { parameter: "threshold", value: -18, unit: "dB", confidence: "high" },
-          { parameter: "ratio", value: 3, confidence: "medium" },
+          { parameter: "ratio", value: 3, unit: null, confidence: "medium" },
           { parameter: "attack", value: 12, unit: "ms", confidence: "medium" },
           { parameter: "release", value: 140, unit: "ms", confidence: "low" },
         ],

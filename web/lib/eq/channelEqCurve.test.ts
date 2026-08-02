@@ -17,7 +17,7 @@ import {
 const channelEq = logicProStockPlugins.find((p) => p.id === "logic-pro.channel-eq")!;
 
 function value(parameter: string, num: number): ControlValue {
-  return { parameter, value: num, confidence: "high", wasRepaired: false };
+  return { parameter, value: num, unit: null, confidence: "high", wasRepaired: false };
 }
 
 // The real applied example from docs/images/reference/ChannelEQ_example.png: only

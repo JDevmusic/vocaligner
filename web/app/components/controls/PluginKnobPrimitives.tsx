@@ -232,7 +232,7 @@ function formatNumber(value: number): string {
 // (ChromaVerb) prints a fixed 2dp ("1.10 s"), confirmed against
 // Chromaverb_plugin.png -- formatNumber's default would drop the trailing
 // zero and show "1.1 s".
-export function formatKnobValue(parameter: string, value: number, unit?: string): string {
+export function formatKnobValue(parameter: string, value: number, unit?: string | null): string {
   if (parameter === "ratio") return `${formatNumber(value)}:1`;
   if (parameter === "drive") return unit ? `${value.toFixed(2)} ${unit}` : value.toFixed(2);
   if (parameter === "output") return unit ? `${value.toFixed(1)} ${unit}` : value.toFixed(1);

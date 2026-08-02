@@ -43,6 +43,11 @@ describe("createAnthropicModelClient", () => {
     const callArgs = create.mock.calls[0][0];
     expect(callArgs.tool_choice).toEqual({ type: "tool", name: "structured_output" });
     expect(callArgs.tools[0].input_schema.type).toBe("object");
+    // Guards against a real regression we hit in production: without `strict: true`,
+    // Claude's structured-output conformance to input_schema is only loosely guided,
+    // not enforced -- which let a live response return an array field as a string
+    // and drop required object fields entirely, crashing with ModelResponseValidationError.
+    expect(callArgs.tools[0].strict).toBe(true);
   });
 
   it("throws ModelResponseValidationError when no tool_use block is present, without retrying", async () => {

@@ -78,6 +78,7 @@ async function callWithSchema<T>(
         name: TOOL_NAME,
         description: "Return the structured result for this request.",
         input_schema: inputSchema,
+        strict: true,
       },
     ],
     tool_choice: { type: "tool", name: TOOL_NAME },

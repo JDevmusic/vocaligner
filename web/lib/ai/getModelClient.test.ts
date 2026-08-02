@@ -26,4 +26,18 @@ describe("getModelClient", () => {
 
     expect(getModelClient().modelId).not.toBe("mock");
   });
+
+  it("returns the mock client when ANTHROPIC_API_KEY is an empty string", () => {
+    process.env.ANTHROPIC_API_KEY = "";
+
+    expect(getModelClient().modelId).toBe("mock");
+  });
+
+  it("returns the mock client when ANTHROPIC_API_KEY is whitespace-only", () => {
+    // Guards against a copy-paste artifact in .env.local (e.g. a stray space)
+    // being treated as "configured" and attempting a doomed live request.
+    process.env.ANTHROPIC_API_KEY = "   ";
+
+    expect(getModelClient().modelId).toBe("mock");
+  });
 });
