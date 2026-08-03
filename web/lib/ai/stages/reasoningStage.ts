@@ -1,14 +1,25 @@
 import { z } from "zod";
 import type { Research } from "../../schema/research";
-import { processingIntentSchema, reasoningSchema, type Reasoning } from "../../schema/reasoning";
+import {
+  MIN_PROCESSING_INTENTS,
+  processingIntentSchema,
+  reasoningSchema,
+  type Reasoning,
+} from "../../schema/reasoning";
+import { ModelResponseValidationError } from "../errors";
 import type { ModelClient } from "../modelClient";
 import type { ObserveStage } from "../observability";
 import { buildReasoningPrompt } from "../prompts/reasoningPrompt";
 
 // The model reasons about category, observation, goal, and priority; stable ids are
 // assigned deterministically afterwards so the Generation stage can reference them reliably.
+// `.min(1)` only rules out a fully empty response -- Anthropic's strict tool mode rejects
+// any `minItems` other than 0 or 1 outright (a live 400, confirmed empirically), so the
+// real "at least a few distinct goals" quality floor (MIN_PROCESSING_INTENTS, imported
+// from schema/reasoning.ts to stay in sync with that schema's own `.min()`) can't live
+// in this wire-facing schema and is enforced as an explicit check after the call instead.
 const reasoningModelOutputSchema = z.object({
-  processingIntents: z.array(processingIntentSchema.omit({ id: true })),
+  processingIntents: z.array(processingIntentSchema.omit({ id: true })).min(1),
 });
 
 export interface RunReasoningStageInput {
@@ -30,6 +41,12 @@ export async function runReasoningStage(
     prompt,
   });
   observe?.({ durationMs: performance.now() - start, usage: result.usage, retryCount: result.retryCount });
+
+  if (result.data.processingIntents.length < MIN_PROCESSING_INTENTS) {
+    throw new ModelResponseValidationError(
+      `Reasoning stage returned only ${result.data.processingIntents.length} processing intent(s); at least ${MIN_PROCESSING_INTENTS} are required.`
+    );
+  }
 
   const processingIntents = result.data.processingIntents.map((intent, index) => ({
     ...intent,

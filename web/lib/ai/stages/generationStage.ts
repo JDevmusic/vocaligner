@@ -13,8 +13,11 @@ const generationControlSchema = controlValueSchema.omit({ wasRepaired: true });
 const generationPluginSchema = pluginInstanceSchema
   .omit({ order: true })
   .extend({ controls: z.array(generationControlSchema) });
+// `.min(1)` is a quality floor, not just a shape check: a zero-plugin response fails
+// validation here and becomes retryable by the caller, rather than silently returning
+// an empty "successful" chain.
 const generationModelOutputSchema = z.object({
-  plugins: z.array(generationPluginSchema),
+  plugins: z.array(generationPluginSchema).min(1),
 });
 
 export interface RunGenerationStageInput {

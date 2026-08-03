@@ -28,7 +28,11 @@ export const chainSchema = z.object({
   registryContext: z.object({
     tier: pluginTierSchema,
   }),
-  plugins: z.array(pluginInstanceSchema),
+  // A zero-plugin chain satisfies this shape but is never a valid recommendation.
+  // See generationStage.ts, whose model-facing schema carries the matching floor
+  // that actually triggers a retry -- this floor documents the same invariant on
+  // the public domain type.
+  plugins: z.array(pluginInstanceSchema).min(1),
 });
 
 export type ControlValue = z.infer<typeof controlValueSchema>;

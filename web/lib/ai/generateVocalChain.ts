@@ -1,7 +1,9 @@
 import { randomUUID } from "crypto";
+import { ModelResponseValidationError } from "./errors";
 import { pluginRegistry } from "../registry/pluginRegistry";
 import type { RegistryContext } from "../registry/pluginRegistry";
 import { CURRENT_SCHEMA_VERSION, type VocalChainInput, type VocalChainResponse } from "../schema/vocalChain";
+import type { Reasoning } from "../schema/reasoning";
 import { validateAndRepairChain } from "../validation/repairChain";
 import type { ModelClient } from "./modelClient";
 import { PIPELINE_VERSION } from "./pipelineVersion";
@@ -17,7 +19,12 @@ export class VocalChainGenerationError extends Error {
   }
 }
 
+function issueFor(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 const REGISTRY_CONTEXT: RegistryContext = { daw: "logic-pro", tier: "stock" };
+const MAX_REASONING_ATTEMPTS = 2;
 const MAX_GENERATION_ATTEMPTS = 2;
 
 export async function generateVocalChain(
@@ -25,26 +32,71 @@ export async function generateVocalChain(
   input: VocalChainInput
 ): Promise<VocalChainResponse> {
   const research = await runResearchStage(modelClient, input);
-  const reasoning = await runReasoningStage(modelClient, { ...input, research });
+
+  // runReasoningStage throws ModelResponseValidationError for any schema-shape failure,
+  // including (but not limited to) a too-thin result -- reasoningModelOutputSchema's own
+  // `.min(1)` catches a fully empty response, and the stage's manual MIN_PROCESSING_INTENTS
+  // check catches a schema-valid-but-still-too-thin one. Retried here up to
+  // MAX_REASONING_ATTEMPTS before giving up, on the same "this is a model behaviour issue
+  // the orchestrator should retry" basis documented on the error class itself. Issues from
+  // every failed attempt are kept (not just the last one) so a final thrown error reflects
+  // the full retry history.
+  let reasoning: Reasoning | undefined;
+  const reasoningIssues: string[] = [];
+  let reasoningAttempts = 0;
+
+  do {
+    reasoningAttempts += 1;
+    try {
+      reasoning = await runReasoningStage(modelClient, { ...input, research });
+    } catch (error) {
+      if (!(error instanceof ModelResponseValidationError)) throw error;
+      reasoningIssues.push(issueFor(error));
+    }
+  } while (!reasoning && reasoningAttempts < MAX_REASONING_ATTEMPTS);
+
+  if (!reasoning) {
+    throw new VocalChainGenerationError(reasoningIssues);
+  }
+
   const availablePlugins = pluginRegistry.getAvailable(REGISTRY_CONTEXT);
 
   let chain;
   let validation;
-  let attempts = 0;
+  let generationAttempts = 0;
+  const generationIssues: string[] = [];
 
   do {
-    const candidate = await runGenerationStage(modelClient, {
-      ...input,
-      processingIntents: reasoning.processingIntents,
-      availablePlugins,
-      context: REGISTRY_CONTEXT,
-    });
-    ({ chain, validation } = validateAndRepairChain(candidate, pluginRegistry));
-    attempts += 1;
-  } while (validation.status === "rejected" && attempts < MAX_GENERATION_ATTEMPTS);
+    generationAttempts += 1;
+    try {
+      const candidate = await runGenerationStage(modelClient, {
+        ...input,
+        processingIntents: reasoning.processingIntents,
+        availablePlugins,
+        context: REGISTRY_CONTEXT,
+      });
+      ({ chain, validation } = validateAndRepairChain(candidate, pluginRegistry));
+    } catch (error) {
+      // A too-thin generation result (including zero plugins) fails
+      // generationModelOutputSchema's `.min(1)` and throws here -- fold it into the
+      // same rejected/retry shape validateAndRepairChain already produces, so the
+      // one attempts budget below covers both "malformed" and "domain-rejected".
+      if (!(error instanceof ModelResponseValidationError)) throw error;
+      validation = { status: "rejected" as const, issues: [issueFor(error)] };
+    }
+    if (validation.status === "rejected") {
+      generationIssues.push(...validation.issues);
+    }
+  } while (validation.status === "rejected" && generationAttempts < MAX_GENERATION_ATTEMPTS);
 
   if (validation.status === "rejected") {
-    throw new VocalChainGenerationError(validation.issues);
+    throw new VocalChainGenerationError(generationIssues);
+  }
+  // chain and validation are always assigned together by validateAndRepairChain, so
+  // a non-rejected validation guarantees chain is set -- this check only narrows the
+  // type for TypeScript, which can't see that link across the try/catch above.
+  if (!chain) {
+    throw new VocalChainGenerationError(["Internal error: no chain was produced."]);
   }
 
   return {
