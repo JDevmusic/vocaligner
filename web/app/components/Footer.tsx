@@ -12,12 +12,22 @@ export function Footer() {
       <div className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-3 px-6 py-8 text-center sm:flex-row sm:justify-between sm:text-left">
         <BrandMark size="small" className="text-on-dark/50" />
 
-        {/* suppressHydrationWarning: the year is computed at render time, so a
-            server render and a client hydration that straddle a year boundary
-            (rare, but possible near midnight) could otherwise mismatch. */}
-        <p className="text-xs text-on-dark/40" suppressHydrationWarning>
-          © {year} VocAligner. Not affiliated with or endorsed by Apple. Logic Pro is a trademark of Apple Inc.
-        </p>
+        <div className="flex flex-col items-center gap-1 sm:items-end">
+          {/* suppressHydrationWarning: the year is computed at render time, so a
+              server render and a client hydration that straddle a year boundary
+              (rare, but possible near midnight) could otherwise mismatch. */}
+          <p className="text-xs text-on-dark/40" suppressHydrationWarning>
+            © {year} VocAligner. Not affiliated with or endorsed by Apple. Logic Pro is a trademark of Apple Inc.
+          </p>
+          <a
+            href="https://getsongbpm.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-on-dark/40 underline decoration-on-dark/20 underline-offset-2 transition-colors hover:text-on-dark/70"
+          >
+            Song data by GetSongBPM
+          </a>
+        </div>
       </div>
     </footer>
   );
