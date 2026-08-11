@@ -165,7 +165,9 @@ function BandData({ bands }: { bands: ResolvedEqBand[] }) {
             <p className={band.enabled ? "text-xs font-semibold text-brand-accent" : "text-xs text-muted"}>
               {band.kind === "highpass" || band.kind === "lowpass" ? `${band.slopeDbPerOct} dB/Oct` : formatBandGain(band.gainDb)}
             </p>
-            <p className="text-[10px] text-supporting">Q {band.q.toFixed(2)}</p>
+            <p className={band.enabled ? "text-[10px] font-semibold text-brand-accent" : "text-[10px] text-supporting"}>
+              Q {band.q.toFixed(2)}
+            </p>
           </div>
         ))}
       </div>
