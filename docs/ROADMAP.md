@@ -9,24 +9,24 @@
 
 # Landing Page
 
-- [ ] Hero
-- [ ] Inputs
-- [ ] CTA
-- [ ] Footer
+- [x] Hero
+- [x] Inputs
+- [x] CTA
+- [x] Footer
 
 ---
 
 # User Flow
 
-- [ ] Results Page
-- [ ] Loading State
+- [x] Results Page
+- [x] Loading State
 
 ---
 
 # AI
 
-- [ ] Research Prompt
-- [ ] Cache
+- [x] Research Prompt
+- [x] Cache
 - [ ] Database
 
 ---
