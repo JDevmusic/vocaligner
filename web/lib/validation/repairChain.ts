@@ -34,6 +34,21 @@ export function validateAndRepairChain(
         return control;
       }
 
+      // A string control with a fixed `options` list (e.g. Pitch Correction's rootNote/
+      // scale) is rejected, not clamped/repaired, if the model's value isn't an exact
+      // match -- unlike an out-of-range number, there's no well-defined "nearest" string
+      // to repair to, so this is treated the same as an unknown plugin/control: a real
+      // mistake worth a retry, not something to silently paper over.
+      if (definition.type === "string" && definition.options && typeof control.value === "string") {
+        if (!definition.options.includes(control.value)) {
+          issues.push(
+            `Control "${control.parameter}" on "${plugin.pluginId}" has value "${control.value}", which is not one of its allowed options.`
+          );
+          rejected = true;
+        }
+        return control;
+      }
+
       if (definition.type !== "number") {
         return control;
       }

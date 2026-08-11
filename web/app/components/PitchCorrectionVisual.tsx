@@ -132,12 +132,20 @@ function CorrectionMeter() {
 }
 
 export function PitchCorrectionVisual({ plugin, values }: { plugin: PluginRegistryEntry; values: ControlValue[] }) {
+  // rootNote/scale both have a registry default ("C"/"Major Scale"), so
+  // resolveControlValue alone can't tell "the model said C Major" apart from
+  // "the model never set a key and this is just the registry fallback" --
+  // checking `values` directly (the model's own raw output) is the only way
+  // to know whether a key was actually detected.
+  const keyDetected = values.some((v) => v.parameter === "rootNote") && values.some((v) => v.parameter === "scale");
   const rootNote = String(resolveControlValue(plugin, values, "rootNote") ?? "C");
   const scale = String(resolveControlValue(plugin, values, "scale") ?? "Major Scale");
 
   // Computed from real music-theory interval math (see
   // web/lib/pitch/scaleIntervals.ts), not a fixed/literal black-white piano.
-  const scaleNotes = getScaleNotes(rootNote, scale);
+  // Empty when no key was detected -- no keys highlighted, same as any other
+  // no-real-data control on this card.
+  const scaleNotes = keyDetected ? getScaleNotes(rootNote, scale) : new Set<string>();
 
   return (
     // Real width:height constraint (the reference screenshot is
@@ -164,11 +172,15 @@ export function PitchCorrectionVisual({ plugin, values }: { plugin: PluginRegist
         <div className="flex w-32 shrink-0 flex-col gap-4">
           <div>
             <p className="text-[11px] font-medium tracking-wide text-muted uppercase">Root Note</p>
-            <p className="text-lg font-bold leading-tight text-brand-accent">{rootNote}</p>
+            <p className={`text-lg font-bold leading-tight ${keyDetected ? "text-brand-accent" : "text-muted opacity-45"}`}>
+              {keyDetected ? rootNote : "Not detected"}
+            </p>
           </div>
           <div>
             <p className="text-[11px] font-medium tracking-wide text-muted uppercase">Scale / Chord</p>
-            <p className="text-lg font-bold leading-tight text-brand-accent">{scale}</p>
+            <p className={`text-lg font-bold leading-tight ${keyDetected ? "text-brand-accent" : "text-muted opacity-45"}`}>
+              {keyDetected ? scale : "—"}
+            </p>
           </div>
           {/* Show Pitch shares the same left edge as Root Note/Scale in the
               reference -- part of this column, not stacked under the

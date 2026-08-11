@@ -9,6 +9,11 @@ export const controlDefinitionSchema = z.object({
   unit: z.string().optional(),
   min: z.number().optional(),
   max: z.number().optional(),
+  // For a string control whose real Logic UI is a fixed dropdown/list (e.g. Pitch
+  // Correction's rootNote/scale) rather than free text -- the exact valid values, so a
+  // Generation can be constrained/validated the same way min/max constrains a number.
+  // Omitted for a string control that's genuinely free text.
+  options: z.array(z.string()).optional(),
   default: z.union([z.number(), z.string(), z.boolean()]),
 });
 

@@ -1,4 +1,5 @@
 import { pluginRegistryEntrySchema, type PluginRegistryEntry } from "./types";
+import { CHROMATIC, SCALE_INTERVALS } from "../pitch/scaleIntervals";
 
 const rawEntries: PluginRegistryEntry[] = [
   {
@@ -173,8 +174,15 @@ const rawEntries: PluginRegistryEntry[] = [
     // real defaults; the previous "amount" (%) control had no real
     // counterpart -- real Logic exposes Tolerance in Cents, not a percentage.
     controls: [
-      { parameter: "rootNote", type: "string", default: "C" },
-      { parameter: "scale", type: "string", default: "Major Scale" },
+      // options constrain a Generation to values this project can actually resolve/
+      // display -- CHROMATIC and SCALE_INTERVALS's keys are Logic's own real, exact
+      // Root Note / Scale-Chord dropdown lists (see scaleIntervals.ts), not an
+      // approximation. Added 2026-08-11 after live testing found the model free-text
+      // generating an imprecise "minor" description (e.g. "Minor Scale") that doesn't
+      // correspond to any one of Logic's several real, distinct minor variants (Natural/
+      // Aeolian, Harmonic, Melodic, Pentatonic) -- previously nothing stopped that.
+      { parameter: "rootNote", type: "string", default: "C", options: CHROMATIC },
+      { parameter: "scale", type: "string", default: "Major Scale", options: Object.keys(SCALE_INTERVALS) },
       { parameter: "response", type: "number", unit: "ms", min: 0, max: 500, default: 122 },
       { parameter: "tolerance", type: "number", unit: "Cent", min: 0, max: 100, default: 10 },
     ],

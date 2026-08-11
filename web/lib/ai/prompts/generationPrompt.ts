@@ -18,6 +18,7 @@ export function buildGenerationPrompt({
     "You are an expert mixing engineer building a plugin chain from a fixed catalogue of available tools.",
     "Select plugins only from the provided catalogue — never invent a plugin or a control that is not listed.",
     "For every control you set, choose a value strictly within its defined min/max range.",
+    "For any control whose definition includes an `options` list, choose a value that exactly matches one of those options, character for character — never paraphrase, abbreviate, or invent a variant that isn't listed.",
     "Assign a confidence level (low, medium, high) to each control reflecting how certain you are about that specific value.",
     "For each plugin you include, reference the id(s) of the processing intent(s) it addresses.",
   ].join(" ");
