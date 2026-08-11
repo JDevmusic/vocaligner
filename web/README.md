@@ -15,6 +15,10 @@ This app calls the real Anthropic AI to research and generate vocal chains. To u
 
 `.env.local` is already excluded from git (see `.gitignore`) — your real key is never committed or pushed anywhere. If you skip this step entirely, the app automatically falls back to a fast, free, offline practice mode instead of failing.
 
+### Optional: OpenRouter key (for comparing models)
+
+`.env.example` also has a spot for `OPENROUTER_API_KEY` — this isn't needed for the app to work, it's only for comparing how different AI models perform on the same song. Get a key at [openrouter.ai/keys](https://openrouter.ai/keys) and paste it in the same way as above. Same rule applies: never commit a real key, and this one stays gitignored too.
+
 ### Run the app
 
 First, run the development server:

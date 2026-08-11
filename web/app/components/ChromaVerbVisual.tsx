@@ -36,7 +36,17 @@ function PredelayField({ plugin, values }: { plugin: PluginRegistryEntry; values
 // height (a size-only difference, not the whole block shifted down).
 export function ChromaVerbVisual({ plugin, values }: { plugin: PluginRegistryEntry; values: ControlValue[] }) {
   return (
-    <PluginPanel plugin={plugin} width="1000px" aspectRatio="1.3 / 1">
+    // width is 1250px, not the usual 1000px other plugins use here: at 1000px the
+    // row's own fixed section padding (58px x4) plus its five knob/fader columns
+    // overflows past the card's right edge, and PluginPanel's overflow-hidden
+    // silently clips whatever's rightmost -- the Dry/Wet faders -- regardless of
+    // the actual control values. A first attempt at 1080px (hand-calculated from
+    // summing the source's own padding/knob-width values, without a real browser
+    // to verify against) was confirmed still insufficient -- real font rendering
+    // is evidently wider than that estimate accounted for. This is a deliberately
+    // large safety margin rather than another marginal guess. aspectRatio is
+    // unchanged, so this just scales the whole card up, not just the row.
+    <PluginPanel plugin={plugin} width="1250px" aspectRatio="1.3 / 1">
       <div className="flex flex-1 flex-col gap-3 px-5 py-4">
         <div className="flex items-center justify-between gap-3">
           <p className="text-[11px] font-semibold tracking-[0.15em] text-supporting uppercase">Damping EQ</p>

@@ -3,36 +3,9 @@
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { AnimatedButton } from "../components/AnimatedButton";
-import { ChannelEqVisual } from "../components/ChannelEqVisual";
-import { ChorusVisual } from "../components/ChorusVisual";
-import { ChromaVerbVisual } from "../components/ChromaVerbVisual";
-import { CompressorVisual } from "../components/CompressorVisual";
-import { DeEsser2Visual } from "../components/DeEsser2Visual";
-import { FlangerVisual } from "../components/FlangerVisual";
-import { OverdriveVisual } from "../components/OverdriveVisual";
-import { PhaserVisual } from "../components/PhaserVisual";
-import { PitchCorrectionVisual } from "../components/PitchCorrectionVisual";
-import { TapeDelayVisual } from "../components/TapeDelayVisual";
+import { PluginChainVisual } from "../components/PluginChainVisual";
 import { Wordmark } from "../components/Wordmark";
-import { pluginRegistry } from "@/lib/registry/pluginRegistry";
-import type { PluginRegistryEntry } from "@/lib/registry/types";
-import type { ControlValue } from "@/lib/schema/chain";
 import { vocalChainResponseSchema, type VocalChainResponse } from "@/lib/schema/vocalChain";
-
-type PluginVisualComponent = (props: { plugin: PluginRegistryEntry; values: ControlValue[] }) => React.JSX.Element;
-
-const PLUGIN_VISUAL_COMPONENTS: Record<string, PluginVisualComponent> = {
-  "logic-pro.channel-eq": ChannelEqVisual,
-  "logic-pro.compressor": CompressorVisual,
-  "logic-pro.de-esser-2": DeEsser2Visual,
-  "logic-pro.chromaverb": ChromaVerbVisual,
-  "logic-pro.tape-delay": TapeDelayVisual,
-  "logic-pro.pitch-correction": PitchCorrectionVisual,
-  "logic-pro.overdrive": OverdriveVisual,
-  "logic-pro.flanger": FlangerVisual,
-  "logic-pro.phaser": PhaserVisual,
-  "logic-pro.chorus": ChorusVisual,
-};
 
 // Tags a fetch result with the id it was fetched for, so staleness (an id
 // change while a previous id's result is still in state) can be detected by
@@ -139,19 +112,7 @@ function ResultsContent() {
           For &ldquo;{input.song}&rdquo; by {input.artist}
         </p>
 
-        <div className="mt-12 flex w-full flex-col items-center gap-8">
-          {chain.plugins.map((instance, index) => {
-            const plugin = pluginRegistry.getById(instance.pluginId);
-            const Component = PLUGIN_VISUAL_COMPONENTS[instance.pluginId];
-            if (!plugin || !Component) {
-              console.warn(`No registry entry or Visual component for plugin id "${instance.pluginId}" — skipping.`);
-              return null;
-            }
-            // Array index, not `instance.order`: order is only schema-constrained to be
-            // a positive int, not unique, so it isn't a safe React key on its own.
-            return <Component key={index} plugin={plugin} values={instance.controls} />;
-          })}
-        </div>
+        <PluginChainVisual plugins={chain.plugins} className="mt-12 flex w-full flex-col items-center gap-8" />
 
         <AnimatedButton
           title="Try Another Song"

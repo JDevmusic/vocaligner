@@ -93,10 +93,11 @@ graph LR
 - **Prevents:** a prompt tweak, pipeline restructure, or response-schema change silently serving stale chains generated under a different (and now-superseded) system.
 - **Rule:** A cache lookup must match on `(Artist + Song key, PIPELINE_VERSION, PROMPT_VERSION, CURRENT_SCHEMA_VERSION)` together — not the artist/song key alone. Bumping any of the three versions invalidates old cache entries for the same input. *Widened 2026-08-02 (Story 2.1 code review) to check `CURRENT_SCHEMA_VERSION` explicitly, rather than relying on the convention that a schema-shape change always bumps `PIPELINE_VERSION` too — that convention is documented on `PIPELINE_VERSION` itself but wasn't code-enforced.*
 
-### AD-9 — The AI pipeline is reached only through the API route
+### AD-9 — The AI pipeline is reached only through an API route
 - **Binds:** `web/app/**`, `web/lib/ai/**`
-- **Prevents:** a page or client component importing `lib/ai/*` directly — which would either leak the Anthropic API key into the browser bundle or duplicate validation/retry logic outside the route. Formalizes the existing `CLAUDE.md`/`ARCHITECTURE.md` rule ("AI requests always server-side") as an enforceable dependency direction.
-- **Rule:** Only `app/api/generate/route.ts` (and its own tests) may import from `lib/ai/*`. Pages/components reach generation exclusively over HTTP via that route. Pages/components may import `lib/registry/*` and `lib/schema/*` directly — that's shared domain data, not AI execution.
+- **Prevents:** a page or client component importing `lib/ai/*` directly — which would either leak the Anthropic API key into the browser bundle or duplicate validation/retry logic outside a route. Formalizes the existing `CLAUDE.md`/`ARCHITECTURE.md` rule ("AI requests always server-side") as an enforceable dependency direction.
+- **Rule:** Only `app/api/generate/route.ts` and `app/api/compare/route.ts` (and their own tests) may import from `lib/ai/*`. Pages/components reach generation exclusively over HTTP via one of those routes. Pages/components may import `lib/registry/*` and `lib/schema/*` directly — that's shared domain data, not AI execution.
+- **Widened 2026-08-03** to add `app/api/compare/route.ts` — an internal, unlinked tool for comparing model quality/cost side by side (`app/compare/page.tsx` calls it over HTTP, same as the main flow calls `generate`). The same reasoning that scopes AD-9 to server-side routes still applies unchanged: it's a second API route, not a page/component, so there's no key-leakage risk, and it calls `generateVocalChain` directly rather than duplicating its retry/validation logic.
 
 ### AD-10 — Cross-page result handoff is by opaque id; cache stores and replays the whole response
 - **Binds:** `app/loading/page.tsx`, `app/results/page.tsx`, the FR-4 cache layer, `app/api/generate/route.ts`
