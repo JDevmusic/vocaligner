@@ -7,7 +7,7 @@ import {
   type Reasoning,
 } from "../../schema/reasoning";
 import { ModelResponseValidationError } from "../errors";
-import type { ModelClient } from "../modelClient";
+import { RESEARCH_REASONING_TEMPERATURE, type ModelClient } from "../modelClient";
 import type { ObserveStage } from "../observability";
 import { buildReasoningPrompt } from "../prompts/reasoningPrompt";
 
@@ -39,6 +39,7 @@ export async function runReasoningStage(
     schema: reasoningModelOutputSchema,
     system,
     prompt,
+    temperature: RESEARCH_REASONING_TEMPERATURE,
   });
   observe?.({ durationMs: performance.now() - start, usage: result.usage, retryCount: result.retryCount });
 

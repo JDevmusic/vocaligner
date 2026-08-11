@@ -68,6 +68,13 @@ async function callWithSchema<T>(
 ): Promise<{ data: T; inputTokens: number; outputTokens: number }> {
   const inputSchema = z.toJSONSchema(schema) as Anthropic.Messages.Tool.InputSchema;
 
+  // `temperature` is deliberately never forwarded here: confirmed live (2026-08-11) that
+  // claude-sonnet-5 hard-rejects any request that includes it at all -- "`temperature` is
+  // deprecated for this model" (400 invalid_request_error), 100% reproducible, not
+  // intermittent. GenerateStructuredInput's temperature field (set by the Research/
+  // Reasoning stages for run-to-run consistency) is honored by the OpenRouter client,
+  // which has no such restriction -- just silently ignored on the Anthropic path until/
+  // unless this model exposes an equivalent consistency control another way.
   const response = await client.messages.create({
     model,
     max_tokens: maxTokens,
