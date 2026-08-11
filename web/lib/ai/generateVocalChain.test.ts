@@ -53,21 +53,38 @@ const VALID_REASONING = {
 };
 
 const THIN_GENERATION = { plugins: [] };
-const VALID_GENERATION = {
-  plugins: [
-    {
-      pluginId: "logic-pro.compressor",
-      addressesIntentIds: ["dynamics-1"],
-      rationale: "Even out dynamic swings between phrases.",
-      controls: [
-        { parameter: "threshold", value: -18, unit: "dB", confidence: "high" },
-        { parameter: "ratio", value: 3, unit: null, confidence: "medium" },
-      ],
-    },
+const COMPRESSOR_PLUGIN = {
+  pluginId: "logic-pro.compressor",
+  addressesIntentIds: ["dynamics-1"],
+  rationale: "Even out dynamic swings between phrases.",
+  controls: [
+    { parameter: "threshold", value: -18, unit: "dB", confidence: "high" },
+    { parameter: "ratio", value: 3, unit: null, confidence: "medium" },
   ],
 };
+const DEESSER_PLUGIN = {
+  pluginId: "logic-pro.de-esser-2",
+  addressesIntentIds: ["clarity-1"],
+  rationale: "Tame harsh sibilance.",
+  controls: [{ parameter: "frequency", value: 6000, unit: "Hz", confidence: "medium" }],
+};
+const CHROMAVERB_PLUGIN = {
+  pluginId: "logic-pro.chromaverb",
+  addressesIntentIds: ["space-1"],
+  rationale: "Add a subtle sense of space.",
+  controls: [{ parameter: "wet", value: 20, unit: "%", confidence: "medium" }],
+};
+// Passes the wire schema's `.min(1)` but is still below the real MIN_PLUGINS quality
+// floor (schema/chain.ts) enforced as an explicit check in generationStage.ts.
+const TOO_FEW_GENERATION = { plugins: [COMPRESSOR_PLUGIN, DEESSER_PLUGIN] };
+const VALID_GENERATION = { plugins: [COMPRESSOR_PLUGIN, DEESSER_PLUGIN, CHROMAVERB_PLUGIN] };
+// Mixes a real plugin id with an unknown one so this still exercises domain-level
+// rejection (validateAndRepairChain) rather than being intercepted earlier by the
+// MIN_PLUGINS count check -- it has 3 plugins, same as VALID_GENERATION.
 const UNKNOWN_PLUGIN_GENERATION = {
   plugins: [
+    COMPRESSOR_PLUGIN,
+    DEESSER_PLUGIN,
     {
       pluginId: "logic-pro.does-not-exist",
       addressesIntentIds: ["dynamics-1"],
@@ -82,7 +99,7 @@ describe("generateVocalChain -- retry on under-delivering model responses", () =
     const client = createScriptedModelClient([VALID_RESEARCH, VALID_REASONING, VALID_GENERATION]);
     const result = await generateVocalChain(client, { artist: "Test Artist", song: "Test Song" });
     expect(result.reasoning.processingIntents).toHaveLength(3);
-    expect(result.chain.plugins).toHaveLength(1);
+    expect(result.chain.plugins).toHaveLength(3);
     expect(result.validation.status).toBe("valid");
   });
 
@@ -108,7 +125,14 @@ describe("generateVocalChain -- retry on under-delivering model responses", () =
   it("retries the generation stage once after a too-thin (zero-plugin) result, then succeeds", async () => {
     const client = createScriptedModelClient([VALID_RESEARCH, VALID_REASONING, THIN_GENERATION, VALID_GENERATION]);
     const result = await generateVocalChain(client, { artist: "Test Artist", song: "Test Song" });
-    expect(result.chain.plugins).toHaveLength(1);
+    expect(result.chain.plugins).toHaveLength(3);
+    expect(result.validation.status).toBe("valid");
+  });
+
+  it("retries the generation stage when it returns too few plugins to satisfy MIN_PLUGINS (but enough to pass the wire schema's min(1)), then succeeds", async () => {
+    const client = createScriptedModelClient([VALID_RESEARCH, VALID_REASONING, TOO_FEW_GENERATION, VALID_GENERATION]);
+    const result = await generateVocalChain(client, { artist: "Test Artist", song: "Test Song" });
+    expect(result.chain.plugins).toHaveLength(3);
     expect(result.validation.status).toBe("valid");
   });
 
@@ -127,7 +151,7 @@ describe("generateVocalChain -- retry on under-delivering model responses", () =
       VALID_GENERATION,
     ]);
     const result = await generateVocalChain(client, { artist: "Test Artist", song: "Test Song" });
-    expect(result.chain.plugins).toHaveLength(1);
+    expect(result.chain.plugins).toHaveLength(3);
     expect(result.validation.status).toBe("valid");
   });
 
@@ -163,6 +187,15 @@ describe("generateVocalChain -- retry on under-delivering model responses", () =
         expect.stringContaining("Model output failed schema validation"),
         expect.stringContaining("logic-pro.does-not-exist"),
       ]),
+    });
+  });
+
+  it("throws VocalChainGenerationError with the MIN_PLUGINS issue when generation stays too-few across every retry", async () => {
+    const client = createScriptedModelClient([VALID_RESEARCH, VALID_REASONING, TOO_FEW_GENERATION, TOO_FEW_GENERATION]);
+    await expect(
+      generateVocalChain(client, { artist: "Test Artist", song: "Test Song" })
+    ).rejects.toMatchObject({
+      issues: expect.arrayContaining([expect.stringContaining("at least 3 are required")]),
     });
   });
 

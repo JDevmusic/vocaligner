@@ -23,15 +23,25 @@ export const pluginInstanceSchema = z.object({
   controls: z.array(controlValueSchema),
 });
 
+// The real "a genuine chain, not a token gesture" quality floor -- mirrors
+// MIN_PROCESSING_INTENTS in schema/reasoning.ts exactly, including why it can't just be
+// a stricter wire-facing `.min()`: Anthropic's strict tool mode caps `minItems` at 1
+// (generationStage.ts's model-facing schema carries that `.min(1)` floor and enforces
+// this real one as an explicit post-call check instead). Added 2026-08-11 after a live
+// Anthropic generation returned a "valid" one-plugin (just Compressor) chain -- the
+// Reasoning stage got this exact floor in Story 3.2, but Generation never did, so a
+// too-thin generation result had nothing stopping it from being accepted as-is.
+export const MIN_PLUGINS = 3;
+
 export const chainSchema = z.object({
   daw: dawSchema,
   registryContext: z.object({
     tier: pluginTierSchema,
   }),
   // A zero-plugin chain satisfies this shape but is never a valid recommendation.
-  // See generationStage.ts, whose model-facing schema carries the matching floor
-  // that actually triggers a retry -- this floor documents the same invariant on
-  // the public domain type.
+  // See generationStage.ts, whose model-facing schema carries the matching `.min(1)`
+  // floor and enforces the real MIN_PLUGINS floor above as an explicit check instead --
+  // this documents the same invariant on the public domain type.
   plugins: z.array(pluginInstanceSchema).min(1),
 });
 

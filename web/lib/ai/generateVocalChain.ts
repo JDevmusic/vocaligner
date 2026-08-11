@@ -6,6 +6,7 @@ import { CURRENT_SCHEMA_VERSION, type VocalChainInput, type VocalChainResponse }
 import type { Reasoning } from "../schema/reasoning";
 import { validateAndRepairChain } from "../validation/repairChain";
 import type { ModelClient } from "./modelClient";
+import type { ObserveStage } from "./observability";
 import { PIPELINE_VERSION } from "./pipelineVersion";
 import { PROMPT_VERSION } from "./prompts/version";
 import { runGenerationStage } from "./stages/generationStage";
@@ -29,9 +30,10 @@ const MAX_GENERATION_ATTEMPTS = 2;
 
 export async function generateVocalChain(
   modelClient: ModelClient,
-  input: VocalChainInput
+  input: VocalChainInput,
+  observe?: ObserveStage
 ): Promise<VocalChainResponse> {
-  const research = await runResearchStage(modelClient, input);
+  const research = await runResearchStage(modelClient, input, observe);
 
   // runReasoningStage throws ModelResponseValidationError for any schema-shape failure,
   // including (but not limited to) a too-thin result -- reasoningModelOutputSchema's own
@@ -48,7 +50,7 @@ export async function generateVocalChain(
   do {
     reasoningAttempts += 1;
     try {
-      reasoning = await runReasoningStage(modelClient, { ...input, research });
+      reasoning = await runReasoningStage(modelClient, { ...input, research }, observe);
     } catch (error) {
       if (!(error instanceof ModelResponseValidationError)) throw error;
       reasoningIssues.push(issueFor(error));
@@ -69,18 +71,25 @@ export async function generateVocalChain(
   do {
     generationAttempts += 1;
     try {
-      const candidate = await runGenerationStage(modelClient, {
-        ...input,
-        processingIntents: reasoning.processingIntents,
-        availablePlugins,
-        context: REGISTRY_CONTEXT,
-      });
+      const candidate = await runGenerationStage(
+        modelClient,
+        {
+          ...input,
+          processingIntents: reasoning.processingIntents,
+          availablePlugins,
+          context: REGISTRY_CONTEXT,
+        },
+        observe
+      );
       ({ chain, validation } = validateAndRepairChain(candidate, pluginRegistry));
     } catch (error) {
-      // A too-thin generation result (including zero plugins) fails
-      // generationModelOutputSchema's `.min(1)` and throws here -- fold it into the
-      // same rejected/retry shape validateAndRepairChain already produces, so the
-      // one attempts budget below covers both "malformed" and "domain-rejected".
+      // A too-thin generation result throws here one of two ways: a fully empty
+      // response fails generationModelOutputSchema's `.min(1)` inside runGenerationStage,
+      // and a schema-valid-but-still-too-thin one (e.g. a single plugin) fails
+      // runGenerationStage's own MIN_PLUGINS check -- same two-layer pattern
+      // reasoningStage.ts uses for MIN_PROCESSING_INTENTS. Both fold into the same
+      // rejected/retry shape validateAndRepairChain already produces, so the one
+      // attempts budget below covers "malformed," "too thin," and "domain-rejected" alike.
       if (!(error instanceof ModelResponseValidationError)) throw error;
       validation = { status: "rejected" as const, issues: [issueFor(error)] };
     }

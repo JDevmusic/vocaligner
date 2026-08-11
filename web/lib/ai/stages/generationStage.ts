@@ -1,6 +1,7 @@
 import { z } from "zod";
-import { chainSchema, controlValueSchema, pluginInstanceSchema, type Chain } from "../../schema/chain";
+import { chainSchema, controlValueSchema, pluginInstanceSchema, MIN_PLUGINS, type Chain } from "../../schema/chain";
 import type { ProcessingIntent } from "../../schema/reasoning";
+import { ModelResponseValidationError } from "../errors";
 import type { RegistryContext } from "../../registry/pluginRegistry";
 import type { PluginRegistryEntry } from "../../registry/types";
 import type { ModelClient } from "../modelClient";
@@ -41,6 +42,17 @@ export async function runGenerationStage(
     prompt,
   });
   observe?.({ durationMs: performance.now() - start, usage: result.usage, retryCount: result.retryCount });
+
+  // Thrown here (not just left to `.min(1)`) so it reaches generateVocalChain.ts's
+  // existing rejected/retry loop -- same pattern as reasoningStage.ts's
+  // MIN_PROCESSING_INTENTS check, and closes the exact gap that check didn't cover:
+  // a schema-valid, single-plugin (e.g. just Compressor) response previously sailed
+  // through as a "successful" chain.
+  if (result.data.plugins.length < MIN_PLUGINS) {
+    throw new ModelResponseValidationError(
+      `Generation stage returned only ${result.data.plugins.length} plugin(s); at least ${MIN_PLUGINS} are required.`
+    );
+  }
 
   const plugins = result.data.plugins.map((plugin, index) => ({
     ...plugin,
