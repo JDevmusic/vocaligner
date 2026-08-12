@@ -21,10 +21,10 @@ export async function POST(request: Request) {
 
   const cached = await getCachedGeneration(parsedInput.data.artist, parsedInput.data.song);
   if (cached) {
-    // Deep-clone before flipping cacheHit -- `cached` is the same object
-    // still sitting in the store's Maps, so a shallow spread here would
-    // leave nested fields (chain/research/reasoning/validation) aliased
-    // between the response we return and the permanently stored record.
+    // Deep-clone before flipping cacheHit -- `cached` may be the same object still held
+    // by the store (InMemoryStore) or a freshly-deserialized one (real Redis), but either
+    // way a shallow spread here would risk leaving nested fields (chain/research/
+    // reasoning/validation) aliased between the response we return and the stored record.
     // structuredClone is safe: VocalChainResponse is plain JSON-shaped data
     // (strings/numbers/booleans/arrays/objects only). Its `id` may later be
     // fetched directly via GET /api/generate/[id], which must keep

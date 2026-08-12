@@ -34,12 +34,18 @@ export class InMemoryStore implements KeyValueStore {
       this.data.delete(key);
       return null;
     }
-    return entry.value as T;
+    // structuredClone matches real Redis's actual behavior: every GET deserializes a
+    // fresh copy from JSON, so mutating what's returned can never corrupt what's stored.
+    // Without this, a caller mutating a returned object would silently corrupt this
+    // fallback store in a way real Redis could never reproduce -- a divergence that
+    // would only ever show up when Upstash isn't configured (local dev, or the window
+    // before it's provisioned in production), not in a test run against this same class.
+    return structuredClone(entry.value) as T;
   }
 
   async set(key: string, value: unknown, options?: { ex?: number }): Promise<"OK"> {
     const expiresAt = options?.ex ? Date.now() + options.ex * 1000 : null;
-    this.data.set(key, { value, expiresAt });
+    this.data.set(key, { value: structuredClone(value), expiresAt });
     return "OK";
   }
 }
@@ -48,8 +54,32 @@ let defaultStore: KeyValueStore | null = null;
 
 function getDefaultStore(): KeyValueStore {
   if (!defaultStore) {
-    const configured = process.env.UPSTASH_REDIS_REST_URL?.trim() && process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
-    defaultStore = configured ? Redis.fromEnv() : new InMemoryStore();
+    // Mirrors Redis.fromEnv()'s own fallback exactly (confirmed by reading the installed
+    // @upstash/redis source): it accepts UPSTASH_REDIS_REST_URL/TOKEN, or falls back to
+    // KV_REST_API_URL/TOKEN "for compatibility with Vercel KV and other platforms that
+    // may use different naming conventions." If this check only recognized the UPSTASH_*
+    // names, a project where Vercel's Upstash integration happened to provision the
+    // KV_* names instead would silently pick InMemoryStore over a perfectly reachable
+    // Redis instance -- reintroducing the exact cross-instance bug this module exists to
+    // fix, with nothing in the logs to explain why.
+    const url = process.env.UPSTASH_REDIS_REST_URL?.trim() || process.env.KV_REST_API_URL?.trim();
+    const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim() || process.env.KV_REST_API_TOKEN?.trim();
+
+    if (url && token) {
+      defaultStore = Redis.fromEnv();
+    } else {
+      if (url || token) {
+        // Exactly one half of a pair is set. Local dev with neither set is expected and
+        // silent; this is not that -- it's much more likely a typo'd or half-copied env
+        // var, and it degrades to InMemoryStore just as silently unless flagged here.
+        console.warn(
+          "[generationStore] Only one of the Upstash URL/token environment variables is set " +
+            "(checked UPSTASH_REDIS_REST_URL/KV_REST_API_URL and UPSTASH_REDIS_REST_TOKEN/KV_REST_API_TOKEN). " +
+            "Falling back to an in-memory store, which does not share data across serverless instances."
+        );
+      }
+      defaultStore = new InMemoryStore();
+    }
   }
   return defaultStore;
 }
@@ -90,16 +120,37 @@ export async function saveGeneration(response: VocalChainResponse, store?: KeyVa
   // moments of each other. getCachedGeneration already treats a cache-key hit whose
   // generation has separately expired as a miss, so the sub-second gap this could
   // theoretically leave has no observable effect.
-  await Promise.all([
+  //
+  // allSettled, not all, and this never rethrows: by the time this runs, the AI call
+  // has already succeeded and its response is what the caller is about to hand back to
+  // the user. A store outage should cost a future cache-miss or a 404-by-id, not throw
+  // away a result that already cost real time and an AI-provider bill to produce.
+  const results = await Promise.allSettled([
     s.set(generationKey(response.id), response, { ex: RETENTION_SECONDS }),
     s.set(cacheKey(key), response.id, { ex: RETENTION_SECONDS }),
   ]);
+  const labels = ["generation entry", "cache entry"] as const;
+  for (const [i, result] of results.entries()) {
+    if (result.status === "rejected") {
+      // error.message only, same convention as getSongBpmClient.ts -- verified against
+      // @upstash/redis's source that its errors echo the command body, never the auth
+      // token (sent as a header, never included in the client's thrown errors).
+      const reason = result.reason instanceof Error ? result.reason.message : "unknown error";
+      console.error(`[generationStore] Failed to persist ${labels[i]} for generation ${response.id}: ${reason}.`);
+    }
+  }
 }
 
 export async function getGenerationById(id: string, store?: KeyValueStore): Promise<VocalChainResponse | undefined> {
   const s = store ?? getDefaultStore();
-  const value = await s.get<VocalChainResponse>(generationKey(id));
-  return value ?? undefined;
+  try {
+    const value = await s.get<VocalChainResponse>(generationKey(id));
+    return value ?? undefined;
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "unknown error";
+    console.error(`[generationStore] Failed to read generation ${id}: ${reason}.`);
+    return undefined;
+  }
 }
 
 // A hit also requires the stored entry to have been generated under today's
@@ -115,9 +166,18 @@ export async function getCachedGeneration(
   store?: KeyValueStore
 ): Promise<VocalChainResponse | undefined> {
   const s = store ?? getDefaultStore();
-  const id = await s.get<string>(cacheKey(normalizeCacheKey(artist, song)));
+  let id: string | null;
+  try {
+    id = await s.get<string>(cacheKey(normalizeCacheKey(artist, song)));
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "unknown error";
+    console.error(`[generationStore] Failed to read cache entry for "${artist}" / "${song}": ${reason}.`);
+    return undefined;
+  }
   if (!id) return undefined;
 
+  // getGenerationById already treats its own store error as "not found" -- no separate
+  // try/catch needed here.
   const entry = await getGenerationById(id, s);
   if (!entry) return undefined;
   if (

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockModelClient } from "../ai/mockModelClient";
 import { generateVocalChain } from "../ai/generateVocalChain";
 import {
@@ -118,11 +118,14 @@ describe("generationStore", () => {
   });
 
   it("applies a retention TTL to both the id-keyed and cache-keyed entries", async () => {
-    let capturedTtl: number | undefined;
+    // Captures one ex value per set() call (not a single shared variable) so a
+    // regression that drops `ex` from only one of the two calls actually fails this
+    // test, instead of being masked by the other call's value overwriting it.
+    const capturedTtls: (number | undefined)[] = [];
     const spyingStore: KeyValueStore = {
       get: (key) => store.get(key),
       set: (key, value, options) => {
-        capturedTtl = options?.ex;
+        capturedTtls.push(options?.ex);
         return store.set(key, value, options);
       },
     };
@@ -130,6 +133,53 @@ describe("generationStore", () => {
     const generation = await buildGeneration("Tyler, The Creator", "EARFQUAKE");
     await saveGeneration(generation, spyingStore);
 
-    expect(capturedTtl).toBe(60 * 60 * 24 * 30);
+    expect(capturedTtls).toEqual([60 * 60 * 24 * 30, 60 * 60 * 24 * 30]);
+  });
+
+  it("does not throw when one of the two store writes rejects, and still attempts the other", async () => {
+    const attemptedKeys: string[] = [];
+    const failingStore: KeyValueStore = {
+      get: (key) => store.get(key),
+      set: async (key, value, options) => {
+        attemptedKeys.push(key);
+        if (key.startsWith("generation:")) throw new Error("simulated Redis outage");
+        return store.set(key, value, options);
+      },
+    };
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const generation = await buildGeneration("Erykah Badu", "On & On");
+
+    await expect(saveGeneration(generation, failingStore)).resolves.toBeUndefined();
+    expect(attemptedKeys).toHaveLength(2); // both writes were attempted despite one failing
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+
+    errorSpy.mockRestore();
+  });
+
+  it("treats a rejected cache-key lookup as a cache miss instead of throwing", async () => {
+    const failingStore: KeyValueStore = {
+      get: () => Promise.reject(new Error("simulated Redis outage")),
+      set: (key, value, options) => store.set(key, value, options),
+    };
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await expect(getCachedGeneration("Anderson .Paak", "Come Down", failingStore)).resolves.toBeUndefined();
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+
+    errorSpy.mockRestore();
+  });
+
+  it("treats a rejected id lookup as not found instead of throwing", async () => {
+    const failingStore: KeyValueStore = {
+      get: () => Promise.reject(new Error("simulated Redis outage")),
+      set: (key, value, options) => store.set(key, value, options),
+    };
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await expect(getGenerationById("some-id", failingStore)).resolves.toBeUndefined();
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+
+    errorSpy.mockRestore();
   });
 });
