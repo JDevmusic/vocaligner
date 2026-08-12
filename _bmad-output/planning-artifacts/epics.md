@@ -4,6 +4,7 @@ inputDocuments:
   - _bmad-output/planning-artifacts/prds/prd-VocAligner-2026-07-23/prd.md
   - _bmad-output/planning-artifacts/architecture/architecture-VocAligner-2026-07-23/ARCHITECTURE-SPINE.md
   - docs/DESIGN_SYSTEM.md
+  - _bmad-output/implementation-artifacts/deferred-work.md
 ---
 
 # VocAligner - Epic Breakdown
@@ -28,10 +29,11 @@ FR7: Each control in a Plugin Visual displays its literal value only (a numeric 
 
 ### NonFunctional Requirements
 
-The PRD deliberately has no formal NFR section (confirmed appropriate for this stage by its quality review — no boilerplate NFR theater). The closest things to cross-cutting quality requirements live in the Architecture Spine's invariants and the PRD's Non-Goals, folded into Additional Requirements below rather than invented here. Two worth calling out explicitly since they constrain every story that touches them:
+The PRD deliberately has no formal NFR section (confirmed appropriate for this stage by its quality review — no boilerplate NFR theater). The closest things to cross-cutting quality requirements live in the Architecture Spine's invariants and the PRD's Non-Goals, folded into Additional Requirements below rather than invented here. Worth calling out explicitly since they constrain every story that touches them:
 
 NFR1: AI generation requests must always be made server-side; the Anthropic API key must never be exposed to the client (Architecture AD-9; `CLAUDE.md`).
-NFR2: No rate-limiting/abuse-prevention exists in MVP — a conscious, flagged risk (PRD §5, §8), not a requirement to build against yet.
+NFR2 *(superseded 2026-08-12 — see Epic 5)*: No rate-limiting/abuse-prevention exists in MVP — originally a conscious, flagged risk (PRD §5, §8), explicitly deferred "until real API costs turn on." Both conditions the deferral was waiting on are now true (Luna is the production model per Story 3.3; the app is live and public on vocaligner.com) — a basic guardrail is now required, not optional.
+NFR3 *(new 2026-08-12)*: A stored Generation must be retrievable via `GET /api/generate/[id]` (and via Artist+Song cache lookup, AD-7) regardless of which server process/instance handled the original write — the storage layer cannot assume in-process affinity once running in a real multi-instance production deployment (Vercel serverless).
 
 ### Additional Requirements
 
@@ -47,8 +49,10 @@ NFR2: No rate-limiting/abuse-prevention exists in MVP — a conscious, flagged r
 - **AD-8**: A cache lookup must also match `PIPELINE_VERSION` + `PROMPT_VERSION`, so a structural/prompt change invalidates stale entries.
 - **AD-9**: Only `app/api/generate/route.ts` may import `lib/ai/*`; pages/components reach generation only over HTTP.
 - **AD-10**: Cross-page result handoff is by opaque `id` only (never the full payload in a URL or an ad hoc client store); the results page fetches the full `VocalChainResponse` by id from the same store the cache uses; a cache hit replays the stored response unmodified except `meta.cacheHit`.
+- **AD-11 candidate** *(new 2026-08-12, resolved by Epic 4)*: `generationStore.ts`'s cache storage technology — deployment target is no longer undecided (Vercel, confirmed live) — must move off a bare in-memory `Map` to something that survives across serverless instances, while preserving AD-7/AD-8's existing normalized-key + version-gate semantics unmodified.
+- **AD-12 candidate** *(new 2026-08-12, resolved by Epic 5)*: `POST /api/generate` needs a basic rate-limiting mechanism (IP-based or similar; exact strategy decided at story level) — resolves the Architecture Spine's previously-deferred rate-limiting item now that real per-request AI cost + public exposure both apply.
 
-*Deferred by the Architecture Spine (do NOT become stories in this pass — noted so nothing is silently lost):* deployment target/environments, cache storage technology (in-memory/Redis/DB), rate-limiting mechanism, Confidence Score UI surfacing (schema already has an unused `confidence` field), string/boolean control value validation, an `ObserveStage` consumer (logging/metrics), cleanup of existing un-tokenized Tailwind utilities in `page.tsx`/`loading/page.tsx`/`results/page.tsx`, swapping the hardcoded (superseded) Anthropic model id, bespoke per-plugin Visual designs, authentication/accounts.
+*Still deferred by the Architecture Spine (do NOT become stories in this pass — noted so nothing is silently lost):* Confidence Score UI surfacing (schema already has an unused `confidence` field), string/boolean control value validation, an `ObserveStage` consumer (logging/metrics), cleanup of existing un-tokenized Tailwind utilities in `page.tsx`/`loading/page.tsx`/`results/page.tsx`, bespoke per-plugin Visual designs, authentication/accounts, insert-vs-send/bus signal routing (flagged 2026-08-05, needs its own scoping pass), and the generation-accuracy backlog in `deferred-work.md` (Tape Delay knob range/log-scaling, Phaser `sweepMode` options, discrete-value-snapping) — founder confirmed 2026-08-12 these stay lower priority than production hardening for this pass.
 
 ### UX Design Requirements
 
@@ -94,7 +98,26 @@ The chain a user receives is genuinely researched from real information about th
 **Also implements:** AD-2 (already-adopted rule this epic must not violate, not a new one)
 **Depends on:** Epic 1 (the real pipeline has to be reachable and displayed before "is it real AI" matters)
 
+### Epic 4: Results Survive Real Production Traffic
+Any request submitted can land on a different Vercel serverless instance than the one that eventually reads it back — a user should never see a false "nothing here" for a generation that really happened. Moves `generationStore.ts` off a bare in-memory `Map` onto storage that survives across instances, with no visible change to the user experience.
+**NFRs covered:** NFR3
+**Also implements:** AD-11 (resolves the Architecture Spine's previously-deferred cache storage technology decision) — preserves AD-7/AD-8's existing key/version semantics unmodified
+**Depends on:** Epics 1–2 (extends the exact store those epics built; no new UI)
+
+### Epic 5: The Public Endpoint Can't Be Freely Abused
+Now that `/api/generate` is live on a public domain and every request costs real money via the production model, a single bad actor or runaway script shouldn't be able to drive unbounded AI spend. Adds basic rate-limiting to `POST /api/generate` — invisible to normal usage, caps abusive volume.
+**NFRs covered:** NFR2 (supersedes its original "not yet" framing)
+**Also implements:** AD-12
+**Depends on:** Epic 3 (only matters once a paid production model is actually live — already true)
+
 *Not included as epics (explicitly out of MVP scope per the PRD): Save Vocal Chain, Dry Vocal upload, Confidence Scores, Interactive Plugin Visuals, Plugin Variant selection (e.g. Compressor circuit types), accounts/auth/payments.*
+
+*Not included as epics (2026-08-12 pass — real but lower priority than production hardening, per founder confirmation): generation-accuracy backlog (Tape Delay knob range/log-scaling, Phaser `sweepMode` options, discrete-value-snapping) and insert-vs-send/bus signal routing — see `deferred-work.md`.*
+
+### Requirements Coverage Map (Epics 4–5)
+
+NFR2: Epic 5 - Basic rate-limiting on `POST /api/generate`
+NFR3: Epic 4 - Storage survives across serverless instances
 
 ---
 
@@ -241,3 +264,81 @@ So that the recommendation is actually accurate, not simulated.
 **When** it's implemented
 **Then** the hardcoded, superseded `DEFAULT_MODEL` id in `anthropicModelClient.ts` is consciously updated to a current model
 **And** the founder is explicitly reminded that no rate-limiting/abuse-prevention exists yet (confirmed non-goal, PRD §5/§8) — not solved by this story, but not allowed to be an accidental surprise either
+
+*(Note: Story 3.1's own text above is preserved as originally written; NFR2's "no rate-limiting yet" framing it references is superseded as of 2026-08-12 — see Epic 5 below.)*
+
+---
+
+## Epic 4: Results Survive Real Production Traffic
+
+Any request submitted can land on a different Vercel serverless instance than the one that eventually reads it back — a user should never see a false "nothing here" for a generation that really happened. Moves `generationStore.ts` off a bare in-memory `Map` onto storage that survives across instances, with no visible change to the user experience. Depends on Epics 1–2 (extends the exact store those epics built).
+
+### Story 4.1: Persist generation results across server instances
+
+As a user,
+I want my generated vocal chain to be retrievable even if my request is served by a different backend instance than the one that generated it,
+So that I never see a false "nothing here" error for a chain that was actually created successfully.
+
+**Acceptance Criteria:**
+
+**Given** a successful `POST /api/generate` on one serverless instance
+**When** a later `GET /api/generate/[id]` is handled by a different instance
+**Then** the stored `VocalChainResponse` is still returned correctly
+
+**Given** the existing Artist+Song cache (AD-7/AD-8)
+**When** a cache-eligible request lands on a different instance than the one that created the entry
+**Then** the cache hit is still correctly detected, `meta.cacheHit: true`, exactly as today
+
+**Given** this story replaces the storage mechanism, not the storage contract
+**When** implemented
+**Then** `getGeneration`/`setGeneration`/cache-lookup function signatures stay unchanged — no call-site changes needed in `route.ts` or `[id]/route.ts`
+
+**Given** the choice of persistence technology
+**When** selected
+**Then** it's the simplest option that satisfies "survives across Vercel instances" (Vercel KV is the natural fit — already on Vercel infra, no new account to manage) — not a full relational database for what's still simple key-value lookups
+
+### Story 4.2: Bound stored data with an expiration policy
+
+As the app owner,
+I want old generation results to eventually expire,
+So that storage doesn't grow unbounded for the life of the deployment.
+
+**Acceptance Criteria:**
+
+**Given** a generation stored longer than the retention window (exact duration TBD at implementation — long enough that no real user's `/results` link ever goes stale mid-use)
+**When** it's looked up
+**Then** it's treated as not found, same as an invalid `id`
+
+**Given** Story 4.1's persistence layer
+**When** this story is implemented
+**Then** it uses that layer's native TTL support rather than a hand-rolled sweep/cleanup job
+
+---
+
+## Epic 5: The Public Endpoint Can't Be Freely Abused
+
+Now that `/api/generate` is live on a public domain and every request costs real money via the production model, a single bad actor or runaway script shouldn't be able to drive unbounded AI spend. Adds basic rate-limiting to `POST /api/generate` — invisible to normal usage, caps abusive volume. Depends on Epic 3 (only matters once a paid production model is actually live — already true).
+
+### Story 5.1: Rate-limit the generation endpoint
+
+As the app owner,
+I want `POST /api/generate` to reject excessive requests from a single source,
+So that no single bad actor or runaway script can drive unbounded AI costs.
+
+**Acceptance Criteria:**
+
+**Given** a client exceeds N requests to `POST /api/generate` within a rolling window (N/window TBD, calibrated well above normal single-user behavior)
+**When** they request again inside that window
+**Then** they get `429 Too Many Requests` and the model client is never called (zero AI cost on a blocked request)
+
+**Given** a normal user submitting one generation
+**When** they use the app as intended
+**Then** they're never rate-limited
+
+**Given** Vercel serverless has no guaranteed shared in-memory state across instances (the same constraint Epic 4 addresses)
+**When** rate limiting is implemented
+**Then** request counts are tracked consistently across instances (e.g. reusing Epic 4's persistent store) rather than a per-instance counter that would undercount real abuse
+
+**Given** the founder's noted unfamiliarity with this kind of infra concept
+**When** this story is implemented
+**Then** the chosen approach and its tradeoffs are explained in plain terms as part of the story
