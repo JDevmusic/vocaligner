@@ -87,4 +87,54 @@ describe("lookupSongKey", () => {
     } as Response);
     expect(await lookupSongKey("A", "B", { apiKey: "test-key" })).toBeNull();
   });
+
+  it("returns null when the top search result's artist clearly doesn't match the query (fuzzy-search mismatch)", async () => {
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: true,
+      json: async () => ({ search: [{ key_of: "Em", artist: { name: "A Completely Different Band" } }] }),
+    } as Response);
+    expect(await lookupSongKey("Metallica", "Master of Puppets", { apiKey: "test-key" })).toBeNull();
+  });
+
+  it("still trusts the key when the artist name matches loosely (missing 'The', case-insensitive)", async () => {
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: true,
+      json: async () => ({ search: [{ key_of: "Em", artist: { name: "strokes" } }] }),
+    } as Response);
+    const result = await lookupSongKey("The Strokes", "Last Night", { apiKey: "test-key" });
+    expect(result).toEqual({ rootNote: "E", scale: "Natural Minor Scale (Aeolian)" });
+  });
+
+  it("still trusts the key when the response has no artist field to check (can't disprove it)", async () => {
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: true,
+      json: async () => ({ search: [{ key_of: "Em" }] }),
+    } as Response);
+    const result = await lookupSongKey("Metallica", "Master of Puppets", { apiKey: "test-key" });
+    expect(result).toEqual({ rootNote: "E", scale: "Natural Minor Scale (Aeolian)" });
+  });
+
+  it("logs a warning (not the URL/API key) on a non-ok HTTP response", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.mocked(global.fetch).mockResolvedValue({ ok: false, status: 503 } as Response);
+
+    await lookupSongKey("A", "B", { apiKey: "super-secret-key" });
+
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    const [message] = warnSpy.mock.calls[0];
+    expect(message).toContain("503");
+    expect(message).not.toContain("super-secret-key");
+  });
+
+  it("logs a warning (not the URL/API key) on a network error", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.mocked(global.fetch).mockRejectedValue(new TypeError("fetch failed"));
+
+    await lookupSongKey("A", "B", { apiKey: "super-secret-key" });
+
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    const [message] = warnSpy.mock.calls[0];
+    expect(message).toContain("fetch failed");
+    expect(message).not.toContain("super-secret-key");
+  });
 });

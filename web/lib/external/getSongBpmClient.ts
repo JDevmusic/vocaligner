@@ -46,11 +46,31 @@ const API_BASE = "https://api.getsong.co";
 const TIMEOUT_MS = 5000;
 
 interface GetSongBpmSearchResponse {
-  search?: Array<{ key_of?: unknown }>;
+  search?: Array<{ key_of?: unknown; artist?: { name?: unknown } }>;
 }
 
 export interface LookupSongKeyOptions {
   apiKey?: string;
+}
+
+// GetSongBPM's /search/ is a fuzzy text search, not an exact-id lookup -- its top result
+// can be a different song entirely (cover version, same-titled song, misspelling), and
+// blindly trusting it would apply a confidently WRONG key (see applyRealSongKey's
+// confidence: "high" in generateVocalChain.ts), worse than the model's own uncertain
+// guess. A loose, direction-agnostic substring check tolerates minor formatting
+// differences ("Strokes" vs "The Strokes") while still catching a wildly wrong match.
+// If the response doesn't include an artist name to check (field missing/blank), this
+// can't be disproven either way -- fails open, same "never trusted blindly" posture as
+// parseKeyOf, not rejected outright.
+function looksLikeSameArtist(queriedArtist: string, resultArtistName: unknown): boolean {
+  if (typeof resultArtistName !== "string") return true;
+  const returned = resultArtistName.trim().toLowerCase();
+  if (!returned) return true;
+
+  const queried = queriedArtist.trim().toLowerCase();
+  if (!queried) return true;
+
+  return queried.includes(returned) || returned.includes(queried);
 }
 
 // Best-effort only, by design: this augments Pitch Correction's rootNote/scale with a
@@ -69,16 +89,29 @@ export async function lookupSongKey(
 
   try {
     const lookup = `song:${song} artist:${artist}`;
+    // `url` embeds the raw API key -- never pass it (or any error that might echo it)
+    // to console/logging. The catch block below only ever logs `error.message`, and
+    // GetSongBPM/fetch transport errors are generic ("fetch failed", "aborted"), never
+    // an echo of the request URL.
     const url = `${API_BASE}/search/?api_key=${encodeURIComponent(apiKey)}&type=both&lookup=${encodeURIComponent(lookup)}`;
     const response = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      // Logged (status code only) so a repeat of the wrong-host bug (commit 40a0d9a --
+      // every lookup silently failing closed for a while before it was noticed live)
+      // surfaces in logs instead of vanishing into an indistinguishable "no key found."
+      console.warn(`GetSongBPM lookup failed with HTTP ${response.status}.`);
+      return null;
+    }
 
     const data = (await response.json()) as GetSongBpmSearchResponse;
-    const keyOf = data.search?.[0]?.key_of;
+    const result = data.search?.[0];
+    const keyOf = result?.key_of;
     if (typeof keyOf !== "string") return null;
+    if (!looksLikeSameArtist(artist, result?.artist?.name)) return null;
 
     return parseKeyOf(keyOf);
-  } catch {
+  } catch (error) {
+    console.warn(`GetSongBPM lookup failed: ${error instanceof Error ? error.message : "unknown error"}.`);
     return null;
   }
 }

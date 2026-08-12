@@ -19,6 +19,9 @@ export function Footer() {
           <p className="text-xs text-on-dark/40" suppressHydrationWarning>
             © {year} VocAligner. Not affiliated with or endorsed by Apple. Logic Pro is a trademark of Apple Inc.
           </p>
+          {/* Load-bearing, not just courtesy attribution: GetSongBPM's API terms require
+              a live backlink to getsongbpm.com on this site before GETSONGBPM_API_KEY
+              access is granted (see web/.env.example). Don't remove without checking that. */}
           <a
             href="https://getsongbpm.com"
             target="_blank"

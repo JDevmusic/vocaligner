@@ -52,8 +52,10 @@ describe("getModelClient", () => {
     process.env.ANTHROPIC_API_KEY = "test-key-not-a-real-secret";
     process.env.OPENROUTER_API_KEY = "   ";
 
-    expect(getModelClient().modelId).not.toBe("mock");
-    expect(getModelClient().modelId).not.toBe("openai/gpt-5.6-luna");
+    // Asserts the actual Anthropic default model id, not just "isn't mock and isn't
+    // Luna" -- that weaker pair of negatives would still pass if this ever regressed
+    // to return some other, wrong client.
+    expect(getModelClient().modelId).toBe("claude-sonnet-5");
   });
 
   it("returns the mock client when ANTHROPIC_API_KEY is an empty string and OPENROUTER_API_KEY is unset", () => {
