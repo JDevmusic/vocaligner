@@ -42,7 +42,7 @@ describe("POST /api/generate", () => {
     const body = await response.json();
     const parsed = vocalChainResponseSchema.parse(body);
 
-    expect(getGenerationById(parsed.id)).toEqual(parsed);
+    expect(await getGenerationById(parsed.id)).toEqual(parsed);
   });
 
   it("rejects a request missing the song field", async () => {

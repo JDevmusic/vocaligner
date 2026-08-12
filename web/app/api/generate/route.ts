@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const cached = getCachedGeneration(parsedInput.data.artist, parsedInput.data.song);
+  const cached = await getCachedGeneration(parsedInput.data.artist, parsedInput.data.song);
   if (cached) {
     // Deep-clone before flipping cacheHit -- `cached` is the same object
     // still sitting in the store's Maps, so a shallow spread here would
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   try {
     const modelClient = getModelClient();
     const response = await generateVocalChain(modelClient, parsedInput.data);
-    saveGeneration(response);
+    await saveGeneration(response);
     return Response.json(response, { status: 201 });
   } catch (error) {
     if (error instanceof VocalChainGenerationError) {
