@@ -77,4 +77,58 @@ describe("createFailoverModelClient", () => {
     expect(primary.generateStructured).toHaveBeenCalledTimes(1);
     expect(fallback.generateStructured).toHaveBeenCalledTimes(2);
   });
+
+  it("logs a visible warning (with no key material) when it fails over", async () => {
+    const primary = fakeClient("primary");
+    const fallback = fakeClient("fallback");
+    vi.mocked(primary.generateStructured).mockRejectedValue(new ModelTransportError("primary is down"));
+    vi.mocked(fallback.generateStructured).mockResolvedValue(fakeResult({ ok: true }));
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const client = createFailoverModelClient({ primary, fallback });
+    await client.generateStructured({ schema: {} as never, system: "s", prompt: "p" });
+
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    const [message] = warnSpy.mock.calls[0];
+    expect(message).toContain("primary");
+    expect(message).toContain("fallback");
+    expect(message).not.toMatch(/sk-|Bearer |api[_-]?key/i);
+
+    warnSpy.mockRestore();
+  });
+
+  it("folds the primary's failure into the thrown error when the fallback also throws a ModelTransportError", async () => {
+    const primary = fakeClient("primary");
+    const fallback = fakeClient("fallback");
+    vi.mocked(primary.generateStructured).mockRejectedValue(new ModelTransportError("primary is down"));
+    vi.mocked(fallback.generateStructured).mockRejectedValue(new ModelTransportError("fallback is down too"));
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const client = createFailoverModelClient({ primary, fallback });
+    const call = client.generateStructured({ schema: {} as never, system: "s", prompt: "p" });
+
+    await expect(call).rejects.toBeInstanceOf(ModelTransportError);
+    await expect(call).rejects.toThrow(/primary is down/i);
+    await expect(call).rejects.toThrow(/fallback is down too/i);
+
+    // Still sticky to the fallback afterward -- no point re-trying a confirmed-down primary
+    // just because the fallback also failed once.
+    vi.mocked(fallback.generateStructured).mockResolvedValue(fakeResult({ ok: true }));
+    await client.generateStructured({ schema: {} as never, system: "s", prompt: "p" });
+    expect(primary.generateStructured).toHaveBeenCalledTimes(1);
+  });
+
+  it("propagates the fallback's ModelResponseValidationError as-is (not wrapped) so the per-stage retry can still recognize it", async () => {
+    const primary = fakeClient("primary");
+    const fallback = fakeClient("fallback");
+    vi.mocked(primary.generateStructured).mockRejectedValue(new ModelTransportError("primary is down"));
+    vi.mocked(fallback.generateStructured).mockRejectedValue(new ModelResponseValidationError("fallback returned junk"));
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const client = createFailoverModelClient({ primary, fallback });
+
+    await expect(client.generateStructured({ schema: {} as never, system: "s", prompt: "p" })).rejects.toBeInstanceOf(
+      ModelResponseValidationError
+    );
+  });
 });
