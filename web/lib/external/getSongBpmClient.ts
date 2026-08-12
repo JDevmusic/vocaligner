@@ -37,7 +37,12 @@ export function parseKeyOf(keyOf: string): SongKeyLookup | null {
   return { rootNote: note, scale: minor ? NATURAL_MINOR_SCALE : MAJOR_SCALE };
 }
 
-const API_BASE = "https://api.getsongbpm.com";
+// NOT api.getsongbpm.com -- that's the pre-2024.09 host. GetSongBPM's own docs (Changelog
+// 1.2) say it "automatically redirects" here, but in practice it now sits behind a
+// Cloudflare bot-challenge that no server-side request can pass, silently breaking every
+// lookup (confirmed live: real requests to the old host never even reached GetSongBPM's
+// own code, let alone returned real data).
+const API_BASE = "https://api.getsong.co";
 const TIMEOUT_MS = 5000;
 
 interface GetSongBpmSearchResponse {
