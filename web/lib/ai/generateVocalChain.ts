@@ -1,7 +1,9 @@
 import { randomUUID } from "crypto";
 import { ModelResponseValidationError } from "./errors";
+import { lookupSongKey, type SongKeyLookup } from "../external/getSongBpmClient";
 import { pluginRegistry } from "../registry/pluginRegistry";
 import type { RegistryContext } from "../registry/pluginRegistry";
+import type { Chain } from "../schema/chain";
 import { CURRENT_SCHEMA_VERSION, type VocalChainInput, type VocalChainResponse } from "../schema/vocalChain";
 import type { Reasoning } from "../schema/reasoning";
 import { validateAndRepairChain } from "../validation/repairChain";
@@ -12,6 +14,32 @@ import { PROMPT_VERSION } from "./prompts/version";
 import { runGenerationStage } from "./stages/generationStage";
 import { runReasoningStage } from "./stages/reasoningStage";
 import { runResearchStage } from "./stages/researchStage";
+
+// Must match Pitch Correction's real registry id (registry/logicPro.ts).
+const PITCH_CORRECTION_PLUGIN_ID = "logic-pro.pitch-correction";
+
+// Overwrites Pitch Correction's rootNote/scale with a real, looked-up value -- app-computed
+// fact, never requested from or trusted to the model, same treatment `order`/`wasRepaired`
+// already get (Architecture AD-1). No-op if the chain doesn't include Pitch Correction at all
+// (a song this lookup applies to but the model correctly decided doesn't need it).
+function applyRealSongKey(chain: Chain, keyLookup: SongKeyLookup): void {
+  const pitchCorrection = chain.plugins.find((plugin) => plugin.pluginId === PITCH_CORRECTION_PLUGIN_ID);
+  if (!pitchCorrection) return;
+
+  for (const [parameter, value] of [
+    ["rootNote", keyLookup.rootNote],
+    ["scale", keyLookup.scale],
+  ] as const) {
+    const existing = pitchCorrection.controls.find((control) => control.parameter === parameter);
+    if (existing) {
+      existing.value = value;
+      existing.confidence = "high";
+      existing.wasRepaired = false;
+    } else {
+      pitchCorrection.controls.push({ parameter, value, unit: null, confidence: "high", wasRepaired: false });
+    }
+  }
+}
 
 export class VocalChainGenerationError extends Error {
   constructor(public readonly issues: string[]) {
@@ -33,6 +61,11 @@ export async function generateVocalChain(
   input: VocalChainInput,
   observe?: ObserveStage
 ): Promise<VocalChainResponse> {
+  // Kicked off immediately so its latency overlaps the research/reasoning/generation AI
+  // calls below (which together take ~30-60s) rather than adding to them -- awaited only
+  // once there's a final chain to apply it to.
+  const keyLookupPromise = lookupSongKey(input.artist, input.song);
+
   const research = await runResearchStage(modelClient, input, observe);
 
   // runReasoningStage throws ModelResponseValidationError for any schema-shape failure,
@@ -106,6 +139,11 @@ export async function generateVocalChain(
   // type for TypeScript, which can't see that link across the try/catch above.
   if (!chain) {
     throw new VocalChainGenerationError(["Internal error: no chain was produced."]);
+  }
+
+  const keyLookup = await keyLookupPromise;
+  if (keyLookup) {
+    applyRealSongKey(chain, keyLookup);
   }
 
   return {
