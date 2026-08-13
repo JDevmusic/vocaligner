@@ -117,14 +117,16 @@ function ResultsContent() {
         <section className="mt-10 max-w-2xl text-left">
           <span className="font-mono text-xs tracking-[0.2em] text-white/40 uppercase">What we found</span>
           <p className="mt-3 text-base leading-relaxed text-white/80 sm:text-lg">{leadParagraph}</p>
-          <ul className="mt-5 flex flex-col gap-3">
-            {bullets.map((bullet, index) => (
-              <li key={index} className="flex gap-3 text-sm leading-relaxed text-white/60 sm:text-base">
-                <span className="mt-2 h-1 w-1 flex-none rounded-full bg-white/30" aria-hidden="true" />
-                <span>{bullet}</span>
-              </li>
-            ))}
-          </ul>
+          {bullets.length > 0 && (
+            <ul className="mt-5 flex flex-col gap-3">
+              {bullets.map((bullet) => (
+                <li key={bullet} className="flex gap-3 text-sm leading-relaxed text-white/60 sm:text-base">
+                  <span className="mt-2 h-1 w-1 flex-none rounded-full bg-white/30" aria-hidden="true" />
+                  <span>{bullet}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
         <PluginChainVisual plugins={chain.plugins} className="mt-12 flex w-full flex-col items-center gap-8" />

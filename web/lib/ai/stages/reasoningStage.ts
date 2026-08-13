@@ -18,8 +18,12 @@ import { buildReasoningPrompt } from "../prompts/reasoningPrompt";
 // real "at least a few distinct goals" quality floor (MIN_PROCESSING_INTENTS, imported
 // from schema/reasoning.ts to stay in sync with that schema's own `.min()`) can't live
 // in this wire-facing schema and is enforced as an explicit check after the call instead.
+// `.required({ headline: true })`: `processingIntentSchema`'s `headline` is optional at
+// the domain-schema level (backward compat for pre-existing cached records read by
+// permanent id -- see reasoning.ts's comment on that field), but every *fresh* model call
+// must still produce one, so the wire schema re-requires it here.
 const reasoningModelOutputSchema = z.object({
-  processingIntents: z.array(processingIntentSchema.omit({ id: true })).min(1),
+  processingIntents: z.array(processingIntentSchema.omit({ id: true }).required({ headline: true })).min(1),
 });
 
 export interface RunReasoningStageInput {

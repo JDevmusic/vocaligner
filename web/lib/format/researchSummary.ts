@@ -31,13 +31,20 @@ export function buildResearchSummary(response: VocalChainResponse): ResearchSumm
   // Prefers primary-priority intents (the ones that actually drove a plugin decision), but
   // falls back to whatever exists if a generation happens to have none marked primary --
   // reasoning.processingIntents is guaranteed non-empty (MIN_PROCESSING_INTENTS), so bullets
-  // is never empty as long as a response exists at all.
+  // is never empty as long as a response exists at all *and* those intents have a headline.
   const primaryIntents = reasoning.processingIntents.filter((intent) => intent.priority === "primary");
   const bulletIntents = (primaryIntents.length > 0 ? primaryIntents : reasoning.processingIntents).slice(
     0,
     MAX_BULLETS
   );
-  const bullets = bulletIntents.map((intent) => intent.headline);
+  // `headline` is optional on the domain schema for backward compatibility with cached
+  // generations from before this field existed (see reasoning.ts) -- filtering here means
+  // one of those older records still renders its lead paragraph correctly, just with an
+  // empty (rather than blank/undefined-text) bullet list, instead of the section showing
+  // broken-looking dot markers with no text next to them.
+  const bullets = bulletIntents
+    .map((intent) => intent.headline?.trim())
+    .filter((headline): headline is string => Boolean(headline));
 
   return { leadParagraph, bullets };
 }

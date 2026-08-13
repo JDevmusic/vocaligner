@@ -36,6 +36,18 @@ const VALID_RESEARCH = {
 };
 
 const THIN_REASONING = { processingIntents: [] };
+// `headline` is optional on the domain schema (reasoning.ts) for backward compatibility
+// with cached generations from before the field existed, but reasoningStage.ts's
+// model-facing wire schema re-requires it via `.required({ headline: true })` -- a fresh
+// model call omitting it must still be rejected as invalid, same as any other malformed
+// response.
+const REASONING_MISSING_HEADLINE = {
+  processingIntents: [
+    { category: "dynamics", observation: "Dynamics vary.", goal: "Even out level.", priority: "primary" },
+    { category: "tonal-balance", observation: "Low-end buildup.", goal: "Clean it up.", priority: "primary" },
+    { category: "space", observation: "Sits dry.", goal: "Add space.", priority: "supporting" },
+  ],
+};
 // Passes the wire schema's `.min(1)` (Anthropic's strict tool mode rejects any
 // minItems other than 0 or 1 -- see reasoningStage.ts) but is still below the real
 // MIN_PROCESSING_INTENTS quality floor enforced as an explicit check afterwards.
@@ -137,6 +149,18 @@ describe("generateVocalChain -- retry on under-delivering model responses", () =
     const client = createScriptedModelClient([VALID_RESEARCH, TOO_FEW_REASONING, VALID_REASONING, VALID_GENERATION]);
     const result = await generateVocalChain(client, { artist: "Test Artist", song: "Test Song" });
     expect(result.reasoning.processingIntents).toHaveLength(3);
+  });
+
+  it("retries the reasoning stage when a fresh model response omits the required headline field, then succeeds", async () => {
+    const client = createScriptedModelClient([
+      VALID_RESEARCH,
+      REASONING_MISSING_HEADLINE,
+      VALID_REASONING,
+      VALID_GENERATION,
+    ]);
+    const result = await generateVocalChain(client, { artist: "Test Artist", song: "Test Song" });
+    expect(result.reasoning.processingIntents).toHaveLength(3);
+    expect(result.reasoning.processingIntents.every((intent) => intent.headline)).toBe(true);
   });
 
   it("throws VocalChainGenerationError when the reasoning stage stays too-thin across every retry", async () => {

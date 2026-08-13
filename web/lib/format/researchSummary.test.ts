@@ -144,7 +144,37 @@ describe("buildResearchSummary", () => {
       intent.priority = "supporting";
     }
     const { bullets } = buildResearchSummary(response);
-    expect(bullets.length).toBeGreaterThan(0);
-    expect(bullets.length).toBeLessThanOrEqual(3);
+    // Exact content, not just count -- a broken fallback that pulled from the wrong
+    // source (or the wrong slice) could still satisfy a bare length check.
+    expect(bullets).toEqual([
+      "Wide dynamic range, kept transparent through choruses",
+      "Warm chest tone, kept forward and present",
+      "Clear diction, sibilance kept in check",
+    ]);
+  });
+
+  it("omits an intent from the bullet list when it has no headline, rather than rendering a blank bullet", () => {
+    // Simulates a generation stored before the `headline` field existed -- optional on the
+    // schema for exactly this backward-compat reason (see reasoning.ts). buildResearchSummary
+    // must degrade gracefully rather than rendering an empty/undefined bullet.
+    const response = fixture();
+    response.reasoning.processingIntents = response.reasoning.processingIntents.map((intent) => ({
+      ...intent,
+      headline: undefined,
+    }));
+    const { leadParagraph, bullets } = buildResearchSummary(response);
+    expect(bullets).toEqual([]);
+    // The lead paragraph never depended on headline -- an old record should still render it.
+    expect(leadParagraph).toContain("Adele");
+  });
+
+  it("omits an intent from the bullet list when its headline is blank/whitespace-only", () => {
+    const response = fixture();
+    response.reasoning.processingIntents[0].headline = "   ";
+    const { bullets } = buildResearchSummary(response);
+    expect(bullets).toEqual([
+      "Warm chest tone, kept forward and present",
+      "Clear diction, sibilance kept in check",
+    ]);
   });
 });
