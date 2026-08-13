@@ -5,6 +5,7 @@ import { Suspense, useEffect, useState } from "react";
 import { AnimatedButton } from "../components/AnimatedButton";
 import { PluginChainVisual } from "../components/PluginChainVisual";
 import { Wordmark } from "../components/Wordmark";
+import { buildResearchSummary } from "@/lib/format/researchSummary";
 import { vocalChainResponseSchema, type VocalChainResponse } from "@/lib/schema/vocalChain";
 
 // Tags a fetch result with the id it was fetched for, so staleness (an id
@@ -98,6 +99,7 @@ function ResultsContent() {
   if (result.status === "error") return <NothingHereState />;
 
   const { input, chain } = result.response;
+  const { leadParagraph, bullets } = buildResearchSummary(result.response);
 
   return (
     <div className="results-gradient flex min-h-screen flex-1 flex-col">
@@ -111,6 +113,19 @@ function ResultsContent() {
         <p className="mt-4 text-lg text-white/70">
           For &ldquo;{input.song}&rdquo; by {input.artist}
         </p>
+
+        <section className="mt-10 max-w-2xl text-left">
+          <span className="font-mono text-xs tracking-[0.2em] text-white/40 uppercase">What we found</span>
+          <p className="mt-3 text-base leading-relaxed text-white/80 sm:text-lg">{leadParagraph}</p>
+          <ul className="mt-5 flex flex-col gap-3">
+            {bullets.map((bullet, index) => (
+              <li key={index} className="flex gap-3 text-sm leading-relaxed text-white/60 sm:text-base">
+                <span className="mt-2 h-1 w-1 flex-none rounded-full bg-white/30" aria-hidden="true" />
+                <span>{bullet}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
 
         <PluginChainVisual plugins={chain.plugins} className="mt-12 flex w-full flex-col items-center gap-8" />
 

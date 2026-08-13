@@ -17,6 +17,14 @@ export const processingIntentSchema = z.object({
   category: processingCategorySchema,
   observation: z.string(),
   goal: z.string(),
+  // Short, display-friendly version of observation+goal combined -- for a customer-facing
+  // "why these settings" summary (results page), not for the Generation stage, which still
+  // reads the fuller observation/goal. Kept separate rather than shortening those: they're
+  // written for the model's own downstream use, and truncating them mechanically for display
+  // proved unreliable (real examples cut off mid-thought, losing the actually-interesting
+  // word). Length is prompt-guided, not schema-enforced -- Anthropic's strict tool mode has
+  // no reliable way to cap string length server-side.
+  headline: z.string(),
   priority: processingPrioritySchema,
 });
 

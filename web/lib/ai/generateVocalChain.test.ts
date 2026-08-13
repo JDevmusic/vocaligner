@@ -41,14 +41,38 @@ const THIN_REASONING = { processingIntents: [] };
 // MIN_PROCESSING_INTENTS quality floor enforced as an explicit check afterwards.
 const TOO_FEW_REASONING = {
   processingIntents: [
-    { category: "dynamics", observation: "Only one thing was noticed.", goal: "Address it.", priority: "primary" },
+    {
+      category: "dynamics",
+      observation: "Only one thing was noticed.",
+      goal: "Address it.",
+      headline: "One thing addressed",
+      priority: "primary",
+    },
   ],
 };
 const VALID_REASONING = {
   processingIntents: [
-    { category: "dynamics", observation: "Dynamics vary between phrases.", goal: "Even out level.", priority: "primary" },
-    { category: "tonal-balance", observation: "Slight low-end buildup.", goal: "Clean up the low end.", priority: "primary" },
-    { category: "space", observation: "Vocal sits dry.", goal: "Add subtle space.", priority: "supporting" },
+    {
+      category: "dynamics",
+      observation: "Dynamics vary between phrases.",
+      goal: "Even out level.",
+      headline: "Uneven dynamics, evened out",
+      priority: "primary",
+    },
+    {
+      category: "tonal-balance",
+      observation: "Slight low-end buildup.",
+      goal: "Clean up the low end.",
+      headline: "Low-end buildup, cleaned up",
+      priority: "primary",
+    },
+    {
+      category: "space",
+      observation: "Vocal sits dry.",
+      goal: "Add subtle space.",
+      headline: "Dry vocal, given subtle space",
+      priority: "supporting",
+    },
   ],
 };
 
