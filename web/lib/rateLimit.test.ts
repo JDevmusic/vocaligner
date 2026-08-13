@@ -5,6 +5,10 @@ function fakeLimiter(success: boolean, reset = 0): Limiter {
   return { limit: vi.fn().mockResolvedValue({ success, reset }) };
 }
 
+function rejectingLimiter(error: unknown): Limiter {
+  return { limit: vi.fn().mockRejectedValue(error) };
+}
+
 describe("evaluateRateLimit", () => {
   it("allows the request when no limiter is configured (Upstash not set up)", async () => {
     const result = await evaluateRateLimit("1.2.3.4", null);
@@ -43,6 +47,17 @@ describe("evaluateRateLimit", () => {
     await evaluateRateLimit("5.6.7.8", limiter);
     expect(limiter.limit).toHaveBeenCalledWith("5.6.7.8");
   });
+
+  it("fails open (allows the request) when the limiter itself rejects -- e.g. a live Upstash outage, distinct from 'not configured'", async () => {
+    const warnSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const limiter = rejectingLimiter(new Error("ECONNRESET"));
+
+    const result = await evaluateRateLimit("1.2.3.4", limiter);
+
+    expect(result).toEqual({ allowed: true });
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    warnSpy.mockRestore();
+  });
 });
 
 describe("getClientIdentifier", () => {
@@ -70,5 +85,17 @@ describe("getClientIdentifier", () => {
 
   it("returns null when the header is present but empty", () => {
     expect(getClientIdentifier(requestWithHeader(""))).toBeNull();
+  });
+
+  it("skips a leading empty segment instead of treating it as a missing identifier", () => {
+    expect(getClientIdentifier(requestWithHeader(",203.0.113.7"))).toBe("203.0.113.7");
+  });
+
+  it("skips leading whitespace-only segments", () => {
+    expect(getClientIdentifier(requestWithHeader("  ,203.0.113.7"))).toBe("203.0.113.7");
+  });
+
+  it("returns null when every segment is empty", () => {
+    expect(getClientIdentifier(requestWithHeader(",,"))).toBeNull();
   });
 });

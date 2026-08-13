@@ -7,18 +7,24 @@ function clearAllCredentialEnvVars() {
   for (const key of ENV_KEYS) delete process.env[key];
 }
 
+// File-scoped (not nested inside a single describe) so it restores process.env after
+// *every* test below, including the separate "getRedisClient" describe -- vitest does not
+// reset process.env between test files that share a worker process, only the module
+// registry, so a describe that clears these vars and never restores them could otherwise
+// leak a cleared (or missing) credential state into whichever test file runs next in the
+// same worker.
+const originalEnv: Record<string, string | undefined> = {};
+for (const key of ENV_KEYS) originalEnv[key] = process.env[key];
+
+afterEach(() => {
+  for (const key of ENV_KEYS) {
+    if (originalEnv[key] === undefined) delete process.env[key];
+    else process.env[key] = originalEnv[key];
+  }
+  vi.restoreAllMocks();
+});
+
 describe("isUpstashConfigured", () => {
-  const original: Record<string, string | undefined> = {};
-  for (const key of ENV_KEYS) original[key] = process.env[key];
-
-  afterEach(() => {
-    for (const key of ENV_KEYS) {
-      if (original[key] === undefined) delete process.env[key];
-      else process.env[key] = original[key];
-    }
-    vi.restoreAllMocks();
-  });
-
   it("is false when nothing is set", () => {
     clearAllCredentialEnvVars();
     expect(isUpstashConfigured()).toBe(false);
@@ -78,7 +84,8 @@ describe("isUpstashConfigured", () => {
 // singleton on first successful call, so this must be the only test in the file that
 // calls it, and must run while credentials are genuinely absent -- otherwise a prior
 // successful construction would make this pass for the wrong reason (returning the
-// cached client instead of actually re-checking configuration).
+// cached client instead of actually re-checking configuration). The file-level afterEach
+// above still restores process.env after this test runs, same as every other test here.
 describe("getRedisClient", () => {
   it("throws a clear error when called without Upstash configured", () => {
     clearAllCredentialEnvVars();

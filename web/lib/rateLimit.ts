@@ -35,7 +35,21 @@ export async function evaluateRateLimit(identifier: string, limiter: Limiter | n
     return { allowed: true };
   }
 
-  const result = await limiter.limit(identifier);
+  // A configured limiter can still fail at call time -- a Redis timeout or transient
+  // Upstash outage, distinct from "not configured" above. Without this, that failure
+  // would propagate as an unhandled rejection out of route.ts's POST (its only try/catch
+  // wraps just the generation call, not this check) and 500 every request until the
+  // outage clears -- turning a hardening layer into a full outage of the revenue path,
+  // worse than having no rate limiter at all. Same fail-open-on-store-error convention as
+  // generationStore.ts's getGenerationById/getCachedGeneration.
+  let result: { success: boolean; reset: number };
+  try {
+    result = await limiter.limit(identifier);
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "unknown error";
+    console.error(`[rateLimit] limiter.limit() failed, failing open for this request: ${reason}.`);
+    return { allowed: true };
+  }
   if (result.success) return { allowed: true };
 
   const retryAfterSeconds = Math.max(0, Math.ceil((result.reset - Date.now()) / 1000));
@@ -75,6 +89,13 @@ export async function checkRateLimit(identifier: string): Promise<RateLimitResul
 export function getClientIdentifier(request: Request): string | null {
   const forwardedFor = request.headers.get("x-forwarded-for");
   if (!forwardedFor) return null;
-  const first = forwardedFor.split(",")[0]?.trim();
-  return first || null;
+  // .find(Boolean), not [0]: a header value with a leading/empty segment (e.g. ",203.0.113.7")
+  // would otherwise yield an empty first entry and silently fall into the same "no
+  // identifier, skip rate limiting" path as a genuinely missing header -- even though a
+  // real client IP is present, just not in the first slot.
+  const first = forwardedFor
+    .split(",")
+    .map((entry) => entry.trim())
+    .find((entry) => entry.length > 0);
+  return first ?? null;
 }
