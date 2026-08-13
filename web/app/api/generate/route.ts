@@ -1,9 +1,29 @@
 import { generateVocalChain, VocalChainGenerationError } from "@/lib/ai/generateVocalChain";
 import { getModelClient } from "@/lib/ai/getModelClient";
+import { checkRateLimit, getClientIdentifier } from "@/lib/rateLimit";
 import { vocalChainInputSchema } from "@/lib/schema/vocalChain";
 import { getCachedGeneration, saveGeneration } from "@/lib/store/generationStore";
 
 export async function POST(request: Request) {
+  // Checked before anything else -- including body parsing -- so a blocked request costs
+  // nothing beyond the rate-limit check itself (Epic 5 Story 5.1). No identifier (missing
+  // x-forwarded-for -- shouldn't happen on Vercel, real for local dev) skips rate limiting
+  // rather than folding every unidentified request into one shared bucket.
+  const identifier = getClientIdentifier(request);
+  if (identifier) {
+    const rateLimitResult = await checkRateLimit(identifier);
+    if (!rateLimitResult.allowed) {
+      const headers =
+        rateLimitResult.retryAfterSeconds !== undefined
+          ? { "Retry-After": String(rateLimitResult.retryAfterSeconds) }
+          : undefined;
+      return Response.json(
+        { error: "Too many requests. Please wait before trying again." },
+        { status: 429, headers }
+      );
+    }
+  }
+
   let body: unknown;
   try {
     body = await request.json();

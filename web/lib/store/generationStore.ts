@@ -1,7 +1,7 @@
-import { Redis } from "@upstash/redis";
 import { PIPELINE_VERSION } from "../ai/pipelineVersion";
 import { PROMPT_VERSION } from "../ai/prompts/version";
 import { CURRENT_SCHEMA_VERSION, type VocalChainResponse } from "../schema/vocalChain";
+import { getRedisClient, isUpstashConfigured } from "./upstashConfig";
 
 // Minimal shape this module actually needs from a key-value store -- lets tests inject a
 // simple in-memory fake instead of hitting real Upstash over the network, same pattern as
@@ -54,32 +54,10 @@ let defaultStore: KeyValueStore | null = null;
 
 function getDefaultStore(): KeyValueStore {
   if (!defaultStore) {
-    // Mirrors Redis.fromEnv()'s own fallback exactly (confirmed by reading the installed
-    // @upstash/redis source): it accepts UPSTASH_REDIS_REST_URL/TOKEN, or falls back to
-    // KV_REST_API_URL/TOKEN "for compatibility with Vercel KV and other platforms that
-    // may use different naming conventions." If this check only recognized the UPSTASH_*
-    // names, a project where Vercel's Upstash integration happened to provision the
-    // KV_* names instead would silently pick InMemoryStore over a perfectly reachable
-    // Redis instance -- reintroducing the exact cross-instance bug this module exists to
-    // fix, with nothing in the logs to explain why.
-    const url = process.env.UPSTASH_REDIS_REST_URL?.trim() || process.env.KV_REST_API_URL?.trim();
-    const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim() || process.env.KV_REST_API_TOKEN?.trim();
-
-    if (url && token) {
-      defaultStore = Redis.fromEnv();
-    } else {
-      if (url || token) {
-        // Exactly one half of a pair is set. Local dev with neither set is expected and
-        // silent; this is not that -- it's much more likely a typo'd or half-copied env
-        // var, and it degrades to InMemoryStore just as silently unless flagged here.
-        console.warn(
-          "[generationStore] Only one of the Upstash URL/token environment variables is set " +
-            "(checked UPSTASH_REDIS_REST_URL/KV_REST_API_URL and UPSTASH_REDIS_REST_TOKEN/KV_REST_API_TOKEN). " +
-            "Falling back to an in-memory store, which does not share data across serverless instances."
-        );
-      }
-      defaultStore = new InMemoryStore();
-    }
+    // isUpstashConfigured()/getRedisClient() (upstashConfig.ts) own the actual env var
+    // detection and the KV_REST_API_URL/TOKEN legacy-name fallback -- shared with
+    // rateLimit.ts so that logic exists in exactly one place.
+    defaultStore = isUpstashConfigured() ? getRedisClient() : new InMemoryStore();
   }
   return defaultStore;
 }
