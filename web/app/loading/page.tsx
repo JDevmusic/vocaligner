@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { AnimatePresence, motion, MotionConfig } from "motion/react";
+import { AnimatePresence, motion, MotionConfig, useReducedMotion } from "motion/react";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { AnimatedButton } from "../components/AnimatedButton";
 import { Wordmark } from "../components/Wordmark";
@@ -35,6 +35,7 @@ function LoadingContent() {
   const searchParams = useSearchParams();
   const [phaseIndex, setPhaseIndex] = useState(0);
   const [error, setError] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
 
   const artist = searchParams.get("artist") ?? "";
   const song = searchParams.get("song") ?? "";
@@ -117,7 +118,10 @@ function LoadingContent() {
       <div className="hero-gradient flex min-h-screen flex-1 flex-col items-center justify-center px-6 text-center">
         <Wordmark />
 
-        <div className="mt-8 h-8 sm:h-9">
+        {/* min-h (not a fixed h-) so a long artist name or a narrow viewport that wraps a
+            phrase to two lines grows the box instead of overflowing it and colliding with
+            the progress bar below -- the old fixed h-8/h-9 had no such guard. */}
+        <div className="mt-8 flex min-h-14 items-center justify-center">
           <AnimatePresence mode="wait">
             <motion.p
               key={phaseIndex}
@@ -136,12 +140,19 @@ function LoadingContent() {
           {/* Deliberately indeterminate (a calm opacity pulse, not a fill animation) --
               there's no reliable "percent done" for a real generation, and a bar that fills
               to 100% implies a false sense of completion the way the old fixed step count
-              did. */}
+              did. Opacity keyframes aren't a transform/layout value, so MotionConfig's
+              reducedMotion="user" (above) doesn't neutralise them on its own -- explicitly
+              swap to a static bar for reduced-motion users instead of pulsing at them for
+              the whole (up to 60s+) wait. */}
           <div className="h-1 w-full overflow-hidden rounded-full bg-black/10">
             <motion.div
               className="h-full w-full rounded-full bg-brand-accent"
-              animate={{ opacity: [0.3, 1, 0.3] }}
-              transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+              animate={prefersReducedMotion ? { opacity: 0.6 } : { opacity: [0.3, 1, 0.3] }}
+              transition={
+                prefersReducedMotion
+                  ? { duration: 0 }
+                  : { duration: 1.8, repeat: Infinity, ease: "easeInOut" }
+              }
             />
           </div>
           <span className="text-xs font-medium tracking-wide text-muted uppercase">
