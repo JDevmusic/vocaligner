@@ -1,19 +1,32 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { AnimatePresence, motion, MotionConfig } from "motion/react";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { AnimatedButton } from "../components/AnimatedButton";
 import { Wordmark } from "../components/Wordmark";
+import { EASE } from "../components/motion-shared";
 
-const PHASE_DURATION_MS = 900;
+// A real generation is 3 sequential AI calls and can take anywhere from ~20s to over a
+// minute -- there's no reliable way to know how far through it actually is. Rather than a
+// fixed, non-looping step sequence that reaches "done" looking within a few seconds and
+// then sits frozen for the rest of a much longer real wait (looks broken, not working),
+// this cycles continuously through phrases describing plausible current activity for as
+// long as the request is in flight, looping back to the start if it runs long. Loosely
+// grounded in the pipeline's real stages (research, then reasoning, then generation) but
+// deliberately not labelled as a literal, completable step count.
+const PHASE_DURATION_MS = 2400;
 
 function buildPhases(artist: string): string[] {
   const artistLabel = artist || "the artist";
   return [
-    `Researching ${artistLabel}'s vocal production`,
-    "Reasoning through the mix",
-    "Building your Logic Pro chain",
-    "Validating plugin settings",
+    `Listening to ${artistLabel}'s vocal style`,
+    "Studying the tone, dynamics and space",
+    "Comparing it against real production techniques",
+    "Weighing which plugins fit the sound",
+    "Checking settings against Logic Pro's real ranges",
+    "Assembling the chain in signal order",
+    "Double-checking every parameter",
   ];
 }
 
@@ -27,14 +40,16 @@ function LoadingContent() {
   const song = searchParams.get("song") ?? "";
   const phases = useMemo(() => buildPhases(artist), [artist]);
 
-  // Purely visual: advances through the phase text/progress bar while the
-  // real request is in flight, capping at the last phase rather than
-  // looping. Stops once an error state is shown.
+  // Purely visual: cycles through the phase text while the real request is in flight,
+  // looping back to the start (modulo, not capped) so a longer-than-usual wait keeps
+  // showing active phrases instead of sitting frozen on the last one. Stops once an
+  // error state is shown; the phase index becomes irrelevant the moment navigation to
+  // /results happens (the other effect below), so there's no "done" state to reach here.
   useEffect(() => {
     if (error) return;
 
     const interval = setInterval(() => {
-      setPhaseIndex((index) => Math.min(index + 1, phases.length - 1));
+      setPhaseIndex((index) => (index + 1) % phases.length);
     }, PHASE_DURATION_MS);
 
     return () => clearInterval(interval);
@@ -97,26 +112,44 @@ function LoadingContent() {
     );
   }
 
-  const progress = ((phaseIndex + 1) / phases.length) * 100;
-
   return (
-    <div className="hero-gradient flex min-h-screen flex-1 flex-col items-center justify-center px-6 text-center">
-      <Wordmark />
+    <MotionConfig reducedMotion="user">
+      <div className="hero-gradient flex min-h-screen flex-1 flex-col items-center justify-center px-6 text-center">
+        <Wordmark />
 
-      <p className="mt-8 text-lg font-medium text-foreground sm:text-xl">{phases[phaseIndex]}</p>
-
-      <div className="mt-6 flex w-48 flex-col items-center gap-2">
-        <div className="h-1 w-full overflow-hidden rounded-full bg-black/10">
-          <div
-            className="h-full rounded-full bg-brand-accent transition-all duration-500 ease-out"
-            style={{ width: `${progress}%` }}
-          />
+        <div className="mt-8 h-8 sm:h-9">
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={phaseIndex}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.4, ease: EASE }}
+              className="text-lg font-medium text-foreground sm:text-xl"
+            >
+              {phases[phaseIndex]}
+            </motion.p>
+          </AnimatePresence>
         </div>
-        <span className="text-xs font-medium tracking-wide text-muted uppercase">
-          Step {phaseIndex + 1} of {phases.length}
-        </span>
+
+        <div className="mt-6 flex w-48 flex-col items-center gap-3">
+          {/* Deliberately indeterminate (a calm opacity pulse, not a fill animation) --
+              there's no reliable "percent done" for a real generation, and a bar that fills
+              to 100% implies a false sense of completion the way the old fixed step count
+              did. */}
+          <div className="h-1 w-full overflow-hidden rounded-full bg-black/10">
+            <motion.div
+              className="h-full w-full rounded-full bg-brand-accent"
+              animate={{ opacity: [0.3, 1, 0.3] }}
+              transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+            />
+          </div>
+          <span className="text-xs font-medium tracking-wide text-muted uppercase">
+            Usually under a minute
+          </span>
+        </div>
       </div>
-    </div>
+    </MotionConfig>
   );
 }
 
