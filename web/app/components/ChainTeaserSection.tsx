@@ -13,6 +13,16 @@ import { container, item } from "./motion-shared";
 // exact song themselves gets this same real chain back, for as long as this cache entry
 // survives its retention window. Real values captured directly from that generation's
 // response, not invented.
+//
+// This stops being true (silently) the moment this specific cache entry is gone --
+// either its 30-day TTL lapses (generationStore.ts's RETENTION_SECONDS) or, more likely
+// sooner given how often this project bumps them, PIPELINE_VERSION/PROMPT_VERSION/the
+// schema version changes, which invalidates the cache hit outright regardless of TTL. A
+// fresh generation for the same song isn't guaranteed to reproduce these exact values or
+// EXAMPLE_TOTAL_PLUGINS below (AI generation isn't perfectly deterministic across
+// regenerations) -- if the copy or these numbers ever look stale, that's the first thing
+// to check, and the fix is re-capturing this snapshot from a real fresh generation, not
+// just bumping a date.
 const EXAMPLE_ARTIST = "The Weeknd";
 const EXAMPLE_SONG = "Blinding Lights";
 const EXAMPLE_TOTAL_PLUGINS = 8; // real chain length; this section only shows Channel EQ
@@ -46,8 +56,14 @@ const EXAMPLE_CHANNEL_EQ_CONTROLS: ControlValue[] = [
 export function ChainTeaserSection() {
   const channelEqPlugin = pluginRegistry.getById("logic-pro.channel-eq");
   // Defensive only -- the registry always has this entry; satisfies TypeScript's
-  // possibly-undefined return type without a real runtime path that hits it.
-  if (!channelEqPlugin) return null;
+  // possibly-undefined return type without a real runtime path that hits it. Logged
+  // (not silent) if it ever did happen, same pattern as PluginChainVisual.tsx's own
+  // registry-lookup guard -- otherwise this entire marketing section would vanish from
+  // the landing page with nothing surfacing why.
+  if (!channelEqPlugin) {
+    console.warn('ChainTeaserSection: no registry entry for "logic-pro.channel-eq" -- section not rendered.');
+    return null;
+  }
 
   const query = new URLSearchParams({ artist: EXAMPLE_ARTIST, song: EXAMPLE_SONG }).toString();
   const morePlugins = EXAMPLE_TOTAL_PLUGINS - 1;
@@ -79,8 +95,7 @@ export function ChainTeaserSection() {
         </motion.h2>
 
         <motion.p variants={item} className="mt-5 max-w-md text-base leading-relaxed text-on-dark/70 sm:text-lg">
-          For &ldquo;{EXAMPLE_SONG}&rdquo; by {EXAMPLE_ARTIST} — the same chain you&apos;d
-          get searching it yourself.
+          For &ldquo;{EXAMPLE_SONG}&rdquo; by {EXAMPLE_ARTIST} — the same chain you&apos;d get searching it yourself.
         </motion.p>
 
         <motion.div variants={item} className="relative mt-10 w-full max-w-xl overflow-hidden rounded-2xl">
@@ -102,7 +117,7 @@ export function ChainTeaserSection() {
           <AnimatedButton
             title={`Generate the chain for "${EXAMPLE_SONG}"`}
             href={`/loading?${query}`}
-            className="rounded-full bg-background px-8 py-3.5 text-base font-semibold text-foreground shadow-[0_6px_24px_-6px_rgba(0,0,0,0.35)] transition-shadow hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.45)]"
+            className="rounded-full bg-background px-8 py-3.5 text-base font-semibold text-foreground shadow-[0_6px_24px_-6px_color-mix(in_srgb,var(--wash-purple-deep)_60%,transparent)] transition-shadow hover:shadow-[0_8px_30px_-4px_color-mix(in_srgb,var(--wash-purple-deep)_75%,transparent)]"
           >
             See the full chain
           </AnimatedButton>

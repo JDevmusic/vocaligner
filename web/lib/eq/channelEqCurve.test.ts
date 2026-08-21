@@ -114,6 +114,18 @@ describe("axis helpers", () => {
     expect(freqToX(20000)).toBeCloseTo(900, 6);
   });
 
+  it("freqToX rounds every non-edge value to 3 decimal places, not just the exact edges above", () => {
+    // Regression test for a real SSR/CSR hydration mismatch: Math.log10 isn't guaranteed
+    // bit-identical across JS engines, so an unrounded freqToX could differ by a few ULPs
+    // between Node (server) and the browser (client) for the same input. The two edge
+    // values above happen to be exact regardless of rounding (t collapses to exactly 0 or
+    // 1 by construction), so they can't catch a regression here on their own -- this
+    // checks a genuine interior value, where only the rounding guarantees a clean, 3dp
+    // result: x * 1000 must land on (essentially) a whole number.
+    const scaled = freqToX(1000) * 1000;
+    expect(scaled).toBeCloseTo(Math.round(scaled), 9);
+  });
+
   it("dbToY places 0dB on the baseline and is monotonically decreasing in y as db increases", () => {
     expect(dbToY(0)).toBe(BASELINE_Y);
     expect(dbToY(15)).toBeLessThan(dbToY(0));
