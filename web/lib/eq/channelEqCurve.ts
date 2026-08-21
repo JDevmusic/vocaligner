@@ -179,7 +179,18 @@ export function freqToX(hz: number): number {
   const minLog = Math.log10(20);
   const maxLog = Math.log10(20000);
   const t = (Math.log10(hz) - minLog) / (maxLog - minLog);
-  return 40 + t * 860;
+  const x = 40 + t * 860;
+  // Math.log10 isn't guaranteed bit-identical across JS engines/platforms for the same
+  // input (unlike basic arithmetic) -- server-rendered (Node) and client-rendered
+  // (browser) values can differ by a handful of ULPs. That's invisible to a human at any
+  // sane SVG precision, but React hydration compares raw attribute strings, so an
+  // unrounded value here caused a real hydration mismatch on the frequency-axis labels
+  // once this component was first server-rendered (Story: landing page chain teaser,
+  // 2026-08-21 -- previously only ever rendered client-side on /results, where no
+  // server-rendered markup exists to mismatch against). Rounding collapses both
+  // environments onto the same value; 3 decimals is far finer than this ever needs to be
+  // (the plot is ~860px wide) and still well within every existing test's tolerance.
+  return Math.round(x * 1000) / 1000;
 }
 
 // Right-hand gain axis: perfectly linear across the plot's own established

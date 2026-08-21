@@ -6,6 +6,7 @@ import { motion, MotionConfig } from "motion/react";
 import { BrandMark } from "./components/BrandMark";
 import { AnimatedButton } from "./components/AnimatedButton";
 import { MeetSection } from "./components/MeetSection";
+import { ChainTeaserSection } from "./components/ChainTeaserSection";
 import { Footer } from "./components/Footer";
 import { CHAIN_PREVIEW } from "./landing-copy";
 import { item } from "./components/motion-shared";
@@ -145,6 +146,7 @@ export default function Home() {
         </section>
 
         <MeetSection />
+        <ChainTeaserSection />
         <Footer />
       </div>
     </MotionConfig>
