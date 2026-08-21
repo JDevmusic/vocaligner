@@ -38,7 +38,7 @@ export default function Home() {
           className="relative flex min-h-screen flex-col"
           style={{
             background:
-              "linear-gradient(180deg, var(--background) 0%, var(--sunset-fade) 14%, var(--sunset-start) 36%, var(--sunset-start) 58%, var(--wash-lavender) 80%, var(--wash-purple) 100%)",
+              "linear-gradient(180deg, var(--wash-purple) 0%, var(--wash-purple-deep) 100%)",
           }}
         >
           <div
@@ -47,89 +47,84 @@ export default function Home() {
             aria-hidden="true"
           />
 
-          <nav className="relative border-b border-foreground/[0.06]">
+          <nav className="relative border-b border-on-dark/10">
             <div className="mx-auto flex w-full max-w-[1200px] items-center px-6 py-7 sm:px-10">
-              <BrandMark />
+              <BrandMark className="text-on-dark" />
             </div>
           </nav>
 
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.4 }}
-            variants={item}
-            className="relative mx-auto grid w-full max-w-[1200px] grid-cols-1 gap-8 px-6 pt-10 sm:px-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-start lg:gap-16"
-          >
-            <div>
+          <div className="relative mx-auto flex w-full max-w-[1200px] flex-1 flex-col items-center justify-center px-6 py-10 sm:px-10">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3 }}
+              variants={item}
+              className="w-full max-w-4xl rounded-[2rem] px-8 py-14 text-center shadow-[0_30px_80px_-20px_color-mix(in_srgb,var(--wash-purple-deep)_75%,transparent)] sm:px-16 sm:py-20"
+              style={{ background: "var(--hero-panel)" }}
+            >
               <span className="font-mono text-xs tracking-[0.2em] text-supporting uppercase">
                 Signal research, matched to spec
               </span>
-              <h1 className="mt-4 max-w-xl text-5xl leading-[1.03] font-semibold tracking-tight text-foreground sm:text-7xl">
+              <h1 className="mx-auto mt-4 max-w-2xl text-4xl leading-[1.05] font-semibold tracking-tight text-foreground sm:text-6xl">
                 Recreate the vocal sound of your favourite artists.
               </h1>
-            </div>
 
-            <div className="lg:pt-2">
-              <span className="font-mono text-xs tracking-[0.2em] text-supporting uppercase">
-                What VocAligner does
+              <span className="mt-10 block text-xl font-semibold text-foreground sm:text-2xl">
+                See For Yourself
               </span>
-              <p className="mt-3 max-w-sm text-sm leading-relaxed text-foreground/75 sm:text-base">
-                Every classic vocal has a recipe. VocAligner finds it and
-                hands you the exact chain to recreate it — no trial and
-                error, no third-party plugins.
-              </p>
-            </div>
-          </motion.div>
 
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={item}
-            className="relative mx-auto flex w-full max-w-[1200px] flex-1 flex-col items-center justify-center px-6 py-14 text-center"
-          >
-            <form
-              id="hero-form"
-              onSubmit={handleGenerate}
-              className="flex max-w-xl flex-wrap items-baseline justify-center gap-x-2 gap-y-2 text-xl leading-relaxed font-medium text-foreground sm:text-2xl"
-            >
-              <span>Match</span>
-              <label className="sr-only" htmlFor="artist">Artist</label>
-              <input
-                id="artist"
-                type="text"
-                value={artist}
-                onChange={(event) => setArtist(event.target.value)}
-                placeholder="Frank Ocean"
-                size={12}
-                className="min-w-0 border-b-2 border-foreground/30 bg-transparent px-1 pb-0.5 text-center text-foreground outline-none placeholder:text-foreground/35 focus:border-foreground"
-              />
-              <span>on</span>
-              <label className="sr-only" htmlFor="song">Song</label>
-              <input
-                id="song"
-                type="text"
-                value={song}
-                onChange={(event) => setSong(event.target.value)}
-                placeholder="Thinkin Bout You"
-                size={16}
-                className="min-w-0 border-b-2 border-foreground/30 bg-transparent px-1 pb-0.5 text-center text-foreground outline-none placeholder:text-foreground/35 focus:border-foreground"
-              />
-              <span>, in Logic Pro.</span>
-            </form>
-
-            <div className="mt-8">
-              <AnimatedButton
-                type="submit"
-                form="hero-form"
-                disabled={!canGenerate}
-                title="Generate Vocal Chain"
-                className="rounded-full bg-foreground px-8 py-3.5 text-base font-semibold text-background shadow-[0_6px_24px_-6px_color-mix(in_srgb,var(--wash-purple)_40%,transparent)] transition-shadow enabled:hover:shadow-[0_8px_30px_-4px_color-mix(in_srgb,var(--wash-purple)_55%,transparent)] disabled:cursor-not-allowed disabled:bg-foreground/[.06] disabled:text-foreground/30 disabled:shadow-none"
+              <form
+                id="hero-form"
+                onSubmit={handleGenerate}
+                className="mt-6 flex flex-col items-center gap-4 sm:flex-row sm:items-end sm:justify-center"
               >
-                Generate Vocal Chain
-              </AnimatedButton>
-            </div>
-          </motion.div>
+                <div className="flex flex-col gap-1.5 text-left">
+                  <label
+                    htmlFor="artist"
+                    className="font-mono text-xs tracking-[0.2em] text-supporting uppercase"
+                  >
+                    Artist
+                  </label>
+                  <input
+                    id="artist"
+                    type="text"
+                    value={artist}
+                    onChange={(event) => setArtist(event.target.value)}
+                    placeholder="Frank Ocean"
+                    className="w-56 rounded-xl border border-foreground/15 bg-background px-4 py-3 text-base text-foreground outline-none placeholder:text-foreground/35 focus:border-foreground/40"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5 text-left">
+                  <label
+                    htmlFor="song"
+                    className="font-mono text-xs tracking-[0.2em] text-supporting uppercase"
+                  >
+                    Song
+                  </label>
+                  <input
+                    id="song"
+                    type="text"
+                    value={song}
+                    onChange={(event) => setSong(event.target.value)}
+                    placeholder="Thinkin Bout You"
+                    className="w-56 rounded-xl border border-foreground/15 bg-background px-4 py-3 text-base text-foreground outline-none placeholder:text-foreground/35 focus:border-foreground/40"
+                  />
+                </div>
+              </form>
+
+              <div className="mt-8">
+                <AnimatedButton
+                  type="submit"
+                  form="hero-form"
+                  disabled={!canGenerate}
+                  title="Generate Vocal Chain"
+                  className="rounded-full bg-brand-accent px-8 py-3.5 text-base font-semibold text-foreground shadow-[0_6px_24px_-6px_color-mix(in_srgb,var(--wash-purple-deep)_40%,transparent)] transition-shadow enabled:hover:shadow-[0_8px_30px_-4px_color-mix(in_srgb,var(--wash-purple-deep)_55%,transparent)] disabled:cursor-not-allowed disabled:bg-foreground/[.06] disabled:text-foreground/30 disabled:shadow-none"
+                >
+                  Generate Vocal Chain
+                </AnimatedButton>
+              </div>
+            </motion.div>
+          </div>
 
           <footer className="relative mx-auto w-full max-w-[1200px] px-6 pb-10 text-center">
             <div className="mx-auto flex max-w-lg flex-wrap items-center justify-center gap-x-3 gap-y-2 text-xs text-on-dark/65">

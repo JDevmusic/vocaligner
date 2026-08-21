@@ -77,23 +77,21 @@ When somebody lands on VocAligner they should think:
 
 # Colour Palette
 
-Primary Background — Landing Hero
+Primary Background — Landing Page
 
-The landing page hero gradient runs white at the top, through a warm sunset gold, down into a deep purple base.
+**(v1.38, 2026-08-21, founder decision — supersedes v1.37's navy hero below.)** The whole landing page — hero, "Meet VocAligner," the chain teaser, and the footer — runs flat on the original `--wash-purple` → `--wash-purple-deep` identity, the same one the results page uses: the hero itself gradients from `--wash-purple` at the top to `--wash-purple-deep` by its own bottom edge, and every section below holds flat at `--wash-purple-deep`, continuous with no seams. v1.37's navy ("space blue") hero is gone — it was tried as the hero's own identity, then as a navy-to-purple blend, but the founder found neither read well against the established purple, so the whole page returned to one colour family instead of two.
 
-Not a pale wash. The gold and purple should read as real, saturated colour — restrained, not flamboyant, but not dulled down either.
+In its place, the hero carries one large light panel (`--hero-panel`, #e3e2fa — a pale blue/purple blend, not straight lavender): a big rounded card floating on the dark purple background, holding the headline, the "See For Yourself" heading, the Artist/Song fields, and the Generate button. Moises-inspired, but adapted rather than copied — their whole page reads as one light "box"; here, only the hero's core content sits in a light panel, framed by the site's own dark purple rather than going light everywhere. Text inside this panel uses the site's normal dark-on-light tokens (`--foreground`/`--supporting`), not `--on-dark` — the one place on the landing page with dark text instead of white, since it's the one place sitting on a light background.
 
-Sections below the hero that continue the story (e.g. "how it works") pick up exactly where the hero's gradient ends and deepen further into a near-black purple, rather than cutting back to white. Use white text on these sections.
-
-Explored and rejected: pink/red/coral as part of this gradient, and a fully-saturated "vivid" version of the same gradient used edge-to-edge. Both read as generic AI-product styling rather than premium.
-
-Primary Background — Other Pages
-
-The loading page keeps the simpler warm sunset yellow gradient fading to white. Reserve the fuller white-to-gold-to-purple treatment for the landing page, where there's room for it to breathe.
+Superseded description (kept for history): the landing page hero gradient originally ran white at the top, through a warm sunset gold, down into a deep purple base — explored and rejected at the time: pink/red/coral as part of that gradient, and a fully-saturated "vivid" version of the same gradient edge-to-edge, both read as generic AI-product styling rather than premium. v1.36 held the white top for roughly the first half of the hero before transitioning to colour lower down. v1.37 replaced all of that with a dark navy hero (deepening twice, toward a "space" feel) blending into purple lower down — superseded by v1.38 above.
 
 Avoid harsh colour changes anywhere. Blend, don't cut.
 
-**Results page is the one exception (v1.15, 2026-07-31, founder decision).** While reviewing a Plugin Visual QA comparison page (dark ground, light plugin cards), the founder preferred that dark-background/light-card contrast and asked for it on the results page specifically. Rather than inventing a new dark tone, it reuses the near-black purple (`--wash-purple` → `--wash-purple-deep`) that the landing page's storytelling sections already deepen into — see `.results-gradient` in `globals.css`, and `MeetSection.tsx`/`Footer.tsx` for the precedent. The plugin cards themselves stay white/light, as in every reference screenshot; only what sits behind them changed. Text on the results page follows the same `text-white` / `text-white/70` scale the storytelling sections use for readability on that background. Scope is results-only — the loading page and landing page are unaffected.
+Primary Background — Other Pages
+
+The loading page keeps its own simpler warm sunset yellow gradient fading to white — unaffected by any of the landing page's colour history above.
+
+**Results page (v1.15, 2026-07-31, founder decision) reuses the same near-black purple the landing page carries (restored as of v1.38).** While reviewing a Plugin Visual QA comparison page (dark ground, light plugin cards), the founder preferred that dark-background/light-card contrast and asked for it on the results page specifically — see `.results-gradient` in `globals.css`. `wash-purple`/`wash-purple-deep` are shared with the whole landing page again, not a results-only pair. The plugin cards themselves stay white/light, as in every reference screenshot; only what sits behind them changed. Text on the results page follows the same `text-white` / `text-white/70` scale. Scope is results-only for the background *treatment itself* (dark ground behind light cards) — the loading page's own gradient is unaffected.
 
 ---
 
@@ -115,7 +113,7 @@ Warm dark grey
 
 Buttons
 
-Primary buttons:
+Primary buttons (on light/white backgrounds):
 
 Black background
 
@@ -126,6 +124,8 @@ Rounded corners
 Subtle hover animation
 
 No excessive gradients
+
+**The hero's primary CTA button (v1.37, still current) uses warm gold background (`--brand-accent`) with near-black text (`--foreground`), not black-on-white.** Originally this was to stand out against a dark navy hero; as of v1.38 the button actually sits on the light `--hero-panel`, where gold-on-pale-lavender still reads clearly and distinctly from the panel's own background — kept rather than reverted to black, since it's a stronger, more deliberate accent moment either way. Secondary buttons already sitting directly on a dark section (e.g. the chain teaser's "See the full chain") stay white background / dark text.
 
 Secondary buttons:
 
@@ -139,9 +139,9 @@ Black text
 
 Accent Colour
 
-Warm golden yellow, used sparingly on functional pages (progress bars, small highlights). Should guide attention rather than dominate.
+Warm golden yellow (`--brand-accent`). On functional pages (loading progress, small highlights) it's still used sparingly. On the landing page it also carries the hero's primary CTA button, so it's a bit more prominent there than "sparingly" — still not dominant, used on exactly one element per section.
 
-Deep purple is a secondary brand colour, not just an accent — it's used deliberately at real scale in the hero and storytelling sections, not sprinkled in small doses.
+Deep purple is a secondary brand colour, not just an accent — used at real scale across the entire landing page (hero included, as of v1.38) and the results page, not sprinkled in small doses. The hero's light panel (`--hero-panel`) is the one deliberate light-toned exception, not a second full-scale colour family.
 
 ---
 
@@ -193,9 +193,9 @@ The primary call-to-action should be obvious.
 
 The artist and song inputs should be immediately visible.
 
-Layout: an asymmetric two-column top section, not centered. Headline on the left, sized as the dominant element on the page. A short, inspiring (not mechanical) explanation of what the product does on the right, beside it — not below it.
+Layout: centered, single-column. The headline is the dominant element on the page, with no competing explanatory copy beside it — the "what it does" framing now lives in the "Meet VocAligner" section below instead. (Superseded v1.36 — previously an asymmetric two-column layout, headline left with a short "What VocAligner does" explanation beside it on the right; founder found the split-attention layout worked against feeling premium/centered.)
 
-The artist/song input itself sits lower, centered, as a secondary interaction: "Match [artist] on [song], in Logic Pro" — one sentence, not a stacked form. It should be visibly smaller than the headline.
+The artist/song input itself sits lower, centered, as a secondary interaction: a short "See For Yourself" heading above two clearly labeled fields (Artist, Song) side by side, each styled per the Inputs component spec (white background, soft border, rounded corners). Visibly smaller than the headline. (Superseded v1.36 — previously a single mad-libs sentence, "Match [artist] on [song], in Logic Pro"; changed to labeled fields as a more conventional, less "clever" pattern. Heading copy tweaked from "Try it out" to "See For Yourself" shortly after.)
 
 ---
 
@@ -297,6 +297,8 @@ Any scale, axis, or range in a bespoke visual should reflect the real plugin's o
 This means literally the same two flat colors for every key, black or white — one for in-scale, one for faded/out-of-scale. Do not tint, darken, or blend the color differently for black keys (e.g. a black key's own natural darkness bleeding into the highlight/fade color) — that produces a muddy in-between tone that reads as ambiguous rather than clearly on or off. Black vs. white key identity should only be communicated by shape/size (the traditional shorter, narrower key silhouette), never by a color difference. Matches how real Logic does it — see PitchCorrection_plugin.png, where every key in Chromatic Scale mode is the exact same blue regardless of black/white.
 
 **Correction (2026-07-31): Channel EQ's gain axis is two independent linear scales, not one non-linear "generous inside/steepened outside" scale.** `dbToY()` originally shipped with a two-slope model — a wider px/dB rate for ±15dB, a narrower one beyond it — described in its own code comment as "validated against the real reference." It never actually was: nobody had pixel-measured `ChannelEQ_plugin.png` against it, and a direct measurement round (this session) showed the real panel has a right-hand axis (+15 to -15) and a separate left-hand axis (0 to 60, most likely the Analyzer overlay's scale) that are each perfectly linear across the identical full plot height — +15/0/-15 line up exactly with the left axis's 0/30/60 at the top edge, dead center, and bottom edge. The lesson generalizes beyond this one plugin: an assumption that's been sitting in a code comment since a component was first built isn't "validated" just because it's old and nobody's questioned it — check it against the actual reference image, pixel by pixel, before trusting it or building further on top of it. (The general "asymmetric or dual scales, if that's what the real plugin uses" guidance a few paragraphs above this one is still correct as written — Channel EQ's own two-*axis* design is a real example of it; only the specific non-linear-single-axis model was wrong.)
+
+v1.36 (2026-08-21) revises the hero's color balance and CTA form, per founder feedback that the landing page didn't read as premium enough. The gradient now holds flat white/near-white for the top ~46% of the hero (headline + subhead) before transitioning into the sunset-to-purple wash lower down, where the CTA and chain-preview footer sit — same final colors and proportions as before, just compressed into the bottom half instead of starting immediately at 0%. This follows the "colour as one confident moment, not a wash" principle already named under Design Inspiration (ElevenLabs) but under-applied in the original full-height gradient. Scope is the landing hero only — MeetSection, the chain teaser, the results page, and the loading page's gradient are unchanged, preserving the continuous-wash effect those sections were built to share. Separately, the hero CTA's "Match [artist] on [song], in Logic Pro" sentence-style form is replaced with a "See For Yourself" heading above two clearly labeled Artist/Song fields side by side — a more conventional SaaS pattern, founder-requested. The Hero Section spec below is updated to match; this is the new documented standard, not a one-off exception.
 
 **Correction (2026-07-31): a per-band UI element (icon, label) that represents a fixed "slot" in a plugin's layout belongs in a static, evenly-spaced column — not at its band's actual value plotted on a data axis.** Channel EQ's 8 band-type icons were originally positioned via `freqToX(band.freq)`, i.e. computed from each band's real frequency and placed on the same log-frequency axis the curve is drawn against. That's the wrong model: the real reference shows the icons sitting in 8 fixed, evenly-spaced columns that line up with the band-data readout row underneath (itself already built as 8 equal-width columns) — completely independent of where that band's frequency happens to fall on the graph's log axis. The two layouts only coincidentally look similar near the middle of the frequency range, which is what let this go unnoticed initially. General rule: before tying a UI element's position to a live-computed value, check whether the real reference actually plots it against that axis, or whether it's a fixed per-slot column that only looks data-driven.
 

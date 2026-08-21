@@ -31,8 +31,9 @@ Completed
 - Artist input
 - Song input
 - Generate button
-- Sunset gradient
 - Responsive layout
+
+Note: the landing page's colour treatment has evolved since this milestone closed — the original sunset gradient (gold-to-purple) was replaced with a dark purple background and a light blue/purple hero panel. See `DESIGN_SYSTEM.md`'s versioned Colour Palette section (v1.36–v1.38) for the full history.
 
 Outcome
 

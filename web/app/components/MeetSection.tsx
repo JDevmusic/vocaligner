@@ -5,18 +5,15 @@ import { STEPS } from "../landing-copy";
 import { container, item } from "./motion-shared";
 
 // "Meet VocAligner" -- the how-it-works section below the hero.
-// Background picks up exactly where the hero's gradient ends (wash-purple)
-// and deepens further into near-black, so the two sections read as one
-// continuous piece rather than a hard cut back to light. See
-// docs/DESIGN_SYSTEM.md's Storytelling Sections.
+// Flat wash-purple-deep, matching exactly where the hero's own gradient
+// ends, so the two sections read as one continuous piece with no seam
+// at the boundary. See docs/DESIGN_SYSTEM.md's Storytelling Sections.
 
 export function MeetSection() {
   return (
     <section
       className="relative flex flex-col"
-      style={{
-        background: "linear-gradient(to bottom, var(--wash-purple) 0%, var(--wash-purple-deep) 30%, var(--wash-purple-deep) 100%)",
-      }}
+      style={{ background: "var(--wash-purple-deep)" }}
     >
       <motion.div
         variants={container}
