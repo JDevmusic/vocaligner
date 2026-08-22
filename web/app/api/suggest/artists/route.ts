@@ -26,5 +26,9 @@ export async function GET(request: Request) {
   }
 
   const artists = await searchArtists(query);
-  return Response.json({ suggestions: artists.map((artist) => artist.name) });
+  // Spotify genuinely has distinct artists sharing an identical display name -- dedupe by
+  // name (same pattern searchTracksByArtist already uses for track titles) since the
+  // dropdown only ever shows/selects the name itself, with no way to disambiguate further.
+  const names = Array.from(new Set(artists.map((artist) => artist.name)));
+  return Response.json({ suggestions: names });
 }

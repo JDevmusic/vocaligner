@@ -85,4 +85,17 @@ describe("GET /api/suggest/artists", () => {
 
     expect(searchArtists).toHaveBeenCalledWith("Kendrick");
   });
+
+  it("dedupes distinct artists that share an identical display name", async () => {
+    vi.mocked(checkSuggestRateLimit).mockResolvedValue({ allowed: true });
+    vi.mocked(searchArtists).mockResolvedValue([
+      { id: "id-1", name: "Same Name" },
+      { id: "id-2", name: "Same Name" },
+    ]);
+
+    const response = await getArtists("Same Name", { "x-forwarded-for": "203.0.113.7" });
+    const body = await response.json();
+
+    expect(body).toEqual({ suggestions: ["Same Name"] });
+  });
 });

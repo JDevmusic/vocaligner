@@ -76,6 +76,22 @@ describe("searchArtists / searchTracksByArtist", () => {
     expect(global.fetch).toHaveBeenCalledTimes(3);
   });
 
+  it("coalesces concurrent calls onto one in-flight token request instead of firing two", async () => {
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce(tokenResponse())
+      .mockResolvedValueOnce(searchArtistsResponse([]))
+      .mockResolvedValueOnce(searchArtistsResponse([]));
+
+    // Both start before either has a cached token to work with.
+    const [resultA, resultB] = await Promise.all([searchArtists("A", CREDENTIALS), searchArtists("B", CREDENTIALS)]);
+
+    expect(resultA).toEqual([]);
+    expect(resultB).toEqual([]);
+    // 1 token request (shared), not 2 -- confirms the two concurrent calls didn't each fire
+    // their own POST to Spotify's token endpoint.
+    expect(global.fetch).toHaveBeenCalledTimes(3);
+  });
+
   it("re-authenticates once the cached token has expired", async () => {
     vi.mocked(global.fetch)
       .mockResolvedValueOnce(tokenResponse("first-token", 60)) // expires almost immediately (60s - 60s early-refresh margin = 0)

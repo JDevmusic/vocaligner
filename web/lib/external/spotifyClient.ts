@@ -17,6 +17,11 @@ interface CachedToken {
 }
 
 let cachedToken: CachedToken | null = null;
+// Coalesces concurrent callers onto one in-flight token request instead of each firing its
+// own -- without this, several autocomplete requests arriving on the same cold serverless
+// instance (no cached token yet) would each independently POST to Spotify's token endpoint
+// at once. Cleared as soon as that request settles, successfully or not.
+let pendingTokenRequest: Promise<string | null> | null = null;
 
 // Test-only escape hatch for the module-level token cache -- exported specifically
 // because a prior review (Story 2.1's "No test-only reset utility for the module-level
@@ -24,6 +29,7 @@ let cachedToken: CachedToken | null = null;
 // worth having once a test suite starts relying on cache behavior across multiple tests.
 export function __resetSpotifyTokenCacheForTests(): void {
   cachedToken = null;
+  pendingTokenRequest = null;
 }
 
 // Client Credentials flow -- server-to-server, no end-user Spotify login involved (see
@@ -37,6 +43,17 @@ async function getAccessToken(credentials: SpotifyCredentials = {}): Promise<str
     return cachedToken.accessToken;
   }
 
+  if (pendingTokenRequest) {
+    return pendingTokenRequest;
+  }
+
+  pendingTokenRequest = fetchNewToken(credentials).finally(() => {
+    pendingTokenRequest = null;
+  });
+  return pendingTokenRequest;
+}
+
+async function fetchNewToken(credentials: SpotifyCredentials): Promise<string | null> {
   const clientId = credentials.clientId ?? process.env.SPOTIFY_CLIENT_ID;
   const clientSecret = credentials.clientSecret ?? process.env.SPOTIFY_CLIENT_SECRET;
   if (!clientId?.trim() || !clientSecret?.trim()) return null;

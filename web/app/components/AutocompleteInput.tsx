@@ -52,15 +52,33 @@ export function AutocompleteInput({
   useEffect(() => {
     fetchSuggestionsRef.current = fetchSuggestions;
   }, [fetchSuggestions]);
+  // Set right before selectSuggestion() calls onChange() -- without this, the value change
+  // from picking a suggestion re-triggers the debounce effect below (value is a dependency),
+  // which fetches again for the now-selected text and reopens the dropdown ~300ms after the
+  // user just closed it by choosing something. Checked and cleared at the top of that effect,
+  // so it only ever suppresses the one fetch cycle caused by a selection, never a real keystroke.
+  const suppressNextFetchRef = useRef(false);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
+    if (suppressNextFetchRef.current) {
+      suppressNextFetchRef.current = false;
+      requestIdRef.current++; // also invalidate any request already in flight from before the selection
+      return;
+    }
+
     const query = value.trim();
     // No setState here for the "too short" case -- `shouldShowDropdown` below derives
     // visibility from `value`/`minChars` directly at render time instead, so a query
-    // shrinking below the minimum doesn't need an effect to reactively clear state.
-    if (query.length < minChars) return;
+    // shrinking below the minimum doesn't need an effect to reactively clear state. Still
+    // bump requestIdRef, though: without it, an earlier request already in flight when the
+    // query shrank could resolve later and populate stale suggestions right as the query
+    // grows back above minChars, before the new debounced request for it returns.
+    if (query.length < minChars) {
+      requestIdRef.current++;
+      return;
+    }
 
     const thisRequestId = ++requestIdRef.current;
     debounceRef.current = setTimeout(() => {
@@ -76,6 +94,7 @@ export function AutocompleteInput({
           if (thisRequestId !== requestIdRef.current) return;
           setSuggestions([]);
           setIsOpen(false);
+          setHighlightedIndex(-1);
         });
     }, DEBOUNCE_MS);
 
@@ -95,6 +114,7 @@ export function AutocompleteInput({
   }, []);
 
   function selectSuggestion(suggestion: string) {
+    suppressNextFetchRef.current = true;
     onChange(suggestion);
     setSuggestions([]);
     setIsOpen(false);
@@ -114,12 +134,17 @@ export function AutocompleteInput({
       event.preventDefault();
       setHighlightedIndex((current) => (current <= 0 ? suggestions.length - 1 : current - 1));
     } else if (event.key === "Enter") {
+      // Always prevent the default (form-submitting) behavior while the dropdown is open,
+      // even with nothing highlighted -- otherwise a stray Enter while suggestions are
+      // visible silently submits whatever raw text is currently typed instead of being a
+      // no-op, since this component sits inside the hero's <form>.
+      event.preventDefault();
       if (highlightedIndex >= 0) {
-        event.preventDefault();
         selectSuggestion(suggestions[highlightedIndex]);
       }
     } else if (event.key === "Escape") {
       setIsOpen(false);
+      setHighlightedIndex(-1);
     }
   }
 
@@ -136,6 +161,11 @@ export function AutocompleteInput({
         onFocus={() => {
           if (suggestions.length > 0) setIsOpen(true);
         }}
+        // Closes the dropdown for keyboard users tabbing away, not just mouse clicks
+        // outside it (the separate document-level mousedown listener below). Safe to fire
+        // unconditionally: a suggestion click's onMouseDown already calls preventDefault(),
+        // which stops the input from blurring at all, so this can never race a real selection.
+        onBlur={() => setIsOpen(false)}
         placeholder={placeholder}
         role="combobox"
         aria-expanded={shouldShowDropdown}
