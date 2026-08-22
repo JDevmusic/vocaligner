@@ -20,8 +20,17 @@ function resolveCredentials(): { url: string; token: string } | null {
 
   if (url || token) {
     // Exactly one half of a pair is set. Neither set is expected and silent (local dev);
-    // this is not that -- it's much more likely a typo'd or half-copied env var.
-    console.warn(
+    // this is not that -- it's much more likely a typo'd or half-copied env var, and in
+    // production it means every request is silently falling back to in-memory
+    // store/rate-limiting behavior that doesn't survive across serverless instances.
+    // console.error (not .warn), specifically so this is positioned to surface via
+    // whatever error-log-based alerting is already available (e.g. Vercel's own dashboard
+    // "Alerts" on error-log spikes) rather than sitting at a severity most log views don't
+    // surface by default. Actually wiring up a real alert/notification is a monitoring
+    // *configuration* decision for whoever owns that dashboard, not something a log-level
+    // change alone can complete -- this only makes the failure loud enough to be caught by
+    // one, if/when one exists.
+    console.error(
       "[upstashConfig] Only one of the Upstash URL/token environment variables is set " +
         "(checked UPSTASH_REDIS_REST_URL/KV_REST_API_URL and UPSTASH_REDIS_REST_TOKEN/KV_REST_API_TOKEN). " +
         "Treating Upstash as not configured."

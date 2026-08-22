@@ -11,9 +11,11 @@ vi.mock("@/lib/ai/generateVocalChain", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/ai/generateVocalChain")>();
   return { ...actual, generateVocalChain: vi.fn() };
 });
+vi.mock("@vercel/functions", () => ({ waitUntil: vi.fn() }));
 
 const { checkRateLimit } = await import("@/lib/rateLimit");
 const { generateVocalChain } = await import("@/lib/ai/generateVocalChain");
+const { waitUntil } = await import("@vercel/functions");
 const { POST } = await import("./route");
 
 // Minimal fake shape -- just enough for saveGeneration()'s field access
@@ -51,6 +53,26 @@ describe("POST /api/generate -- rate limiting (AC 1, Epic 5 Story 5.1)", () => {
   afterEach(() => {
     vi.mocked(checkRateLimit).mockReset();
     vi.mocked(generateVocalChain).mockReset();
+    vi.mocked(waitUntil).mockReset();
+  });
+
+  it("forwards the rate limiter's pending promise to waitUntil when present", async () => {
+    const pending = Promise.resolve("background sync");
+    vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, pending });
+    vi.mocked(generateVocalChain).mockResolvedValue(FAKE_GENERATION);
+
+    await postGenerate({ artist: "Frank Ocean", song: "Thinkin Bout You" }, { "x-forwarded-for": "203.0.113.7" });
+
+    expect(waitUntil).toHaveBeenCalledWith(pending);
+  });
+
+  it("does not call waitUntil when the limiter reports no pending promise", async () => {
+    vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true });
+    vi.mocked(generateVocalChain).mockResolvedValue(FAKE_GENERATION);
+
+    await postGenerate({ artist: "Frank Ocean", song: "Thinkin Bout You" }, { "x-forwarded-for": "203.0.113.7" });
+
+    expect(waitUntil).not.toHaveBeenCalled();
   });
 
   it("returns 429 with a Retry-After header and never calls generateVocalChain (zero AI cost) when blocked", async () => {

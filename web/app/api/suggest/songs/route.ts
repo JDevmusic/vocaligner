@@ -1,3 +1,4 @@
+import { waitUntil } from "@vercel/functions";
 import { checkSuggestRateLimit, getClientIdentifier } from "@/lib/rateLimit";
 import { searchTracksByArtist } from "@/lib/external/spotifyClient";
 
@@ -10,6 +11,7 @@ export async function GET(request: Request) {
   const identifier = getClientIdentifier(request);
   if (identifier) {
     const rateLimitResult = await checkSuggestRateLimit(identifier);
+    if (rateLimitResult.pending) waitUntil(rateLimitResult.pending);
     if (!rateLimitResult.allowed) {
       const headers =
         rateLimitResult.retryAfterSeconds !== undefined

@@ -8,9 +8,11 @@ vi.mock("@/lib/external/spotifyClient", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/external/spotifyClient")>();
   return { ...actual, searchTracksByArtist: vi.fn() };
 });
+vi.mock("@vercel/functions", () => ({ waitUntil: vi.fn() }));
 
 const { checkSuggestRateLimit } = await import("@/lib/rateLimit");
 const { searchTracksByArtist } = await import("@/lib/external/spotifyClient");
+const { waitUntil } = await import("@vercel/functions");
 const { GET } = await import("./route");
 
 function getSongs(params: Record<string, string>, headers: Record<string, string> = {}) {
@@ -23,6 +25,26 @@ describe("GET /api/suggest/songs", () => {
   afterEach(() => {
     vi.mocked(checkSuggestRateLimit).mockReset();
     vi.mocked(searchTracksByArtist).mockReset();
+    vi.mocked(waitUntil).mockReset();
+  });
+
+  it("forwards the rate limiter's pending promise to waitUntil when present", async () => {
+    const pending = Promise.resolve("background sync");
+    vi.mocked(checkSuggestRateLimit).mockResolvedValue({ allowed: true, pending });
+    vi.mocked(searchTracksByArtist).mockResolvedValue([]);
+
+    await getSongs({ artist: "Clairo", q: "Pre" }, { "x-forwarded-for": "203.0.113.7" });
+
+    expect(waitUntil).toHaveBeenCalledWith(pending);
+  });
+
+  it("does not call waitUntil when the limiter reports no pending promise", async () => {
+    vi.mocked(checkSuggestRateLimit).mockResolvedValue({ allowed: true });
+    vi.mocked(searchTracksByArtist).mockResolvedValue([]);
+
+    await getSongs({ artist: "Clairo", q: "Pre" }, { "x-forwarded-for": "203.0.113.7" });
+
+    expect(waitUntil).not.toHaveBeenCalled();
   });
 
   it("returns 429 with a Retry-After header and never calls searchTracksByArtist when rate limited", async () => {

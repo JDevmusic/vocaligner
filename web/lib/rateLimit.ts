@@ -12,13 +12,19 @@ export interface RateLimitResult {
   allowed: boolean;
   // Only present when allowed is false. Seconds, suitable for a Retry-After header.
   retryAfterSeconds?: number;
+  // Present whenever the underlying limiter reports one (real Upstash always does; a test
+  // fake typically won't). Callers should forward this to `waitUntil` (see route.ts call
+  // sites) -- @upstash/ratelimit uses it for background analytics/multi-region sync that
+  // would otherwise risk being cut off once the serverless function's response is sent.
+  pending?: Promise<unknown>;
 }
 
 // Minimal shape this module actually needs from a limiter -- lets tests inject a fake
 // instead of hitting real Upstash, same DI pattern as this project's other injectable
-// clients (e.g. anthropicModelClient.ts's `client` option).
+// clients (e.g. anthropicModelClient.ts's `client` option). `pending` is optional so
+// existing test fakes that don't supply one remain valid.
 export interface Limiter {
-  limit(identifier: string): Promise<{ success: boolean; reset: number }>;
+  limit(identifier: string): Promise<{ success: boolean; reset: number; pending?: Promise<unknown> }>;
 }
 
 // The pure, fully-testable core: given a resolved limiter (or null, meaning "not
@@ -42,7 +48,7 @@ export async function evaluateRateLimit(identifier: string, limiter: Limiter | n
   // outage clears -- turning a hardening layer into a full outage of the revenue path,
   // worse than having no rate limiter at all. Same fail-open-on-store-error convention as
   // generationStore.ts's getGenerationById/getCachedGeneration.
-  let result: { success: boolean; reset: number };
+  let result: { success: boolean; reset: number; pending?: Promise<unknown> };
   try {
     result = await limiter.limit(identifier);
   } catch (error) {
@@ -50,10 +56,12 @@ export async function evaluateRateLimit(identifier: string, limiter: Limiter | n
     console.error(`[rateLimit] limiter.limit() failed, failing open for this request: ${reason}.`);
     return { allowed: true };
   }
-  if (result.success) return { allowed: true };
+  // Forwarded regardless of allow/block -- the background work `pending` represents
+  // (analytics, multi-region sync) happens either way, not just on a block.
+  if (result.success) return { allowed: true, pending: result.pending };
 
   const retryAfterSeconds = Math.max(0, Math.ceil((result.reset - Date.now()) / 1000));
-  return { allowed: false, retryAfterSeconds };
+  return { allowed: false, retryAfterSeconds, pending: result.pending };
 }
 
 let defaultLimiter: Limiter | null | undefined;

@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { evaluateRateLimit, getClientIdentifier, type Limiter } from "./rateLimit";
 
-function fakeLimiter(success: boolean, reset = 0): Limiter {
-  return { limit: vi.fn().mockResolvedValue({ success, reset }) };
+function fakeLimiter(success: boolean, reset = 0, pending?: Promise<unknown>): Limiter {
+  return { limit: vi.fn().mockResolvedValue({ success, reset, pending }) };
 }
 
 function rejectingLimiter(error: unknown): Limiter {
@@ -40,6 +40,27 @@ describe("evaluateRateLimit", () => {
 
     expect(result.allowed).toBe(false);
     expect(result.retryAfterSeconds).toBe(0);
+  });
+
+  it("forwards the limiter's pending promise when the request is allowed", async () => {
+    const pending = Promise.resolve("background sync");
+    const limiter = fakeLimiter(true, 0, pending);
+    const result = await evaluateRateLimit("1.2.3.4", limiter);
+    expect(result.pending).toBe(pending);
+  });
+
+  it("forwards the limiter's pending promise even when the request is blocked", async () => {
+    const pending = Promise.resolve("background sync");
+    const limiter = fakeLimiter(false, Date.now() + 1000, pending);
+    const result = await evaluateRateLimit("1.2.3.4", limiter);
+    expect(result.allowed).toBe(false);
+    expect(result.pending).toBe(pending);
+  });
+
+  it("has no pending field when the limiter doesn't report one (test fakes without it stay valid)", async () => {
+    const limiter = fakeLimiter(true);
+    const result = await evaluateRateLimit("1.2.3.4", limiter);
+    expect(result.pending).toBeUndefined();
   });
 
   it("uses distinct identifiers independently -- passes the given identifier through, doesn't hardcode one", async () => {

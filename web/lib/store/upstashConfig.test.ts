@@ -51,32 +51,32 @@ describe("isUpstashConfigured", () => {
     expect(isUpstashConfigured()).toBe(true);
   });
 
-  it("is false and warns when only the URL half of a pair is set (likely misconfiguration, not intentional)", () => {
+  it("is false and logs an error when only the URL half of a pair is set (likely misconfiguration, not intentional)", () => {
     clearAllCredentialEnvVars();
     process.env.UPSTASH_REDIS_REST_URL = "https://example.upstash.io";
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     expect(isUpstashConfigured()).toBe(false);
-    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(errorSpy).toHaveBeenCalledTimes(1);
   });
 
-  it("is false and warns when only the token half of a pair is set", () => {
+  it("is false and logs an error when only the token half of a pair is set", () => {
     clearAllCredentialEnvVars();
     process.env.UPSTASH_REDIS_REST_TOKEN = "test-token";
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     expect(isUpstashConfigured()).toBe(false);
-    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(errorSpy).toHaveBeenCalledTimes(1);
   });
 
   it("treats a whitespace-only value the same as unset", () => {
     clearAllCredentialEnvVars();
     process.env.UPSTASH_REDIS_REST_URL = "   ";
     process.env.UPSTASH_REDIS_REST_TOKEN = "test-token";
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     expect(isUpstashConfigured()).toBe(false);
-    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(errorSpy).toHaveBeenCalledTimes(1);
   });
 });
 

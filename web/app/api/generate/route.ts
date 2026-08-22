@@ -1,3 +1,4 @@
+import { waitUntil } from "@vercel/functions";
 import { generateVocalChain, VocalChainGenerationError } from "@/lib/ai/generateVocalChain";
 import { getModelClient } from "@/lib/ai/getModelClient";
 import { checkRateLimit, getClientIdentifier } from "@/lib/rateLimit";
@@ -12,6 +13,10 @@ export async function POST(request: Request) {
   const identifier = getClientIdentifier(request);
   if (identifier) {
     const rateLimitResult = await checkRateLimit(identifier);
+    // @upstash/ratelimit's own background work (analytics/multi-region sync) -- forwarded
+    // so it isn't cut off once this function's response is sent. Not conditional on
+    // allowed/blocked: the background work happens either way.
+    if (rateLimitResult.pending) waitUntil(rateLimitResult.pending);
     if (!rateLimitResult.allowed) {
       const headers =
         rateLimitResult.retryAfterSeconds !== undefined
