@@ -27,11 +27,15 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
         run: |
-          # Strips any trailing slash from the URL secret -- a copy-pasted URL with one
-          # produces a double slash once /rest/v1/... is appended, which PostgREST rejects
-          # outright (error PGRST125, "Invalid path specified") rather than tolerating it.
-          # Hit exactly this live during Story 6.1 setup.
-          CLEAN_URL="${SUPABASE_URL%/}"
+          # Strips ALL trailing slashes from the URL secret (not just one -- `${VAR%/}` only
+          # removes a single trailing slash, which would still leave a double slash after
+          # e.g. a "https://x.co//" paste; sed handles any number, matching config.ts's
+          # getSupabaseUrl() regex exactly, since this workflow constructs the same kind of
+          # URL independently in bash rather than through that shared helper). A copy-pasted
+          # URL with a trailing slash produces a double slash once /rest/v1/... is appended,
+          # which PostgREST rejects outright (error PGRST125, "Invalid path specified")
+          # rather than tolerating it -- hit exactly this live during Story 6.1 setup.
+          CLEAN_URL="$(echo "${SUPABASE_URL}" | sed -E 's#/+$##')"
           curl -sf "${CLEAN_URL}/rest/v1/saved_songs?select=id&limit=1" \
             -H "apikey: ${SUPABASE_PUBLISHABLE_KEY}" \
             -H "Authorization: Bearer ${SUPABASE_PUBLISHABLE_KEY}" \

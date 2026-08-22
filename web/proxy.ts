@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
+import { isAuthSessionMissingError } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
-import { isSupabaseConfigured } from "./lib/supabase/config";
+import { getSupabasePublishableKey, getSupabaseUrl, isSupabaseConfigured } from "./lib/supabase/config";
 
 // Refreshes a logged-in user's Supabase session token on every request -- required because
 // Server Components can read cookies but can't write them (see lib/supabase/server.ts's
@@ -24,9 +25,14 @@ export async function proxy(request: NextRequest) {
 
   let response = NextResponse.next({ request });
 
+  // getSupabaseUrl()/getSupabasePublishableKey(), not raw process.env -- these are the same
+  // helpers client.ts/server.ts use, which trim and (the URL) strip trailing slashes. Using
+  // raw env vars here would silently defeat that fix for this file specifically: a
+  // trailing-slash URL would build a malformed double-slash request on every single
+  // request, not just the one this project already hit live during setup.
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    getSupabaseUrl(),
+    getSupabasePublishableKey(),
     {
       cookies: {
         getAll() {
@@ -45,10 +51,24 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  // Triggers a token refresh if the current session is expired -- the return value itself
-  // isn't used here; pages/routes that need to know who's logged in call this again
-  // themselves via lib/supabase/server.ts, which reads the (now-fresh) cookie.
-  await supabase.auth.getUser();
+  // Triggers a token refresh if the current session is expired -- the *user* returned isn't
+  // used here; pages/routes that need to know who's logged in call this again themselves
+  // via lib/supabase/server.ts, which reads the (now-fresh) cookie. The SDK itself never
+  // throws here (network/config failures are caught internally and returned as `error`
+  // instead), which is what keeps this file safe to run unconditionally on every request --
+  // but that same safety means a persistent failure (e.g. a misconfigured URL) would
+  // otherwise refresh silently forever with zero visibility. Logged, not thrown: a broken
+  // session refresh should never be what takes a page down.
+  //
+  // isAuthSessionMissingError specifically excluded: it's the completely normal result for
+  // any logged-out visitor (i.e. currently every visitor, since Story 6.2's login UI doesn't
+  // exist yet) -- confirmed live that logging it unconditionally spams this exact message on
+  // every single anonymous request, which would drown out a genuinely rare, actionable
+  // failure (the whole reason this logging was added) rather than surface it.
+  const { error } = await supabase.auth.getUser();
+  if (error && !isAuthSessionMissingError(error)) {
+    console.warn(`[proxy] Supabase session refresh failed: ${error.message}.`);
+  }
 
   return response;
 }

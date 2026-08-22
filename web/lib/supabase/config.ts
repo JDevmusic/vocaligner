@@ -32,5 +32,9 @@ export function getSupabasePublishableKey(): string {
       "[supabase] NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY is not configured. Check isSupabaseConfigured() first."
     );
   }
-  return key;
+  // Trimmed on return, not just for the truthiness check above -- incidental
+  // leading/trailing whitespace from a copy-paste would otherwise reach an Authorization
+  // header as-is, same class of subtle paste mistake getSupabaseUrl() already guards
+  // against for the URL.
+  return key.trim();
 }

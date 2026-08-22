@@ -81,4 +81,11 @@ describe("getSupabaseUrl / getSupabasePublishableKey", () => {
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_test";
     expect(getSupabaseUrl()).toBe("https://example.supabase.co");
   });
+
+  it("trims incidental whitespace from the publishable key", () => {
+    clearEnv();
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "  sb_publishable_test  ";
+    expect(getSupabasePublishableKey()).toBe("sb_publishable_test");
+  });
 });
