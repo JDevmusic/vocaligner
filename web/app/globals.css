@@ -29,10 +29,7 @@
   --dusk-panel: #2b2622;
   --dusk-panel-raised: #38312b;
   /* "Wash" v2 -- coral/red dropped per feedback; direction flipped to
-     white at the top, through sunset gold, down to a deep purple base.
-     wash-lavender bridges gold -> deep purple so the hue shift reads as
-     one purple family deepening, not two unrelated colors meeting. */
-  --wash-lavender: #c9a8dd;
+     white at the top, through sunset gold, down to a deep purple base. */
   --wash-purple: #3f1f4a;
   --wash-purple-deep: #150a18; /* continues the wash-purple family further into near-black, for sections that pick up where the hero's gradient ends */
   /* Landing page v1.38 -- the light panel inside the hero (headline + CTA),
@@ -41,7 +38,13 @@
      as one light "box," translated here as one large light panel against an
      otherwise dark page rather than going light everywhere. Text inside this
      panel uses --foreground/--supporting (the site's existing dark-on-light
-     tokens), not --on-dark. */
+     tokens), not --on-dark.
+     Known gap (code review, 2026-08-22): unlike --on-dark/--plugin-card below,
+     --hero-panel has no .dark override, but --foreground/--supporting DO flip
+     inside .dark -- currently harmless since no theme toggle is wired up
+     anywhere in the app, but if one ever is, headline/label text would go
+     near-white against this still-light panel. Give --hero-panel a .dark
+     override (or move its text to fixed tokens) at that point, not before. */
   --hero-panel: #e3e2fa;
   --on-dark: #ffffff; /* fixed light text/border color for the landing page's always-dark sections (hero's gradient tail, MeetSection, Footer) -- these don't follow the light/dark theme toggle, so --foreground (which flips) isn't the right token here */
   --plugin-card: #ffffff; /* the Plugin Visual card surface stays white/light regardless of the results page's own dark background (DESIGN_SYSTEM.md's Functional Pages section) or a future theme toggle -- same "fixed regardless" rationale as --on-dark above, not --background (which flips in .dark) */

@@ -78,7 +78,7 @@ export default function Home() {
                 onSubmit={handleGenerate}
                 className="mt-6 flex flex-col items-center gap-4 sm:flex-row sm:items-end sm:justify-center"
               >
-                <div className="flex flex-col gap-1.5 text-left">
+                <div className="flex w-full flex-col gap-1.5 text-left sm:w-auto">
                   <label
                     htmlFor="artist"
                     className="font-mono text-xs tracking-[0.2em] text-supporting uppercase"
@@ -91,10 +91,10 @@ export default function Home() {
                     value={artist}
                     onChange={(event) => setArtist(event.target.value)}
                     placeholder="Frank Ocean"
-                    className="w-56 rounded-xl border border-foreground/15 bg-background px-4 py-3 text-base text-foreground outline-none placeholder:text-foreground/35 focus:border-foreground/40"
+                    className="w-full min-w-0 rounded-xl border border-foreground/15 bg-background px-4 py-3 text-base text-foreground outline-none placeholder:text-foreground/35 focus:border-foreground sm:w-56"
                   />
                 </div>
-                <div className="flex flex-col gap-1.5 text-left">
+                <div className="flex w-full flex-col gap-1.5 text-left sm:w-auto">
                   <label
                     htmlFor="song"
                     className="font-mono text-xs tracking-[0.2em] text-supporting uppercase"
@@ -107,7 +107,7 @@ export default function Home() {
                     value={song}
                     onChange={(event) => setSong(event.target.value)}
                     placeholder="Thinkin Bout You"
-                    className="w-56 rounded-xl border border-foreground/15 bg-background px-4 py-3 text-base text-foreground outline-none placeholder:text-foreground/35 focus:border-foreground/40"
+                    className="w-full min-w-0 rounded-xl border border-foreground/15 bg-background px-4 py-3 text-base text-foreground outline-none placeholder:text-foreground/35 focus:border-foreground sm:w-56"
                   />
                 </div>
               </form>
