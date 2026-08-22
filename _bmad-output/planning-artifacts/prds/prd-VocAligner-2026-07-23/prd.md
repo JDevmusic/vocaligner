@@ -158,8 +158,8 @@ Each control in a Plugin Visual displays its literal value (a numeric parameter 
 - VocAligner does not support any DAW other than Logic Pro.
 - VocAligner never recommends third-party or paid plugins — Stock Plugins only, always.
 - VocAligner does not process a user's own audio in v1 — no dry vocal upload, no personalisation to a specific voice. This is a confirmed future feature with no target milestone yet (see §6.2).
-- VocAligner does not support user accounts, authentication, or payments in v1.
-- VocAligner does not let users save, revisit, or manage a history of past Generations in v1 — confirmed by founder as deferred, planned to land once live Anthropic integration is in place (see §6.2), not MVP.
+- VocAligner does not support user accounts, authentication, or payments in v1. *(Superseded 2026-08-22 — accounts/authentication moved in-scope as Epic 6, `_bmad-output/planning-artifacts/epics.md`, founder-confirmed decision. Payments remain out of scope, deliberately deferred to a later, separately-scoped epic once Epic 6 ships and there's real usage data on what's worth charging for.)*
+- VocAligner does not let users save, revisit, or manage a history of past Generations in v1 — confirmed by founder as deferred, planned to land once live Anthropic integration is in place (see §6.2), not MVP. *(Superseded 2026-08-22 — this is now Epic 6, its originally-anticipated trigger condition (live Anthropic integration) having shipped as Epic 3 long before this.)*
 - VocAligner does not include community features (ratings, shared/public presets) in v1.
 - VocAligner does not display Confidence Scores for generated chains in v1 — named future feature, not yet designed.
 - `[NON-GOAL for MVP]` VocAligner does not implement rate-limiting or abuse-prevention on the Generation endpoint in v1. This is a free, unauthenticated, free-text form that will eventually call a paid AI provider per request — a conscious, near-term cost exposure for a solo founder, not an oversight. Revisit before or immediately after live Anthropic integration ships (see §8).
@@ -199,7 +199,7 @@ Each control in a Plugin Visual displays its literal value (a numeric parameter 
 - Interactive Plugin Visuals and Setting Rationale Hover — see FR-6/FR-7 Out of Scope (§4.3).
 - Bespoke per-plugin-type visuals — MVP reuses one default visual treatment across all plugin types.
 - Plugin Variant selection (e.g. Compressor circuit types, ChromaVerb algorithms) — every plugin uses its default behavior; no variant is chosen or displayed.
-- User accounts, authentication, payments — per `CLAUDE.md`, not implemented "unless specifically requested."
+- User accounts, authentication, payments — per `CLAUDE.md`, not implemented "unless specifically requested." *(Superseded 2026-08-22 for accounts/authentication — specifically requested, now Epic 6. Payments remain unrequested and out of scope.)*
 - Other DAWs, community ratings/shared presets, project export/import.
 
 ## 7. Success Metrics

@@ -26,6 +26,10 @@ FR4: If a Vocal Chain has already been generated for an identical Artist + Song 
 FR5: If the system cannot produce a Plugin-Registry-valid chain after retrying, the user sees an explicit failure state rather than an incomplete/invalid/silently-wrong chain.
 FR6: A user can view the generated Vocal Chain as an ordered sequence of Plugin Visuals (Logic-style graphical representations — knobs, toggles, meters), each showing that plugin's settings, in the order Logic Pro would apply them.
 FR7: Each control in a Plugin Visual displays its literal value only (a numeric parameter or toggle position) — no inline rationale/explanation text in MVP.
+FR8 *(new 2026-08-22, Epic 6)*: A visitor can create an account and log in via Supabase Auth. Using the core Generate flow (no account) is completely unaffected — accounts are additive, never a gate on the product's main loop.
+FR9 *(new 2026-08-22, Epic 6)*: A logged-in user can save a generated Vocal Chain (from its results page) to their account.
+FR10 *(new 2026-08-22, Epic 6)*: A logged-in user can view a list of their saved Vocal Chains and navigate back to any of them.
+FR11 *(new 2026-08-22, Epic 6)*: The site reflects a visitor's logged-in/logged-out state wherever the nav appears, and lets a logged-in user log out.
 
 ### NonFunctional Requirements
 
@@ -51,8 +55,10 @@ NFR3 *(new 2026-08-12)*: A stored Generation must be retrievable via `GET /api/g
 - **AD-10**: Cross-page result handoff is by opaque `id` only (never the full payload in a URL or an ad hoc client store); the results page fetches the full `VocalChainResponse` by id from the same store the cache uses; a cache hit replays the stored response unmodified except `meta.cacheHit`.
 - **AD-11 candidate** *(new 2026-08-12, resolved by Epic 4)*: `generationStore.ts`'s cache storage technology — deployment target is no longer undecided (Vercel, confirmed live) — must move off a bare in-memory `Map` to something that survives across serverless instances, while preserving AD-7/AD-8's existing normalized-key + version-gate semantics unmodified.
 - **AD-12 candidate** *(new 2026-08-12, resolved by Epic 5)*: `POST /api/generate` needs a basic rate-limiting mechanism (IP-based or similar; exact strategy decided at story level) — resolves the Architecture Spine's previously-deferred rate-limiting item now that real per-request AI cost + public exposure both apply.
+- **AD-13 candidate** *(new 2026-08-22, Epic 6)*: Supabase (Postgres + Auth) becomes the boundary for user identity and user-owned data (accounts, saved songs, and — future, not this epic — audio uploads), mirroring AD-2's "one boundary per concern" pattern but for a second, unrelated concern (persistent user data, not AI). **Explicitly additive, not a replacement:** the existing Upstash-backed generation cache/store (AD-7/AD-8/AD-11) is untouched — a `saved_songs` row references an existing generation by its already-opaque id (same handoff pattern as AD-10), it does not duplicate or migrate the chain/reasoning/research data itself.
+- **AD-7 amendment candidate** *(new 2026-08-22, Epic 6)*: AD-7's premise ("no per-user concept anywhere in the MVP data model — no auth exists") is superseded now that Supabase Auth exists. The cache itself is deliberately NOT changed to be per-user — it stays global (anyone asking for the same Artist+Song still gets the same cached result, logged in or not); "saved songs" is a separate, additive per-user reference layer sitting alongside the unchanged global cache, not a fork of it.
 
-*Still deferred by the Architecture Spine (do NOT become stories in this pass — noted so nothing is silently lost):* Confidence Score UI surfacing (schema already has an unused `confidence` field), string/boolean control value validation, an `ObserveStage` consumer (logging/metrics), cleanup of existing un-tokenized Tailwind utilities in `page.tsx`/`loading/page.tsx`/`results/page.tsx`, bespoke per-plugin Visual designs, authentication/accounts, insert-vs-send/bus signal routing (flagged 2026-08-05, needs its own scoping pass), and the generation-accuracy backlog in `deferred-work.md` (Tape Delay knob range/log-scaling, Phaser `sweepMode` options, discrete-value-snapping) — founder confirmed 2026-08-12 these stay lower priority than production hardening for this pass.
+*Still deferred by the Architecture Spine (do NOT become stories in this pass — noted so nothing is silently lost):* Confidence Score UI surfacing (schema already has an unused `confidence` field), string/boolean control value validation, an `ObserveStage` consumer (logging/metrics), cleanup of existing un-tokenized Tailwind utilities in `page.tsx`/`loading/page.tsx`/`results/page.tsx`, bespoke per-plugin Visual designs, insert-vs-send/bus signal routing (flagged 2026-08-05, needs its own scoping pass), payments/Stripe (Epic 7 — deliberately scoped separately, only once Epic 6 ships and there's real usage data on what to charge for), audio upload (named by the founder as the likely next premium feature after Epic 6, but not part of Epic 6 itself), and the generation-accuracy backlog in `deferred-work.md` (Tape Delay knob range/log-scaling, Phaser `sweepMode` options, discrete-value-snapping) — founder confirmed 2026-08-12 these stay lower priority than production hardening for this pass. *(Authentication/accounts is REMOVED from this deferred list as of 2026-08-22 — see Epic 6 below, no longer deferred.)*
 
 ### UX Design Requirements
 
@@ -110,7 +116,17 @@ Now that `/api/generate` is live on a public domain and every request costs real
 **Also implements:** AD-12
 **Depends on:** Epic 3 (only matters once a paid production model is actually live — already true)
 
-*Not included as epics (explicitly out of MVP scope per the PRD): Save Vocal Chain, Dry Vocal upload, Confidence Scores, Interactive Plugin Visuals, Plugin Variant selection (e.g. Compressor circuit types), accounts/auth/payments.*
+### Epic 6: A User Can Save the Songs They Care About
+
+*(New 2026-08-22 — the founder's own decision to move forward with accounts, deliberately before payments. Confirmed out loud in conversation, not assumed. Supersedes this document's earlier "accounts/auth/payments" MVP exclusion below — accounts are no longer excluded; payments/Stripe remain a separate, later epic, deliberately not scoped until Epic 6 ships and there's real usage data on what's worth charging for.)*
+
+A visitor can create an account (Supabase Auth) and, once logged in, save a generated Vocal Chain from its results page and come back to a list of everything they've saved. Using the core Generate flow requires no account at all, exactly as today — accounts are strictly additive. No paywall, no premium gating, no Stripe in this epic.
+**FRs covered:** FR8, FR9, FR10, FR11
+**Also implements:** AD-13 (Supabase as the new user-identity/user-data boundary), the AD-7 amendment (cache stays global; saved songs is a separate additive layer)
+**Depends on:** Epic 1 (saved songs reference an existing generation's opaque `id`, same handoff mechanism as AD-10) — otherwise independent of Epics 2–5
+**Explicitly not included in this epic:** any premium/paywall logic, Stripe/payments (Epic 7, future, scoped separately), audio upload (a plausible future epic after this one, not part of it), migrating the existing Upstash-backed generation cache onto Supabase (deliberately left alone — Supabase is additive infrastructure, not a consolidation of working infra)
+
+*Not included as epics (explicitly out of MVP scope per the PRD, updated 2026-08-22): Dry Vocal upload, Confidence Scores, Interactive Plugin Visuals, Plugin Variant selection (e.g. Compressor circuit types), payments. ~~accounts/auth~~ — no longer excluded, see Epic 6 above. ~~Save Vocal Chain~~ — no longer excluded, see Epic 6 above (FR9/FR10).*
 
 *Not included as epics (2026-08-12 pass — real but lower priority than production hardening, per founder confirmation): generation-accuracy backlog (Tape Delay knob range/log-scaling, Phaser `sweepMode` options, discrete-value-snapping) and insert-vs-send/bus signal routing — see `deferred-work.md`.*
 
@@ -118,6 +134,13 @@ Now that `/api/generate` is live on a public domain and every request costs real
 
 NFR2: Epic 5 - Basic rate-limiting on `POST /api/generate`
 NFR3: Epic 4 - Storage survives across serverless instances
+
+### Requirements Coverage Map (Epic 6)
+
+FR8: Epic 6 - Supabase Auth sign up / log in (Story 6.2)
+FR9: Epic 6 - Save button on the results page (Story 6.3)
+FR10: Epic 6 - "My Saved Songs" page (Story 6.4)
+FR11: Epic 6 - Nav reflects logged-in/logged-out state (Story 6.5)
 
 ---
 
@@ -342,3 +365,122 @@ So that no single bad actor or runaway script can drive unbounded AI costs.
 **Given** the founder's noted unfamiliarity with this kind of infra concept
 **When** this story is implemented
 **Then** the chosen approach and its tradeoffs are explained in plain terms as part of the story
+
+---
+
+## Epic 6: A User Can Save the Songs They Care About
+
+A visitor can create an account and, once logged in, save a generated Vocal Chain from its results page and come back to a list of everything they've saved. Using the core Generate flow requires no account at all — accounts are strictly additive to the existing product, never a gate on it. No paywall, no premium gating, no Stripe in this epic (that's Epic 7, later, scoped separately once there's real usage data). Depends on Epic 1 (saved songs reference an existing generation's opaque `id`).
+
+**Infrastructure decision (2026-08-22, founder confirmed):** Supabase (Postgres + Auth), not the existing Upstash-backed generation store. Chosen for its relational data model (a natural fit for "one user has many saved songs") and its bundled file storage, which the founder has named as the likely fit for a future Audio Upload premium feature — not part of this epic, but the reason Supabase was picked over extending Upstash for this new, unrelated concern. The existing generation cache stays on Upstash, untouched; Supabase is additive infrastructure sitting alongside it, not a consolidation. Supabase's free tier pauses a project after 7 days with no database activity — mitigated with a scheduled keep-alive ping (e.g. a daily GitHub Actions job), not by upgrading to a paid tier, per the founder's explicit preference.
+
+### Story 6.1: Set up Supabase project with Auth and a Saved Songs data model
+
+As the app owner,
+I want a Supabase project configured with Auth enabled and a schema for users' saved songs,
+So that later stories in this epic have real infrastructure to build against.
+
+**Acceptance Criteria:**
+
+**Given** a new Supabase project
+**When** it's configured
+**Then** Auth is enabled (provider set — email/password vs. OAuth — decided at implementation) and the project's URL/keys are documented in `.env.example` following this project's existing pattern (never committed with real values; explained plainly per the founder's noted unfamiliarity with secrets handling)
+
+**Given** saved songs need to reference an existing Generation, not duplicate it
+**When** the schema is designed
+**Then** a `saved_songs` table stores only `(id, user_id, generation_id, saved_at)` — the full chain/reasoning/research data is never copied into Supabase; it stays exactly where AD-7/AD-10 already put it (the existing Upstash-backed generation store), referenced only by its existing opaque id
+**And** Row Level Security is enabled so a user can only ever read or write their own `saved_songs` rows — enforced at the database level, not just in application code
+
+**Given** the existing generation cache (Upstash) works today
+**When** this story is implemented
+**Then** it is not touched, migrated, or modified in any way — Supabase is purely additive infrastructure
+
+**Given** Supabase's free tier pauses a project after 7 days of database inactivity
+**When** this story is implemented
+**Then** a scheduled keep-alive mechanism (e.g. a daily GitHub Actions job making one real query) is set up alongside it, so the project never pauses — not deferred as a "fix it if it happens" risk
+
+### Story 6.2: Sign up / log in
+
+As a visitor,
+I want to create an account or log in,
+So that I can save vocal chains to come back to later.
+
+**Acceptance Criteria:**
+
+**Given** a visitor who isn't logged in
+**When** they use a "Sign in" entry point in the site's nav
+**Then** they reach a login/signup form (Supabase Auth's own UI, or a hand-built form calling the Supabase client — decided at implementation) offering account creation and login
+
+**Given** a visitor submits valid signup credentials
+**When** the account is created
+**Then** they're logged in immediately, without a separate manual login step afterward
+
+**Given** a visitor enters invalid credentials (wrong password, malformed email, an email already in use on signup)
+**When** they submit
+**Then** they see a clear, specific error — never a silent failure or a generic crash
+
+**Given** a visitor who is not logged in
+**When** they use the Generate flow (artist/song input, loading, results)
+**Then** nothing about that flow changes, is gated, or is interrupted — accounts are additive, never a requirement to use the core product
+
+### Story 6.3: Save a generated chain to your account
+
+As a logged-in user viewing my results,
+I want to save this chain to my account,
+So that I can find it again later without re-searching for it.
+
+**Acceptance Criteria:**
+
+**Given** a logged-in user viewing `/results?id=<id>`
+**When** they use the "Save" control
+**Then** a `saved_songs` row is created linking their user id to that generation's existing id (Story 6.1's schema)
+**And** the control's own state reflects that it's now saved (e.g. changes to "Saved")
+
+**Given** a logged-out visitor viewing the same results page
+**When** they view the page
+**Then** the Save control either prompts them to log in first or is hidden — it never silently fails to do anything on click
+
+**Given** a user saves a chain they've already saved
+**When** they use the Save control again
+**Then** it's a no-op / already-saved state — no duplicate `saved_songs` row is created
+
+### Story 6.4: "My Saved Songs" page
+
+As a logged-in user,
+I want to see a list of everything I've saved,
+So that I can get back to any of them.
+
+**Acceptance Criteria:**
+
+**Given** a logged-in user navigates to their saved songs page
+**When** it loads
+**Then** it lists every chain they've saved (at minimum: artist, song, saved date), each linking back to its own `/results?id=` page
+**And** the query is scoped to that user's own rows only — enforced by Story 6.1's Row Level Security, not just an application-level filter
+
+**Given** a user has saved nothing yet
+**When** they view this page
+**Then** they see a clear, deliberate empty state — never a blank or broken-looking page
+
+**Given** a logged-out visitor
+**When** they attempt to reach this page directly
+**Then** they're redirected to log in first, never shown an empty/broken version of the page
+
+### Story 6.5: Nav reflects logged-in state
+
+As any visitor,
+I want to see whether I'm logged in and be able to log out,
+So that I always know my current account state and can end my session.
+
+**Acceptance Criteria:**
+
+**Given** a logged-in user
+**When** they view any page that includes the site nav
+**Then** it shows their logged-in state (e.g. a link to their saved songs and a log-out control) instead of "Sign in"
+
+**Given** a logged-out visitor
+**When** they view any page that includes the site nav
+**Then** they see a "Sign in" entry point (Story 6.2)
+
+**Given** a logged-in user uses the log-out control
+**When** they do
+**Then** their session ends and every page's nav reverts to the logged-out state immediately, without needing a manual page refresh
