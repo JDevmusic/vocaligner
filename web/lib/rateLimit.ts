@@ -79,6 +79,33 @@ export async function checkRateLimit(identifier: string): Promise<RateLimitResul
   return evaluateRateLimit(identifier, getDefaultLimiter());
 }
 
+// Autocomplete's own limiter, separate from generate's above: a much higher budget,
+// tuned for "several requests per keystroke burst while someone types" rather than
+// generate's "a handful of real submissions per hour" -- these are cheap catalog searches
+// against Spotify/GetSongBPM, not paid AI calls, so the risk profile is "don't let a
+// runaway script hammer our server," not "bound AI cost."
+const SUGGEST_REQUESTS_PER_WINDOW = 60;
+const SUGGEST_WINDOW = "1 m";
+
+let suggestLimiter: Limiter | null | undefined;
+
+function getSuggestLimiter(): Limiter | null {
+  if (suggestLimiter === undefined) {
+    suggestLimiter = isUpstashConfigured()
+      ? new Ratelimit({
+          redis: getRedisClient(),
+          limiter: Ratelimit.slidingWindow(SUGGEST_REQUESTS_PER_WINDOW, SUGGEST_WINDOW),
+          prefix: "ratelimit:suggest",
+        })
+      : null;
+  }
+  return suggestLimiter;
+}
+
+export async function checkSuggestRateLimit(identifier: string): Promise<RateLimitResult> {
+  return evaluateRateLimit(identifier, getSuggestLimiter());
+}
+
 // x-forwarded-for is safe to trust for this specifically on Vercel: they overwrite it at
 // the edge and do not forward a client-supplied value (confirmed against Vercel's own
 // docs), so this can't be spoofed to dodge the limit. Can contain a comma-separated chain

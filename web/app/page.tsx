@@ -5,11 +5,13 @@ import { useState, type FormEvent } from "react";
 import { motion, MotionConfig } from "motion/react";
 import { BrandMark } from "./components/BrandMark";
 import { AnimatedButton } from "./components/AnimatedButton";
+import { AutocompleteInput } from "./components/AutocompleteInput";
 import { MeetSection } from "./components/MeetSection";
 import { ChainTeaserSection } from "./components/ChainTeaserSection";
 import { Footer } from "./components/Footer";
 import { CHAIN_PREVIEW } from "./landing-copy";
 import { item } from "./components/motion-shared";
+import { fetchArtistSuggestions, fetchSongSuggestions } from "@/lib/api/suggestClient";
 
 // Film-grain texture on the hero's large gradient area -- see
 // docs/DESIGN_SYSTEM.md's Images/Texture note.
@@ -85,11 +87,11 @@ export default function Home() {
                   >
                     Artist
                   </label>
-                  <input
+                  <AutocompleteInput
                     id="artist"
-                    type="text"
                     value={artist}
-                    onChange={(event) => setArtist(event.target.value)}
+                    onChange={setArtist}
+                    fetchSuggestions={fetchArtistSuggestions}
                     placeholder="Frank Ocean"
                     className="w-full min-w-0 rounded-xl border border-foreground/15 bg-background px-4 py-3 text-base text-foreground outline-none placeholder:text-foreground/35 focus:border-foreground sm:w-56"
                   />
@@ -101,11 +103,12 @@ export default function Home() {
                   >
                     Song
                   </label>
-                  <input
+                  <AutocompleteInput
                     id="song"
-                    type="text"
                     value={song}
-                    onChange={(event) => setSong(event.target.value)}
+                    onChange={setSong}
+                    fetchSuggestions={(query) => fetchSongSuggestions(artist, query)}
+                    minChars={1}
                     placeholder="Thinkin Bout You"
                     className="w-full min-w-0 rounded-xl border border-foreground/15 bg-background px-4 py-3 text-base text-foreground outline-none placeholder:text-foreground/35 focus:border-foreground sm:w-56"
                   />
